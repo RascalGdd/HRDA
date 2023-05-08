@@ -18,24 +18,24 @@ def get_crop_bbox(img_h, img_w, crop_size, divisible=1):
         return (0, img_h, 0, img_w)
     margin_h = max(img_h - crop_size[-2], 0)
     margin_w = max(img_w - crop_size[-1], 0)
-    a = np.random.normal(loc=0, scale=16)
-    b = np.random.normal(loc=0, scale=16)
-    offset_h = int(32 + a)
-    offset_w = int(32 + b)
-    if offset_w < 0:
-        offset_w = 0
-    if offset_w > 64:
-        offset_w = 64
-    if offset_h < 0:
-        offset_h = 0
-    if offset_h > 64:
-        offset_h = 64
-    offset_h *= 8
-    offset_w *= 8
+#    a = np.random.normal(loc=0, scale=16)
+#    b = np.random.normal(loc=0, scale=16)
+#    offset_h = int(32 + a)
+#    offset_w = int(32 + b)
+#    if offset_w < 0:
+#        offset_w = 0
+#    if offset_w > 64:
+#        offset_w = 64
+#    if offset_h < 0:
+#        offset_h = 0
+#    if offset_h > 64:
+#        offset_h = 64
+#    offset_h *= 8
+#    offset_w *= 8
     # print("offset_h", offset_h)
     # print("offset_w", offset_w)
-    # offset_h = np.random.randint(0, (margin_h + 1) // divisible) * divisible
-    # offset_w = np.random.randint(0, (margin_w + 1) // divisible) * divisible
+    offset_h = np.random.randint(0, (margin_h + 1) // divisible) * divisible
+    offset_w = np.random.randint(0, (margin_w + 1) // divisible) * divisible
     crop_y1, crop_y2 = offset_h, offset_h + crop_size[0]
     crop_x1, crop_x2 = offset_w, offset_w + crop_size[1]
 
@@ -109,7 +109,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
 
     def extract_slide_feat(self, img):
         if self.hr_slide_overlapping:
-            h_stride, w_stride = [e // 2 for e in self.crop_size]
+            h_stride, w_stride = [e // 4 for e in self.crop_size]
         else:
             h_stride, w_stride = self.crop_size
         h_crop, w_crop = self.crop_size
