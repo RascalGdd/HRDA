@@ -32,9 +32,8 @@ def get_crop_bbox(img_h, img_w, crop_size, divisible=1):
         offset_h = 64
     offset_h *= 8
     offset_w *= 8
-    print("offset_h", offset_h)
-    print("offset_w", offset_w)
-
+    # print("offset_h", offset_h)
+    # print("offset_w", offset_w)
     # offset_h = np.random.randint(0, (margin_h + 1) // divisible) * divisible
     # offset_w = np.random.randint(0, (margin_w + 1) // divisible) * divisible
     crop_y1, crop_y2 = offset_h, offset_h + crop_size[0]
