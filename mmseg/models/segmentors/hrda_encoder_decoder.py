@@ -132,7 +132,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
 
-        self.debug_count = 0 # debug
+        # self.debug_count = 0 # debug
 
     def extract_unscaled_feat(self, img):
         x = self.backbone(img[:,:3,:,:]) # ensure input 3 channels
@@ -230,21 +230,21 @@ class HRDAEncoderDecoder(EncoderDecoder):
                 mres_feats.append(self.extract_unscaled_feat(scaled_img))
 
                 # debug
-                if self.debug_count < 100:
-                    print("image shape:", img.shape)
-                    save_image(img[0,:3,:,:], 'debug/{}_ori_image.png'.format(self.debug_count))
-                    save_image(img[0,3:,:,:], 'debug/{}_depth_map.png'.format(self.debug_count))
-                    print("crop box h1 h2 w1 w2:", roi_crop_box)
-                    save_image(scaled_img[0,:3,:,:], 'debug/{}_cropped_image.png'.format(self.debug_count))
-                    crop_mask = img[0,3:,:,:] * 0
-                    crop_y1, crop_y2, crop_x1, crop_x2 = roi_crop_box
-                    crop_mask[:, crop_y1:crop_y2, crop_x1:crop_x2] = 1
-                    save_image(crop_mask, 'debug/{}_crop_mask.png'.format(self.debug_count))
-                    for feat in mres_feats[-1]:
-                        print("mres feat shapes:", feat.shape)
-                    self.debug_count += 1
-                else:
-                    break_debug
+                # if self.debug_count < 100:
+                #     print("image shape:", img.shape)
+                #     save_image(img[0,:3,:,:], 'debug/{}_ori_image.png'.format(self.debug_count))
+                #     save_image(img[0,3:,:,:], 'debug/{}_depth_map.png'.format(self.debug_count))
+                #     print("crop box h1 h2 w1 w2:", roi_crop_box)
+                #     save_image(scaled_img[0,:3,:,:], 'debug/{}_cropped_image.png'.format(self.debug_count))
+                #     crop_mask = img[0,3:,:,:] * 0
+                #     crop_y1, crop_y2, crop_x1, crop_x2 = roi_crop_box
+                #     crop_mask[:, crop_y1:crop_y2, crop_x1:crop_x2] = 1
+                #     save_image(crop_mask, 'debug/{}_crop_mask.png'.format(self.debug_count))
+                #     for feat in mres_feats[-1]:
+                #         print("mres feat shapes:", feat.shape)
+                #     self.debug_count += 1
+                # else:
+                #     break_debug
 
             if self.decode_head.debug:
                 self.decode_head.debug_output[f'Img {i} Scale {s}'] = \
