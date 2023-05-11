@@ -235,7 +235,7 @@ class HRDAHead(BaseDecodeHead):
         # print("forward test...") # debug
         fused_seg = self.forward(inputs)[0]
         if self.hr_crop_box is not None:
-            print("hr crop considered in testing") # debug
+            # print("hr crop considered in testing") # debug
             self.reset_crop()
         return fused_seg
 
