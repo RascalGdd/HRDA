@@ -41,14 +41,12 @@ def get_crop_bbox_vanish_point(depth_map, crop_size, divisible=1):
     # max_val_ids: (L,4), e.g., [[0,0,0,0], [0,0,0,1],..., [3,0,16,501]] (list of max_value_points)
     max_val_ids = (depth_map == max_val).nonzero(as_tuple = False)
 
-    # central_id = max_val_ids.float().mean(dim=0).long()[2:]  # (h,w)
-    # if divisible:
-    #     if central_id[0] % 4 != 0:
-    #         central_id[0] = central_id[0] - central_id[0] % 4
-    #     if central_id[1] % 4 != 0:
-    #         central_id[1] = central_id[1] - central_id[1] % 4
-
-    central_id = torch.tensor([img_h, img_w]).long() # debug
+    central_id = max_val_ids.float().mean(dim=0).long()[2:]  # (h,w)
+    if divisible:
+        if central_id[0] % 4 != 0:
+            central_id[0] = central_id[0] - central_id[0] % 4
+        if central_id[1] % 4 != 0:
+            central_id[1] = central_id[1] - central_id[1] % 4
 
     crop_y1 = (central_id[0] - crop_size[0] / 2).long()
     crop_y2 = (central_id[0] + crop_size[0] / 2).long()
@@ -59,13 +57,13 @@ def get_crop_bbox_vanish_point(depth_map, crop_size, divisible=1):
         crop_y2 += - crop_y1
         crop_y1 = 0
     if crop_y2 > img_h:
-        crop_y1 -= img_h - crop_y2
+        crop_y1 -= crop_y2 - img_h
         crop_y2 = img_h
     if crop_x1 < 0:
         crop_x2 += - crop_x1
         crop_x1 = 0
     if crop_x2 > img_w:
-        crop_x1 -= img_w - crop_x2
+        crop_x1 -= crop_x2 - img_w
         crop_x2 = img_w
 
     return crop_y1, crop_y2, crop_x1, crop_x2
