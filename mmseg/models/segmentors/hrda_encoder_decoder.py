@@ -48,7 +48,7 @@ def get_crop_bbox_vanish_point(depth_map, crop_size, divisible=1):
     #     if central_id[1] % 4 != 0:
     #         central_id[1] = central_id[1] - central_id[1] % 4
 
-    central_id = [img_h, img_w] # debug
+    central_id = torch.tensor([img_h, img_w], dtype = long) # debug
 
     crop_y1 = (central_id[0] - crop_size[0] / 2).long()
     crop_y2 = (central_id[0] + crop_size[0] / 2).long()
