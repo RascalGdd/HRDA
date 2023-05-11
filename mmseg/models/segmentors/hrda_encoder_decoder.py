@@ -37,11 +37,11 @@ def get_crop_bbox_vanish_point(depth_map, crop_size, divisible=1):
 
     # max_val: (B,1,1,1)
     # max_val = torch.amax(depth_map, dim=(2, 3)).unsqueeze(-1).unsqueeze(-1)
-    max_val = torch.topk(depth_map, 2).values[1].item()
+    max_val = torch.max(depth_map).item()
+    depth_map[depth_map == max_val] = 0
+    max_val = torch.max(depth_map).item() # use the second-largest
 
     # max_val_ids: (L,4), e.g., [[0,0,0,0], [0,0,0,1],..., [3,0,16,501]] (list of max_value_points)
-    # max_val = torch.max(depth_map).item()
-
     max_val_ids = (depth_map == max_val).nonzero(as_tuple = False)
 
     central_id = max_val_ids.float().mean(dim=0).long()[2:]  # (h,w)
