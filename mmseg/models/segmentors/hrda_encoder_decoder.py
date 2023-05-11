@@ -126,7 +126,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.blur_hr_crop = blur_hr_crop
 
     def extract_unscaled_feat(self, img):
-        x = self.backbone(img[:,:4,:,:]) # ensure input 3 channels
+        x = self.backbone(img[:,:3,:,:]) # ensure input 3 channels
         if self.with_neck:
             x = self.neck(x)
         return x
@@ -222,10 +222,10 @@ class HRDAEncoderDecoder(EncoderDecoder):
 
                 # debug
                 print("image shape:", img.shape)
-                save_image(img[:,:4,:,:], 'debug/ori_image.png')
-                save_image(img[:,4:,:,:], 'debug/depth_map.png')
+                save_image(img[:,:3,:,:], 'debug/ori_image.png')
+                save_image(img[:,3:,:,:], 'debug/depth_map.png')
                 print("crop box h1 h2 w1 w2:", roi_crop_box)
-                save_image(scaled_img[:,:4,:,:], 'debug/cropped_image.png')
+                save_image(scaled_img[:,:3,:,:], 'debug/cropped_image.png')
                 print("mres feat shape:", mres_feats[-1].shape)
 
             if self.decode_head.debug:
