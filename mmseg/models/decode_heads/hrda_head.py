@@ -187,7 +187,7 @@ class HRDAHead(BaseDecodeHead):
         else:
             hr_seg_inserted = hr_seg
 
-        fused_seg = up_lr_seg # att * hr_seg_inserted + up_lr_seg ## debug
+        fused_seg = att * hr_seg_inserted + up_lr_seg
 
         if self.debug_output_attention:
             att = torch.sum(
@@ -235,6 +235,7 @@ class HRDAHead(BaseDecodeHead):
         # print("forward test...") # debug
         fused_seg = self.forward(inputs)[0]
         if self.hr_crop_box is not None:
+            print("hr crop considered in testing") # debug
             self.reset_crop()
         return fused_seg
 

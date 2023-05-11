@@ -1,3 +1,5 @@
+# Obtained from: https://github.com/open-mmlab/mmsegmentation/tree/v0.16.0
+
 import os.path as osp
 import torch
 import mmcv
@@ -33,10 +35,12 @@ def vanishing_point_to_depth_mask(vanishing_mode, vanishing_point, image_size, l
 @PIPELINES.register_module()
 class LoadImageFromFile(object):
     """Load an image from file.
+
     Required keys are "img_prefix" and "img_info" (a dict that must contain the
     key "filename"). Added or updated keys are "filename", "img", "img_shape",
     "ori_shape" (same as `img_shape`), "pad_shape" (same as `img_shape`),
     "scale_factor" (1.0) and "img_norm_cfg" (means=0 and stds=1).
+
     Args:
         to_float32 (bool): Whether to convert the loaded image to a float32
             numpy array. If set to False, the loaded image is an uint8 array.
@@ -63,8 +67,10 @@ class LoadImageFromFile(object):
 
     def __call__(self, results):
         """Call functions to load image and get image meta information.
+
         Args:
             results (dict): Result dict from :obj:`mmseg.CustomDataset`.
+
         Returns:
             dict: The dict contains loaded image and meta information.
         """
@@ -97,20 +103,12 @@ class LoadImageFromFile(object):
             std=np.ones(num_channels, dtype=np.float32),
             to_rgb=False)
 
-        # add vanishing_mask here!
-
+        # ACDC-only
         if "night" in results['filename']:
             vanishing_mode = "night"
         else:
             vanishing_mode = "day"
-        # with open("/cluster/work/cvl/denfan/diandian/seg/SegFormer/hello.txt", "a") as my_file:
-        #     my_file.write("file_name")
-        #     my_file.write(str(results['filename']))
-        #     my_file.write("ori_file_name")
-        #     my_file.write(str(results['ori_filename']))
-
         vanishing_mask = vanishing_point_to_depth_mask(vanishing_mode, None, (img.shape[0], img.shape[1]))
-        # results["img"] = np.concatenate((results["img"], vanishing_mask), axis=2)
         results["vanishing_mask"] = vanishing_mask
 
         return results
@@ -126,6 +124,7 @@ class LoadImageFromFile(object):
 @PIPELINES.register_module()
 class LoadAnnotations(object):
     """Load annotations for semantic segmentation.
+
     Args:
         reduce_zero_label (bool): Whether reduce all label value by 1.
             Usually used for datasets where 0 is background label.
@@ -148,8 +147,10 @@ class LoadAnnotations(object):
 
     def __call__(self, results):
         """Call function to load multiple types annotations.
+
         Args:
             results (dict): Result dict from :obj:`mmseg.CustomDataset`.
+
         Returns:
             dict: The dict contains loaded semantic segmentation annotations.
         """
