@@ -101,7 +101,7 @@ class ImageToTensor(object):
             img = img.transpose(2, 0, 1)
             if key == 'img' and "vanishing_mask" in results:
                 mask = np.expand_dims(results["vanishing_mask"], axis=0)
-                img = np.concatenate([img, mask], axis=0)
+                img = np.concatenate([img, mask], axis=0).astype(img.dtype)
             results[key] = to_tensor(img)
 
         return results
