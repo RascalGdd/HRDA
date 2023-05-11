@@ -226,7 +226,8 @@ class HRDAEncoderDecoder(EncoderDecoder):
                 save_image(img[:,3:,:,:], 'debug/depth_map.png')
                 print("crop box h1 h2 w1 w2:", roi_crop_box)
                 save_image(scaled_img[:,:3,:,:], 'debug/cropped_image.png')
-                print("mres feat shape:", mres_feats[-1].shape)
+                for feat in mres_feats[-1]:
+                    print("mres feat shapes:", feat.shape)
 
             if self.decode_head.debug:
                 self.decode_head.debug_output[f'Img {i} Scale {s}'] = \
