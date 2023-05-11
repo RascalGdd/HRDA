@@ -41,12 +41,14 @@ def get_crop_bbox_vanish_point(depth_map, crop_size, divisible=1):
     # max_val_ids: (L,4), e.g., [[0,0,0,0], [0,0,0,1],..., [3,0,16,501]] (list of max_value_points)
     max_val_ids = (depth_map == max_val).nonzero(as_tuple = False)
 
-    central_id = max_val_ids.float().mean(dim=0).long()[2:]  # (h,w)
-    if divisible:
-        if central_id[0] % 4 != 0:
-            central_id[0] = central_id[0] - central_id[0] % 4
-        if central_id[1] % 4 != 0:
-            central_id[1] = central_id[1] - central_id[1] % 4
+    # central_id = max_val_ids.float().mean(dim=0).long()[2:]  # (h,w)
+    # if divisible:
+    #     if central_id[0] % 4 != 0:
+    #         central_id[0] = central_id[0] - central_id[0] % 4
+    #     if central_id[1] % 4 != 0:
+    #         central_id[1] = central_id[1] - central_id[1] % 4
+
+    central_id = torch.tensor([img_h, img_w]).long()
 
     crop_y1 = (central_id[0] - crop_size[0] / 2).long()
     crop_y2 = (central_id[0] + crop_size[0] / 2).long()
@@ -231,6 +233,10 @@ class HRDAEncoderDecoder(EncoderDecoder):
                     save_image(img[0,3:,:,:], 'debug/{}_depth_map.png'.format(self.debug_count))
                     print("crop box h1 h2 w1 w2:", roi_crop_box)
                     save_image(scaled_img[0,:3,:,:], 'debug/{}_cropped_image.png'.format(self.debug_count))
+                    crop_mask = img[0,3:,:,:] * 0
+                    crop_y1, crop_y2, crop_x1, crop_x2 = roi_crop_box
+                    crop_mask[:, :, crop_y1:crop_y2, crop_x1:crop_x2] = 1
+                    save_image(crop_mask, 'debug/{}_crop_mask.png'.format(self.debug_count))
                     for feat in mres_feats[-1]:
                         print("mres feat shapes:", feat.shape)
                     self.debug_count += 1
