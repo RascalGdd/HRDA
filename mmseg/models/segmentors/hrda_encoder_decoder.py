@@ -5,6 +5,7 @@
 
 import numpy as np
 import torch
+from torchvision.utils import save_image
 
 from mmseg.ops import resize
 from ..builder import SEGMENTORS
@@ -27,6 +28,43 @@ def get_crop_bbox(img_h, img_w, crop_size, divisible=1):
 
     return crop_y1, crop_y2, crop_x1, crop_x2
 
+def get_crop_bbox_vanish_point(depth_map, crop_size, divisible=1):
+    """Get a crop bounding box according to depth_map."""
+    img_h, img_w = depth_map.shape[-2:]
+    assert crop_size[0] > 0 and crop_size[1] > 0
+    if img_h == crop_size[-2] and img_w == crop_size[-1]:
+        return (0, img_h, 0, img_w)
+
+    # max_val: (B,1,1,1)
+    max_val = torch.amax(depth_map, dim=(2, 3)).unsqueeze(-1).unsqueeze(-1)
+    # max_val_ids: (L,4), e.g., [[0,0,0,0], [0,0,0,1],..., [3,0,16,501]] (list of max_value_points)
+    max_val_ids = (depth_map == max_val).nonzero(as_tuple = False)
+
+    central_id = max_val_ids.float().mean(dim=0).long()[2:]  # (h,w)
+    if central_id[0] % 4 != 0:
+        central_id[0] = central_id[0] - central_id[0] % 4
+    if central_id[1] % 4 != 0:
+        central_id[1] = central_id[1] - central_id[1] % 4
+
+    crop_y1 = (central_id[0] - crop_size[-2] / 2).long()
+    crop_y2 = (central_id[0] + crop_size[-2] / 2).long()
+    crop_x1 = (central_id[1] - crop_size[-1] / 2).long()
+    crop_x2 = (central_id[1] + crop_size[-1] / 2).long()
+
+    if crop_y1 < 0:
+        crop_y2 += - crop_y1
+        crop_y1 = 0
+    if crop_y2 > img_h:
+        crop_y1 -= img_h - crop_y2
+        crop_y2 = img_h
+    if crop_x1 < 0:
+        crop_x2 += - crop_x1
+        crop_x1 = 0
+    if crop_x2 > img_w:
+        crop_x1 -= img_w - crop_x2
+        crop_x2 = img_w
+
+    return crop_y1, crop_y2, crop_x1, crop_x2
 
 def crop(img, crop_bbox):
     """Crop from ``img``"""
@@ -88,7 +126,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.blur_hr_crop = blur_hr_crop
 
     def extract_unscaled_feat(self, img):
-        x = self.backbone(img)
+        x = self.backbone(img[:,:4,:,:]) # ensure input 3 channels
         if self.with_neck:
             x = self.neck(x)
         return x
@@ -164,6 +202,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
     def encode_decode(self, img, img_metas):
         """Encode images with backbone and decode into a semantic segmentation
         map of the same size as input."""
+
         mres_feats = []
         self.decode_head.debug_output = {}
         for i, s in enumerate(self.scales):
@@ -174,10 +213,25 @@ class HRDAEncoderDecoder(EncoderDecoder):
             if i >= 1 and self.hr_slide_inference:
                 mres_feats.append(self.extract_slide_feat(scaled_img))
             else:
+                # mres_feats.append(self.extract_unscaled_feat(scaled_img))
+                depth_map = img[:,-1:,:,:]
+                roi_crop_box = get_crop_bbox_vanish_point(depth_map, self.crop_size, self.crop_coord_divisible)
+                self.decode_head.set_hr_crop_box(roi_crop_box)
+                scaled_img = crop(img, roi_crop_box)
                 mres_feats.append(self.extract_unscaled_feat(scaled_img))
+
+                # debug
+                print("image shape:", img.shape)
+                save_image(img[:,:4,:,:], 'debug/ori_image.png')
+                save_image(img[:,4:,:,:], 'debug/depth_map.png')
+                print("crop box h1 h2 w1 w2:", roi_crop_box)
+                save_image(scaled_img[:,:4,:,:], 'debug/cropped_image.png')
+                print("mres feat shape:", mres_feats[-1].shape)
+
             if self.decode_head.debug:
                 self.decode_head.debug_output[f'Img {i} Scale {s}'] = \
                     scaled_img.detach()
+
         out = self._decode_head_forward_test(mres_feats, img_metas)
         out = resize(
             input=out,

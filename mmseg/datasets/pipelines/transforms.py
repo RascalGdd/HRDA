@@ -204,6 +204,17 @@ class Resize(object):
         results['scale_factor'] = scale_factor
         results['keep_ratio'] = self.keep_ratio
 
+    def _resize_map(self, results):
+        """Resize depth map with ``results['scale']``."""
+        key = "vanishing_mask"
+        if self.keep_ratio:
+            map = mmcv.imrescale(
+                results[key], results['scale'], interpolation='nearest')
+        else:
+            map = mmcv.imresize(
+                results[key], results['scale'], interpolation='nearest')
+        results[key] = map
+
     def _resize_seg(self, results):
         """Resize semantic segmentation map with ``results['scale']``."""
         for key in results.get('seg_fields', []):
@@ -231,6 +242,7 @@ class Resize(object):
             self._random_scale(results)
         self._resize_img(results)
         self._resize_seg(results)
+        self._resize_map(results)
         return results
 
     def __repr__(self):
@@ -347,6 +359,14 @@ class Pad(object):
                 shape=results['pad_shape'][:2],
                 pad_val=self.seg_pad_val)
 
+    def _pad_map(self, results):
+        """Pad maps according to ``results['pad_shape']``."""
+        key = "vanishing_mask"
+        results[key] = mmcv.impad(
+            results[key],
+            shape=results['pad_shape'][:2],
+            pad_val=self.seg_pad_val)
+
     def __call__(self, results):
         """Call function to pad images, masks, semantic segmentation maps.
 
@@ -359,6 +379,7 @@ class Pad(object):
 
         self._pad_img(results)
         self._pad_seg(results)
+        self._pad_map(results)
         return results
 
     def __repr__(self):
@@ -567,6 +588,10 @@ class RandomCrop(object):
         # crop semantic seg
         for key in results.get('seg_fields', []):
             results[key] = self.crop(results[key], crop_bbox)
+
+        # crop the depth map
+        key = "vanishing_mask"
+        results[key] = self.crop(results[key], crop_bbox)
 
         return results
 

@@ -170,6 +170,9 @@ class HRDAHead(BaseDecodeHead):
             slc = self.hr_crop_slice(sc_os)
             mask[:, :, slc[0], slc[1]] = 1
             att = att * mask
+
+            print("using crop in decoder forward") # debug
+
         # print_log(f'att {att.shape}', 'mmseg')
         lr_seg = (1 - att) * lr_seg
         # print_log(f'scaled lr_seg {lr_seg.shape}', 'mmseg')
@@ -229,7 +232,11 @@ class HRDAHead(BaseDecodeHead):
 
     def forward_test(self, inputs, img_metas, test_cfg):
         """Forward function for testing, only ``fused_seg`` is used."""
-        return self.forward(inputs)[0]
+        print("forward test...") # debug
+        fused_seg = self.forward(inputs)[0]
+        if self.hr_crop_box is not None:
+            self.reset_crop()
+        return fused_seg
 
     def losses(self, seg_logit, seg_label, seg_weight=None):
         """Compute losses."""
