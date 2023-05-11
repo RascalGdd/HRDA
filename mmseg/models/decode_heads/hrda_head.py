@@ -187,7 +187,7 @@ class HRDAHead(BaseDecodeHead):
         else:
             hr_seg_inserted = hr_seg
 
-        fused_seg = att * hr_seg_inserted + up_lr_seg
+        fused_seg = up_lr_seg # att * hr_seg_inserted + up_lr_seg ## debug
 
         if self.debug_output_attention:
             att = torch.sum(
