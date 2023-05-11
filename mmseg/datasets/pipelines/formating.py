@@ -95,9 +95,9 @@ class ImageToTensor(object):
             if len(img.shape) < 3:
                 img = np.expand_dims(img, -1)
             img = img.transpose(2, 0, 1)
-            mask = np.expand_dims(results["vanishing_mask"], axis=0).astype(img.dtype)
+            mask = np.expand_dims(results["vanishing_mask"], axis=0)
             img = np.concatenate([img, mask], axis=0)
-            results[key] = to_tensor(img)
+            results[key] = to_tensor(img).to(torch.float32)
         return results
 
     def __repr__(self):
