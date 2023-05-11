@@ -227,10 +227,10 @@ class HRDAEncoderDecoder(EncoderDecoder):
                 # debug
                 if self.debug_count < 100:
                     print("image shape:", img.shape)
-                    save_image(img[0,:3,:,:], 'debug/ori_image_{}.png'.format(self.debug_count))
-                    save_image(img[0,3:,:,:], 'debug/depth_map_{}.png'.format(self.debug_count))
+                    save_image(img[0,:3,:,:], 'debug/{}_ori_image.png'.format(self.debug_count))
+                    save_image(img[0,3:,:,:], 'debug/{}_depth_map.png'.format(self.debug_count))
                     print("crop box h1 h2 w1 w2:", roi_crop_box)
-                    save_image(scaled_img[0,:3,:,:], 'debug/cropped_image_{}.png'.format(self.debug_count))
+                    save_image(scaled_img[0,:3,:,:], 'debug/{}_cropped_image.png'.format(self.debug_count))
                     for feat in mres_feats[-1]:
                         print("mres feat shapes:", feat.shape)
                     self.debug_count += 1
