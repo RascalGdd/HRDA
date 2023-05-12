@@ -275,8 +275,8 @@ class HRDAEncoderDecoder(EncoderDecoder):
                 for b in range(batch_size):
                     depth_map = scaled_img[b:b+1,-1:,:,:]
                     crop_box = get_crop_bbox_vanish_point(depth_map, self.crop_size, self.crop_coord_divisible)
-                    crop_boxes.append(crop_box)
-                    scaled_img_tmp = crop(scaled_img_tmp, crop_box)
+                    crop_boxes.append(crop_box[:])
+                    scaled_img_tmp = crop(scaled_img, crop_box)
                     scaled_imgs.append(scaled_img_tmp*1.0)
 
                     # debug
