@@ -172,7 +172,6 @@ class HRDAHead(BaseDecodeHead):
         if has_crop:
             crop_y1, crop_y2, crop_x1, crop_x2 = self.hr_crop_box
         elif has_batch_crop:
-            batch_size = len(self.hr_crop_boxes_batch)
             crop_y1s, crop_y2s, crop_x1s, crop_x2s = [None]*batch_size, [None]*batch_size, [None]*batch_size, [None]*batch_size
             for b in range(batch_size):
                 crop_y1s[b], crop_y2s[b], crop_x1s[b], crop_x2s[b] = self.hr_crop_boxes_batch[b]

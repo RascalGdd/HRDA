@@ -51,10 +51,10 @@ def get_crop_bbox_vanish_point(depth_map, crop_size, divisible=1):
         if central_id[1] % 4 != 0:
             central_id[1] = central_id[1] - central_id[1] % 4
 
-    crop_y1 = (central_id[0] - crop_size[0] / 2).long()
-    crop_y2 = (central_id[0] + crop_size[0] / 2).long()
-    crop_x1 = (central_id[1] - crop_size[1] / 2).long()
-    crop_x2 = (central_id[1] + crop_size[1] / 2).long()
+    crop_y1 = (central_id[0] - crop_size[0] / 2).long().item()
+    crop_y2 = (central_id[0] + crop_size[0] / 2).long().item()
+    crop_x1 = (central_id[1] - crop_size[1] / 2).long().item()
+    crop_x2 = (central_id[1] + crop_size[1] / 2).long().item()
 
     if crop_y1 < 0:
         crop_y2 += - crop_y1
@@ -272,8 +272,8 @@ class HRDAEncoderDecoder(EncoderDecoder):
                 scaled_imgs = []
                 for b in range(batch_size):
                     depth_map = scaled_img[b:b+1,-1:,:,:]
-                    crop_box = get_crop_bbox_vanish_point(depth_map, self.crop_size, self.crop_coord_divisible)
-                    crop_boxes.append(crop_box[:])
+                    crop_boxes.append(get_crop_bbox_vanish_point(depth_map, self.crop_size, self.crop_coord_divisible))
+                    crop_box = crop_boxes[-1]
                     scaled_img_tmp = crop(scaled_img, crop_box)
                     scaled_imgs.append(scaled_img_tmp*1.0)
 
