@@ -177,10 +177,7 @@ class HRDAHead(BaseDecodeHead):
             for b in range(batch_size):
                 crop_y1s[b], crop_y2s[b], crop_x1s[b], crop_x2s[b] = self.hr_crop_boxes_batch[b]
 
-        # print_log(f'lr_inp {[f.shape for f in lr_inp]}', 'mmseg')
         lr_seg = self.head(lr_inp)
-        # print_log(f'lr_seg {lr_seg.shape}', 'mmseg')
-
         hr_seg = self.decode_hr(hr_inp, batch_size)
 
         att = self.get_scale_attention(lr_sc_att_inp)
