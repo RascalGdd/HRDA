@@ -245,6 +245,8 @@ class HRDAHead(BaseDecodeHead):
     def reset_crop(self):
         del self.hr_crop_box
         self.hr_crop_box = None
+        del self.hr_crop_boxes_batch
+        self.hr_crop_boxes_batch = None
 
     def forward_train(self,
                       inputs,
