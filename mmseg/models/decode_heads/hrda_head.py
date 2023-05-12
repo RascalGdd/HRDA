@@ -266,7 +266,7 @@ class HRDAHead(BaseDecodeHead):
         """Forward function for testing, only ``fused_seg`` is used."""
         # print("forward test...") # debug
         fused_seg = self.forward(inputs)[0]
-        if self.hr_crop_box is not None:
+        if self.hr_crop_box is not None or self.hr_crop_boxes_batch is not None:
             # print("hr crop considered in testing") # debug
             self.reset_crop()
         return fused_seg
