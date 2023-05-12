@@ -260,6 +260,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
 
     def encode_decode(self, img, img_metas):
         mres_feats = []
+        batch_size = img.shape[0]
         assert len(self.scales) <= 2, 'Only up to 2 scales are supported.'
         for i, s in enumerate(self.scales):
             scaled_img = resize(
@@ -269,28 +270,35 @@ class HRDAEncoderDecoder(EncoderDecoder):
                 align_corners=self.align_corners
             )
             if self.crop_size is not None and i >= 1:
-                depth_map = scaled_img[:,-1:,:,:]
-                crop_box = get_crop_bbox_vanish_point(depth_map, self.crop_size, self.crop_coord_divisible)
-                self.decode_head.set_hr_crop_box(crop_box)
-                scaled_img = crop(scaled_img, crop_box)
+                crop_boxes = []
+                scaled_imgs = []
+                for b in range(batch_size):
+                    depth_map = scaled_img[b:b+1,-1:,:,:]
+                    crop_box = get_crop_bbox_vanish_point(depth_map, self.crop_size, self.crop_coord_divisible)
+                    crop_boxes.append(crop_box)
+                    scaled_img_tmp = crop(scaled_img_tmp, crop_box)
+                    scaled_imgs.append(scaled_img_tmp*1.0)
 
-                # debug
-                if self.debug_count < 100:
-                    print("image shape:", img.shape)
-                    print("cropped image shape:", scaled_img.shape)
-                    save_image(img[0,:3,:,:], 'debug/{}_ori_image.png'.format(self.debug_count))
-                    save_image(img[0,3:,:,:], 'debug/{}_depth_map.png'.format(self.debug_count))
-                    print("crop box h1 h2 w1 w2:", roi_crop_box)
-                    save_image(scaled_img[0,:3,:,:], 'debug/{}_cropped_image.png'.format(self.debug_count))
-                    crop_mask = img[0,3:,:,:] * 0
-                    crop_y1, crop_y2, crop_x1, crop_x2 = roi_crop_box
-                    crop_mask[:, crop_y1:crop_y2, crop_x1:crop_x2] = 1
-                    save_image(crop_mask, 'debug/{}_crop_mask.png'.format(self.debug_count))
-                    for feat in mres_feats[-1]:
-                        print("mres feat shapes:", feat.shape)
-                    self.debug_count += 1
-                else:
-                    break_debug
+                    # debug
+                    if self.debug_count < 100:
+                        print("image shape:", img.shape)
+                        print("cropped image shape:", scaled_img_tmp.shape)
+                        save_image(img[b,:3,:,:], 'debug/{}_ori_image.png'.format(self.debug_count))
+                        save_image(img[b,3:,:,:], 'debug/{}_depth_map.png'.format(self.debug_count))
+                        print("crop box h1 h2 w1 w2:", roi_crop_box)
+                        save_image(scaled_img_tmp[b,:3,:,:], 'debug/{}_cropped_image.png'.format(self.debug_count))
+                        crop_mask = img[b,3:,:,:] * 0
+                        crop_y1, crop_y2, crop_x1, crop_x2 = roi_crop_box
+                        crop_mask[:, crop_y1:crop_y2, crop_x1:crop_x2] = 1
+                        save_image(crop_mask, 'debug/{}_crop_mask.png'.format(self.debug_count))
+                        for feat in mres_feats[-1]:
+                            print("mres feat shapes:", feat.shape)
+                        self.debug_count += 1
+                    else:
+                        break_debug
+
+                scaled_img = torch.cat(scaled_imgs, dim=0)
+                self.decode_head.set_batch_hr_crop_box(crop_boxes)
 
             mres_feats.append(self.extract_unscaled_feat(scaled_img))
 

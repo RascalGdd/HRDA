@@ -86,15 +86,28 @@ class HRDAHead(BaseDecodeHead):
         self.scales = scales
         self.enable_hr_crop = enable_hr_crop
         self.hr_crop_box = None
+        self.hr_crop_boxes_batch = None
         self.hr_slide_inference = hr_slide_inference
         self.debug_output_attention = debug_output_attention
 
     def set_hr_crop_box(self, boxes):
         self.hr_crop_box = boxes
 
+    def set_batch_hr_crop_box(self, boxes_batch_list):
+        self.hr_crop_boxes_batch = boxes_batch_list
+
     def hr_crop_slice(self, scale):
         crop_y1, crop_y2, crop_x1, crop_x2 = scale_box(self.hr_crop_box, scale)
         return slice(crop_y1, crop_y2), slice(crop_x1, crop_x2)
+    def hr_batch_crop_slice(self, scale):
+        batch_size = len(self.hr_crop_boxes_batch)
+        crop_y1s, crop_y2s, crop_x1s, crop_x2s = [None]*batch_size, [None]*batch_size, [None]*batch_size, [None]*batch_size
+        slice_ys, slice_xs = [None]*batch_size, [None]*batch_size
+        for b in range(batch_size):
+            crop_y1s[b], crop_y2s[b], crop_x1s[b], crop_x2s[b] = scale_box(self.hr_crop_boxes_batch[b], scale)
+            slice_ys[b], slice_xs[b] = slice(crop_y1s[b], crop_y2s[b]), slice(crop_x1s[b], crop_x2s[b])
+        return slice_ys, slice_xs
+
 
     def resize(self, input, scale_factor):
         return _resize(
@@ -154,8 +167,15 @@ class HRDAHead(BaseDecodeHead):
         assert lr_scale <= hr_scale
 
         has_crop = self.hr_crop_box is not None
+        has_batch_crop = self.hr_crop_boxes_batch is not None
+        assert (has_crop == False or has_batch_crop == False), "can only use unified crop or batch crop"
         if has_crop:
             crop_y1, crop_y2, crop_x1, crop_x2 = self.hr_crop_box
+        elif has_batch_crop:
+            batch_size = len(self.hr_crop_boxes_batch)
+            crop_y1s, crop_y2s, crop_x1s, crop_x2s = [None]*batch_size, [None]*batch_size, [None]*batch_size, [None]*batch_size
+            for b in range(batch_size):
+                crop_y1s[b], crop_y2s[b], crop_x1s[b], crop_x2s[b] = self.hr_crop_boxes_batch[b]
 
         # print_log(f'lr_inp {[f.shape for f in lr_inp]}', 'mmseg')
         lr_seg = self.head(lr_inp)
@@ -170,8 +190,13 @@ class HRDAHead(BaseDecodeHead):
             slc = self.hr_crop_slice(sc_os)
             mask[:, :, slc[0], slc[1]] = 1
             att = att * mask
-
-            # print("using crop in decoder forward") # debug
+        elif has_batch_crop:
+            mask = lr_seg.new_zeros([lr_seg.shape[0], 1, *lr_seg.shape[2:]])
+            sc_os = self.os / lr_scale
+            slc_ys, slc_xs = self.hr_batch_crop_slice(sc_os)
+            for b in range(batch_size):
+                mask[b, :, slc_ys[b], slc_xs[b]] = 1
+            att = att * mask
 
         # print_log(f'att {att.shape}', 'mmseg')
         lr_seg = (1 - att) * lr_seg
@@ -184,6 +209,11 @@ class HRDAHead(BaseDecodeHead):
             hr_seg_inserted = torch.zeros_like(up_lr_seg)
             slc = self.hr_crop_slice(self.os)
             hr_seg_inserted[:, :, slc[0], slc[1]] = hr_seg
+        elif has_batch_crop:
+            hr_seg_inserted = torch.zeros_like(up_lr_seg)
+            slc_ys, slc_xs = self.hr_batch_crop_slice(sc_os)
+            for b in range(batch_size):
+                hr_seg_inserted[b, :, slc_ys[b], slc_xs[b]] = hr_seg[b]
         else:
             hr_seg_inserted = hr_seg
 
