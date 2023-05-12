@@ -31,6 +31,7 @@ model = dict(
     scales=[1, 0.5],
     # Use a relative crop size of 0.5 (=512/1024) for the detail crop.
     hr_crop_size=[512, 512],
+    hr_slide_overlapping=False,
     # Use LR features for the Feature Distance as in the original DAFormer.
     feature_scale=0.5,
     # Make the crop coordinates divisible by 8 (output stride = 4,
