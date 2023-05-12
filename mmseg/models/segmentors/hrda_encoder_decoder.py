@@ -132,7 +132,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
 
-        # self.debug_count = 0 # debug
+        self.debug_count = 0 # debug
 
     def extract_unscaled_feat(self, img):
         x = self.backbone(img[:,:3,:,:]) # ensure input 3 channels
