@@ -285,10 +285,10 @@ class HRDAEncoderDecoder(EncoderDecoder):
                         print("cropped image shape:", scaled_img_tmp.shape)
                         save_image(img[b,:3,:,:], 'debug/{}_{}_ori_image.png'.format(self.debug_count, b))
                         save_image(img[b,3:,:,:], 'debug/{}_{}_depth_map.png'.format(self.debug_count, b))
-                        print("crop box h1 h2 w1 w2:", roi_crop_box)
+                        print("crop box h1 h2 w1 w2:", crop_box)
                         save_image(scaled_img_tmp[b,:3,:,:], 'debug/{}_{}_cropped_image.png'.format(self.debug_count, b))
                         crop_mask = img[b,3:,:,:] * 0
-                        crop_y1, crop_y2, crop_x1, crop_x2 = roi_crop_box
+                        crop_y1, crop_y2, crop_x1, crop_x2 = crop_box
                         crop_mask[:, crop_y1:crop_y2, crop_x1:crop_x2] = 1
                         save_image(crop_mask, 'debug/{}_{}_crop_mask.png'.format(self.debug_count, b))
                         for feat in mres_feats[-1]:
