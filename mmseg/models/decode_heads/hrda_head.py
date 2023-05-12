@@ -43,6 +43,7 @@ class HRDAHead(BaseDecodeHead):
                  hr_slide_inference=True,
                  fixed_attention=None,
                  debug_output_attention=False,
+                 lr_only=False,
                  **kwargs):
         head_cfg = deepcopy(kwargs)
         attn_cfg = deepcopy(kwargs)
@@ -89,6 +90,7 @@ class HRDAHead(BaseDecodeHead):
         self.hr_crop_boxes_batch = None
         self.hr_slide_inference = hr_slide_inference
         self.debug_output_attention = debug_output_attention
+        self.lr_only = lr_only
 
     def set_hr_crop_box(self, boxes):
         self.hr_crop_box = boxes
@@ -193,6 +195,10 @@ class HRDAHead(BaseDecodeHead):
             for b in range(batch_size):
                 mask[b, :, slc_ys[b], slc_xs[b]] = 1
             att = att * mask
+
+        # debug: lr-only
+        if self.lr_only:
+            att = att * 0
 
         # print_log(f'att {att.shape}', 'mmseg')
         lr_seg = (1 - att) * lr_seg

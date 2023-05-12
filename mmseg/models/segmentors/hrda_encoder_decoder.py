@@ -206,57 +206,9 @@ class HRDAEncoderDecoder(EncoderDecoder):
             scaled_img = self.resize(img, self.feature_scale)
             return self.extract_unscaled_feat(scaled_img)
 
-    # def encode_decode(self, img, img_metas):
-    #     """Encode images with backbone and decode into a semantic segmentation
-    #     map of the same size as input."""
-
-    #     mres_feats = []
-    #     self.decode_head.debug_output = {}
-    #     for i, s in enumerate(self.scales):
-    #         if s == 1 and self.blur_hr_crop:
-    #             scaled_img = self.blur_downup(img)
-    #         else:
-    #             scaled_img = self.resize(img, s)
-    #         if i >= 1 and self.hr_slide_inference:
-    #             mres_feats.append(self.extract_slide_feat(scaled_img))
-    #         else:
-    #             # mres_feats.append(self.extract_unscaled_feat(scaled_img))
-    #             depth_map = img[:,-1:,:,:]
-    #             roi_crop_box = get_crop_bbox_vanish_point(depth_map, self.crop_size, self.crop_coord_divisible)
-    #             self.decode_head.set_hr_crop_box(roi_crop_box)
-    #             scaled_img = crop(img, roi_crop_box)
-    #             mres_feats.append(self.extract_unscaled_feat(scaled_img))
-
-    #             # debug
-    #             # if self.debug_count < 100:
-    #             #     print("image shape:", img.shape)
-    #             #     save_image(img[0,:3,:,:], 'debug/{}_ori_image.png'.format(self.debug_count))
-    #             #     save_image(img[0,3:,:,:], 'debug/{}_depth_map.png'.format(self.debug_count))
-    #             #     print("crop box h1 h2 w1 w2:", roi_crop_box)
-    #             #     save_image(scaled_img[0,:3,:,:], 'debug/{}_cropped_image.png'.format(self.debug_count))
-    #             #     crop_mask = img[0,3:,:,:] * 0
-    #             #     crop_y1, crop_y2, crop_x1, crop_x2 = roi_crop_box
-    #             #     crop_mask[:, crop_y1:crop_y2, crop_x1:crop_x2] = 1
-    #             #     save_image(crop_mask, 'debug/{}_crop_mask.png'.format(self.debug_count))
-    #             #     for feat in mres_feats[-1]:
-    #             #         print("mres feat shapes:", feat.shape)
-    #             #     self.debug_count += 1
-    #             # else:
-    #             #     break_debug
-
-    #         if self.decode_head.debug:
-    #             self.decode_head.debug_output[f'Img {i} Scale {s}'] = \
-    #                 scaled_img.detach()
-
-    #     out = self._decode_head_forward_test(mres_feats, img_metas)
-    #     out = resize(
-    #         input=out,
-    #         size=img.shape[2:],
-    #         mode='bilinear',
-    #         align_corners=self.align_corners)
-    #     return out
-
     def encode_decode(self, img, img_metas):
+        """Encode images with backbone and decode into a semantic segmentation
+        map of the same size as input."""
         mres_feats = []
         batch_size = img.shape[0]
         assert len(self.scales) <= 2, 'Only up to 2 scales are supported.'
@@ -297,8 +249,13 @@ class HRDAEncoderDecoder(EncoderDecoder):
                 self.debug_count += 1
                 scaled_img = torch.cat(scaled_imgs, dim=0)
                 self.decode_head.set_batch_hr_crop_box(crop_boxes)
+                mres_feats.append(self.extract_unscaled_feat(scaled_img))
 
-            mres_feats.append(self.extract_unscaled_feat(scaled_img))
+            elif i >= 1 and self.hr_slide_inference:
+                mres_feats.append(self.extract_slide_feat(scaled_img))
+
+            else:
+                mres_feats.append(self.extract_unscaled_feat(scaled_img))
 
         out = self._decode_head_forward_test(mres_feats, img_metas)
         out = resize(
