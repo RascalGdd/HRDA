@@ -98,6 +98,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
             h_stride, w_stride = [e // 2 for e in self.crop_size]
         else:
             h_stride, w_stride = self.crop_size
+            print("debug: no overlapping in inference") # debug
         h_crop, w_crop = self.crop_size
         bs, _, h_img, w_img = img.size()
         h_grids = max(h_img - h_crop + h_stride - 1, 0) // h_stride + 1
