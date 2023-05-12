@@ -274,10 +274,10 @@ class HRDAEncoderDecoder(EncoderDecoder):
                     depth_map = scaled_img[b:b+1,-1:,:,:]
                     crop_boxes.append(get_crop_bbox_vanish_point(depth_map, self.crop_size, self.crop_coord_divisible))
                     crop_box = crop_boxes[-1]
-                    scaled_img_tmp = crop(scaled_img, crop_box)
-                    scaled_imgs.append(scaled_img_tmp*1.0)
-
+                    scaled_imgs.append(crop(scaled_img[b:b+1,0:3:,:,:], crop_box))
+                    
                     # debug
+                    # scaled_img_tmp = caled_imgs[-1]
                     # if self.debug_count < 100:
                     #     print("image shape:", img.shape)
                     #     print("cropped image shape:", scaled_img_tmp.shape)
