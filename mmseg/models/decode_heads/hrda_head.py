@@ -211,7 +211,7 @@ class HRDAHead(BaseDecodeHead):
             hr_seg_inserted[:, :, slc[0], slc[1]] = hr_seg
         elif has_batch_crop:
             hr_seg_inserted = torch.zeros_like(up_lr_seg)
-            slc_ys, slc_xs = self.hr_batch_crop_slice(sc_os)
+            slc_ys, slc_xs = self.hr_batch_crop_slice(self.os)
             for b in range(batch_size):
                 hr_seg_inserted[b, :, slc_ys[b], slc_xs[b]] = hr_seg[b]
         else:

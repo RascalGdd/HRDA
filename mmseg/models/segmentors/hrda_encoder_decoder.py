@@ -51,8 +51,6 @@ def get_crop_bbox_vanish_point(depth_map, crop_size, divisible=1):
         if central_id[1] % 4 != 0:
             central_id[1] = central_id[1] - central_id[1] % 4
 
-    central_id = torch.tensor([img_h, img_w]).long()
-
     crop_y1 = (central_id[0] - crop_size[0] / 2).long()
     crop_y2 = (central_id[0] + crop_size[0] / 2).long()
     crop_x1 = (central_id[1] - crop_size[1] / 2).long()
@@ -293,10 +291,10 @@ class HRDAEncoderDecoder(EncoderDecoder):
                         save_image(crop_mask, 'debug/{}_{}_crop_mask.png'.format(self.debug_count, b))
                         for feat in mres_feats[-1]:
                             print("mres feat shapes:", feat.shape)
-                        self.debug_count += 1
                     else:
                         break_debug
 
+                self.debug_count += 1
                 scaled_img = torch.cat(scaled_imgs, dim=0)
                 self.decode_head.set_batch_hr_crop_box(crop_boxes)
 
