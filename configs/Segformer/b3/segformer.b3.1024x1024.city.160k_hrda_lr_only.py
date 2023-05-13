@@ -25,10 +25,11 @@ model = dict(
         # Learn a scale attention for each class channel of the prediction.
         attention_classwise=True,
         # Set the detail loss weight $\lambda_d=0.1$.
-        lr_only=True),
+        ),
     # Use the full resolution for the detail crop and half the resolution for
     # the context crop.
     scales=[0.5],
+    lr_only=True,
     # Use a relative crop size of 0.5 (=512/1024) for the detail crop.
     hr_crop_size=[512, 512],
     # Use LR features for the Feature Distance as in the original DAFormer.
@@ -43,7 +44,7 @@ model = dict(
     test_cfg=dict(
         mode='slide',
         batched_slide=True,
-        stride=[1024, 1024], # no testing overlap
+        stride=[512, 512],
         crop_size=[1024, 1024]))
 
 # data

@@ -102,6 +102,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
                  hr_crop_size=None,
                  hr_slide_inference=True,
                  hr_slide_overlapping=True,
+                 lr_only=False,
                  crop_coord_divisible=1,
                  blur_hr_crop=False,
                  feature_scale=1):
@@ -129,6 +130,11 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.hr_slide_overlapping = hr_slide_overlapping
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
+
+        if len(scales) == 1 and scales[0]<0:
+            lr_only = True
+        self.lr_only = lr_only
+        self.decode_head.lr_only = lr_only
 
         self.debug_count = 0 # debug
 
