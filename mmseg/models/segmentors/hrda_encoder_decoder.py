@@ -211,7 +211,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         map of the same size as input."""
         mres_feats = []
         batch_size = img.shape[0]
-        assert len(self.scales) <= 2, 'Only up to 2 scales are supported.'
+        # assert len(self.scales) <= 2, 'Only up to 2 scales are supported.'
         for i, s in enumerate(self.scales):
             scaled_img = resize(
                 input=img,
@@ -268,7 +268,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
     def _forward_train_features(self, img):
         mres_feats = []
         self.decode_head.debug_output = {}
-        assert len(self.scales) <= 2, 'Only up to 2 scales are supported.'
+        # assert len(self.scales) <= 2, 'Only up to 2 scales are supported.'
         prob_vis = None
         for i, s in enumerate(self.scales):
             if s == 1 and self.blur_hr_crop:

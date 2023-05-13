@@ -28,7 +28,7 @@ model = dict(
         lr_only=True),
     # Use the full resolution for the detail crop and half the resolution for
     # the context crop.
-    scales=[1, 0.5],
+    scales=[0.5],
     # Use a relative crop size of 0.5 (=512/1024) for the detail crop.
     hr_crop_size=[512, 512],
     # Use LR features for the Feature Distance as in the original DAFormer.

@@ -159,90 +159,98 @@ class HRDAHead(BaseDecodeHead):
         return att
 
     def forward(self, inputs):
-        assert len(inputs) == 2
-        hr_inp = inputs[1]
-        hr_scale = self.scales[1]
-        lr_inp = inputs[0]
-        lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
-        lr_scale = self.scales[0]
-        batch_size = lr_inp[0].shape[0]
-        assert lr_scale <= hr_scale
-
-        has_crop = self.hr_crop_box is not None
-        has_batch_crop = self.hr_crop_boxes_batch is not None
-        assert (has_crop == False or has_batch_crop == False), "can only use unified crop or batch crop"
-        if has_crop:
-            crop_y1, crop_y2, crop_x1, crop_x2 = self.hr_crop_box
-        elif has_batch_crop:
-            crop_y1s, crop_y2s, crop_x1s, crop_x2s = [None]*batch_size, [None]*batch_size, [None]*batch_size, [None]*batch_size
-            for b in range(batch_size):
-                crop_y1s[b], crop_y2s[b], crop_x1s[b], crop_x2s[b] = self.hr_crop_boxes_batch[b]
-
-        lr_seg = self.head(lr_inp)
-        hr_seg = self.decode_hr(hr_inp, batch_size)
-
-        att = self.get_scale_attention(lr_sc_att_inp)
-        if has_crop:
-            mask = lr_seg.new_zeros([lr_seg.shape[0], 1, *lr_seg.shape[2:]])
-            sc_os = self.os / lr_scale
-            slc = self.hr_crop_slice(sc_os)
-            mask[:, :, slc[0], slc[1]] = 1
-            att = att * mask
-        elif has_batch_crop:
-            mask = lr_seg.new_zeros([lr_seg.shape[0], 1, *lr_seg.shape[2:]])
-            sc_os = self.os / lr_scale
-            slc_ys, slc_xs = self.hr_batch_crop_slice(sc_os)
-            for b in range(batch_size):
-                mask[b, :, slc_ys[b], slc_xs[b]] = 1
-            att = att * mask
-
         # debug: lr-only
         if self.lr_only:
-            att = att * 0
+            print("low-resolution-only mode")
+            lr_inp = inputs[0]
+            hr_scale = self.scales[1]
+            lr_scale = self.scales[0]
+            lr_seg = self.head(lr_inp)
+            up_lr_seg = self.resize(lr_seg, hr_scale / lr_scale)
+            fused_seg = up_lr_seg * 1.0
+            return fused_seg, lr_seg, None
 
-        # print_log(f'att {att.shape}', 'mmseg')
-        lr_seg = (1 - att) * lr_seg
-        # print_log(f'scaled lr_seg {lr_seg.shape}', 'mmseg')
-        up_lr_seg = self.resize(lr_seg, hr_scale / lr_scale)
-        if torch.is_tensor(att):
-            att = self.resize(att, hr_scale / lr_scale)
-
-        if has_crop:
-            hr_seg_inserted = torch.zeros_like(up_lr_seg)
-            slc = self.hr_crop_slice(self.os)
-            hr_seg_inserted[:, :, slc[0], slc[1]] = hr_seg
-        elif has_batch_crop:
-            hr_seg_inserted = torch.zeros_like(up_lr_seg)
-            slc_ys, slc_xs = self.hr_batch_crop_slice(self.os)
-            for b in range(batch_size):
-                hr_seg_inserted[b, :, slc_ys[b], slc_xs[b]] = hr_seg[b]
         else:
-            hr_seg_inserted = hr_seg
+            assert len(inputs) == 2
+            hr_inp = inputs[1]
+            hr_scale = self.scales[1]
+            lr_inp = inputs[0]
+            lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
+            lr_scale = self.scales[0]
+            batch_size = lr_inp[0].shape[0]
+            assert lr_scale <= hr_scale
 
-        fused_seg = att * hr_seg_inserted + up_lr_seg
+            has_crop = self.hr_crop_box is not None
+            has_batch_crop = self.hr_crop_boxes_batch is not None
+            assert (has_crop == False or has_batch_crop == False), "can only use unified crop or batch crop"
+            if has_crop:
+                crop_y1, crop_y2, crop_x1, crop_x2 = self.hr_crop_box
+            elif has_batch_crop:
+                crop_y1s, crop_y2s, crop_x1s, crop_x2s = [None]*batch_size, [None]*batch_size, [None]*batch_size, [None]*batch_size
+                for b in range(batch_size):
+                    crop_y1s[b], crop_y2s[b], crop_x1s[b], crop_x2s[b] = self.hr_crop_boxes_batch[b]
 
-        if self.debug_output_attention:
-            att = torch.sum(
-                att * torch.softmax(fused_seg, dim=1), dim=1, keepdim=True)
-            return att, None, None
+            lr_seg = self.head(lr_inp)
+            hr_seg = self.decode_hr(hr_inp, batch_size)
 
-        if self.debug:
-            self.debug_output.update({
-                'High Res':
-                torch.max(hr_seg, dim=1)[1].detach().cpu().numpy(),
-                'High Res Inserted':
-                torch.max(hr_seg_inserted, dim=1)[1].detach().cpu().numpy(),
-                'Low Res':
-                torch.max(lr_seg, dim=1)[1].detach().cpu().numpy(),
-                'Fused':
-                torch.max(fused_seg, dim=1)[1].detach().cpu().numpy(),
-            })
+            att = self.get_scale_attention(lr_sc_att_inp)
+            if has_crop:
+                mask = lr_seg.new_zeros([lr_seg.shape[0], 1, *lr_seg.shape[2:]])
+                sc_os = self.os / lr_scale
+                slc = self.hr_crop_slice(sc_os)
+                mask[:, :, slc[0], slc[1]] = 1
+                att = att * mask
+            elif has_batch_crop:
+                mask = lr_seg.new_zeros([lr_seg.shape[0], 1, *lr_seg.shape[2:]])
+                sc_os = self.os / lr_scale
+                slc_ys, slc_xs = self.hr_batch_crop_slice(sc_os)
+                for b in range(batch_size):
+                    mask[b, :, slc_ys[b], slc_xs[b]] = 1
+                att = att * mask
+
+            # print_log(f'att {att.shape}', 'mmseg')
+            lr_seg = (1 - att) * lr_seg
+            # print_log(f'scaled lr_seg {lr_seg.shape}', 'mmseg')
+            up_lr_seg = self.resize(lr_seg, hr_scale / lr_scale)
             if torch.is_tensor(att):
-                self.debug_output['Attention'] = torch.sum(
-                    att * torch.softmax(fused_seg, dim=1), dim=1,
-                    keepdim=True).detach().cpu().numpy()
+                att = self.resize(att, hr_scale / lr_scale)
 
-        return fused_seg, lr_seg, hr_seg
+            if has_crop:
+                hr_seg_inserted = torch.zeros_like(up_lr_seg)
+                slc = self.hr_crop_slice(self.os)
+                hr_seg_inserted[:, :, slc[0], slc[1]] = hr_seg
+            elif has_batch_crop:
+                hr_seg_inserted = torch.zeros_like(up_lr_seg)
+                slc_ys, slc_xs = self.hr_batch_crop_slice(self.os)
+                for b in range(batch_size):
+                    hr_seg_inserted[b, :, slc_ys[b], slc_xs[b]] = hr_seg[b]
+            else:
+                hr_seg_inserted = hr_seg
+
+            fused_seg = att * hr_seg_inserted + up_lr_seg
+
+            if self.debug_output_attention:
+                att = torch.sum(
+                    att * torch.softmax(fused_seg, dim=1), dim=1, keepdim=True)
+                return att, None, None
+
+            if self.debug:
+                self.debug_output.update({
+                    'High Res':
+                    torch.max(hr_seg, dim=1)[1].detach().cpu().numpy(),
+                    'High Res Inserted':
+                    torch.max(hr_seg_inserted, dim=1)[1].detach().cpu().numpy(),
+                    'Low Res':
+                    torch.max(lr_seg, dim=1)[1].detach().cpu().numpy(),
+                    'Fused':
+                    torch.max(fused_seg, dim=1)[1].detach().cpu().numpy(),
+                })
+                if torch.is_tensor(att):
+                    self.debug_output['Attention'] = torch.sum(
+                        att * torch.softmax(fused_seg, dim=1), dim=1,
+                        keepdim=True).detach().cpu().numpy()
+
+            return fused_seg, lr_seg, hr_seg
 
     def reset_crop(self):
         del self.hr_crop_box
@@ -285,27 +293,33 @@ class HRDAHead(BaseDecodeHead):
                 add_prefix(
                     super(HRDAHead, self).losses(lr_seg, seg_label,
                                                  seg_weight), 'lr'))
-        if self.hr_loss_weight > 0 and self.enable_hr_crop:
-            cropped_seg_label = crop(seg_label, self.hr_crop_box)
-            if seg_weight is not None:
-                cropped_seg_weight = crop(seg_weight, self.hr_crop_box)
-            else:
-                cropped_seg_weight = seg_weight
-            self.debug_output['Cropped GT'] = \
-                cropped_seg_label.squeeze(1).detach().cpu().numpy()
-            loss.update(
-                add_prefix(
-                    super(HRDAHead, self).losses(hr_seg, cropped_seg_label,
-                                                 cropped_seg_weight), 'hr'))
-        elif self.hr_loss_weight > 0:
-            loss.update(
-                add_prefix(
-                    super(HRDAHead, self).losses(hr_seg, seg_label,
-                                                 seg_weight), 'hr'))
+
+        if hr_seg is not None:
+            if self.hr_loss_weight > 0 and self.enable_hr_crop:
+                cropped_seg_label = crop(seg_label, self.hr_crop_box)
+                if seg_weight is not None:
+                    cropped_seg_weight = crop(seg_weight, self.hr_crop_box)
+                else:
+                    cropped_seg_weight = seg_weight
+                self.debug_output['Cropped GT'] = \
+                    cropped_seg_label.squeeze(1).detach().cpu().numpy()
+                loss.update(
+                    add_prefix(
+                        super(HRDAHead, self).losses(hr_seg, cropped_seg_label,
+                                                     cropped_seg_weight), 'hr'))
+            elif self.hr_loss_weight > 0:
+                loss.update(
+                    add_prefix(
+                        super(HRDAHead, self).losses(hr_seg, seg_label,
+                                                     seg_weight), 'hr'))
+
+        if hr_seg is None:
+            self.hr_loss_weight = 0
+
         loss['loss_seg'] *= (1 - self.lr_loss_weight - self.hr_loss_weight)
         if self.lr_loss_weight > 0:
             loss['lr.loss_seg'] *= self.lr_loss_weight
-        if self.hr_loss_weight > 0:
+        if self.hr_loss_weight > 0 and hr_seg is not None:
             loss['hr.loss_seg'] *= self.hr_loss_weight
 
         return loss
