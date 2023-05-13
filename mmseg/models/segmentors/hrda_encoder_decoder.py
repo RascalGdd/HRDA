@@ -113,6 +113,11 @@ class HRDAEncoderDecoder(EncoderDecoder):
         decode_head['scales'] = scales
         decode_head['enable_hr_crop'] = hr_crop_size is not None
         decode_head['hr_slide_inference'] = hr_slide_inference
+        if len(scales) == 1 and scales[0]<0:
+            lr_only = True
+        self.lr_only = lr_only
+        decode_head.lr_only = lr_only
+
         super(HRDAEncoderDecoder, self).__init__(
             backbone=backbone,
             decode_head=decode_head,
@@ -130,11 +135,6 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.hr_slide_overlapping = hr_slide_overlapping
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
-
-        if len(scales) == 1 and scales[0]<0:
-            lr_only = True
-        self.lr_only = lr_only
-        self.decode_head.lr_only = lr_only
 
         self.debug_count = 0 # debug
 

@@ -163,10 +163,8 @@ class HRDAHead(BaseDecodeHead):
         if self.lr_only:
             print("low-resolution-only mode")
             lr_inp = inputs[0]
-            hr_scale = self.scales[1]
-            lr_scale = self.scales[0]
             lr_seg = self.head(lr_inp)
-            up_lr_seg = self.resize(lr_seg, hr_scale / lr_scale)
+            up_lr_seg = self.resize(lr_seg, 1/self.scales[0])
             fused_seg = up_lr_seg * 1.0
             return fused_seg, lr_seg, None
 
