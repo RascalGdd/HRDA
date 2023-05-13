@@ -161,7 +161,7 @@ class HRDAHead(BaseDecodeHead):
     def forward(self, inputs):
         # debug: lr-only
         if self.lr_only:
-            print("low-resolution-only mode")
+            # print("low-resolution-only mode")
             lr_inp = inputs[0]
             lr_seg = self.head(lr_inp)
             up_lr_seg = self.resize(lr_seg, 1/self.scales[0])
