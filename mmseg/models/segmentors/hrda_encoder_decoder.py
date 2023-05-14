@@ -236,11 +236,11 @@ class HRDAEncoderDecoder(EncoderDecoder):
 
         if self.pos_emb_dim > 0:
             x.append(self.pos_emb(img)) # pos emb
-            print("Debug: pos embedding calculated in encoding!", x[-1].shape) # debug
+            # print("Debug: pos embedding calculated in encoding!", x[-1].shape) # debug
 
         if self.depthmap_emb_dim > 0:
             x.append(self.depthmap_emb(img[:,3:,:,:])) # pos emb
-            print("Debug: depthmap embedding calculated in encoding!", x[-1].shape) # debug
+            # print("Debug: depthmap embedding calculated in encoding!", x[-1].shape) # debug
 
         return x
 

@@ -162,7 +162,7 @@ class DAFormerHead(BaseDecodeHead):
                 embed_dims.append(decoder_params["pos_emb_dim"])
                 self.n_extensions += 1
 
-                print("Debug: Daformer Head pos emb activated!") # debug
+                # print("Debug: Daformer Head pos emb activated!") # debug
 
         self.has_depthmap_emb = False
         if "depthmap_emb_dim" in decoder_params:
@@ -171,7 +171,7 @@ class DAFormerHead(BaseDecodeHead):
                 embed_dims.append(decoder_params["depthmap_emb_dim"])
                 self.n_extensions += 1
 
-                print("Debug: Daformer Head depthmap emb activated!") # debug
+                # print("Debug: Daformer Head depthmap emb activated!") # debug
 
         self.fuse_layer = build_layer(
             sum(embed_dims), self.channels, **fusion_cfg)

@@ -99,13 +99,13 @@ class HRDAHead(BaseDecodeHead):
         if "pos_emb_dim" in decoder_params:
             self.pos_emb_dim = decoder_params["pos_emb_dim"]
 
-            print("Debug: HRDA Head pos emb activated!") # debug
+            # print("Debug: HRDA Head pos emb activated!") # debug
 
         self.depthmap_emb_dim = 0
         if "depthmap_emb_dim" in decoder_params:
             self.depthmap_emb_dim = decoder_params["depthmap_emb_dim"]
 
-            print("Debug: HRDA Head depthmap emb activated!") # debug
+            # print("Debug: HRDA Head depthmap emb activated!") # debug
 
     def set_hr_crop_box(self, boxes):
         self.hr_crop_box = boxes
