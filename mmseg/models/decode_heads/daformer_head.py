@@ -182,8 +182,6 @@ class DAFormerHead(BaseDecodeHead):
         # for f in x:
         #     mmcv.print_log(f'{f.shape}', 'mmseg')
 
-        print(len(x)) # debug
-
         os_size = x[0].size()[2:]
         _c = {}
         for i in self.in_index:
@@ -203,7 +201,7 @@ class DAFormerHead(BaseDecodeHead):
 
         for i_plus in range(self.n_extensions):
             if self.has_pos_emb:
-                i = self.in_index[-1]+i+1
+                i = self.in_index[-1]+i_plus+1
                 if x[i].size()[2:] != os_size:
                     _c[i] = resize(
                         x[i],
