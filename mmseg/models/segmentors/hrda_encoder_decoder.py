@@ -220,11 +220,11 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.blur_hr_crop = blur_hr_crop
 
         self.debug_count = 0 # debug
-        self.pos_emb_dim = decode_head.pos_emb_dim
+        self.pos_emb_dim = self.decode_head.pos_emb_dim
         if self.pos_emb_dim > 0:
             self.pos_emb = PositionalEncodingPermute2D(self.pos_emb_dim)
 
-        self.depthmap_emb_dim = decode_head.depthmap_emb_dim
+        self.depthmap_emb_dim = self.decode_head.depthmap_emb_dim
         if self.depthmap_emb_dim > 0:
             self.depthmap_emb = DepthMapEmbedding(self.depthmap_emb_dim)
         # TODO: add depthmap emb
