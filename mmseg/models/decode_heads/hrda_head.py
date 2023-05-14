@@ -45,6 +45,8 @@ class HRDAHead(BaseDecodeHead):
                  debug_output_attention=False,
                  lr_only=False,
                  **kwargs):
+
+        decoder_params = kwargs['decoder_params']
         head_cfg = deepcopy(kwargs)
         attn_cfg = deepcopy(kwargs)
         if single_scale_head == 'DAFormerHead':
@@ -91,6 +93,18 @@ class HRDAHead(BaseDecodeHead):
         self.hr_slide_inference = hr_slide_inference
         self.debug_output_attention = debug_output_attention
         self.lr_only = lr_only
+
+        self.pos_emb_dim = 0
+        if "pos_emb_dim" in decoder_params:
+            self.pos_emb_dim = decoder_params["pos_emb_dim"]
+
+            print("Debug: HRDA Head pos emb activated!") # debug
+
+        self.depthmap_emb_dim = 0
+        if "depthmap_emb_dim" in decoder_params:
+            self.depthmap_emb_dim = decoder_params["depthmap_emb_dim"]
+
+            print("Debug: HRDA Head depthmap emb activated!") # debug
 
     def set_hr_crop_box(self, boxes):
         self.hr_crop_box = boxes

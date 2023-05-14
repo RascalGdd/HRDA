@@ -20,7 +20,9 @@ model = dict(
                 pool=False,
                 act_cfg=dict(type='ReLU'),
                 norm_cfg=norm_cfg
-            )
+            ),
+            pos_emb_dim=128,
+            depthmap_emb_dim=32
         ),
         type='HRDAHead',
         # Use the DAFormer decoder for each scale.

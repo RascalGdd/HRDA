@@ -20,7 +20,9 @@ model = dict(
                 pool=False,
                 act_cfg=dict(type='ReLU'),
                 norm_cfg=norm_cfg
-            )
+            ),
+            pos_emb_dim=128,
+            depthmap_emb_dim=32
         ),
         type='HRDAHead',
         # Use the DAFormer decoder for each scale.
@@ -50,7 +52,7 @@ model = dict(
 
 # data
 data = dict(samples_per_gpu=1)
-evaluation = dict(interval=4000, metric='mIoU')
+evaluation = dict(interval=10, metric='mIoU')
 
 # optimizer
 optimizer = dict(_delete_=True, type='AdamW', lr=0.00006, betas=(0.9, 0.999), weight_decay=0.01,

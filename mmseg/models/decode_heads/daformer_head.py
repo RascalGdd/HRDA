@@ -151,7 +151,27 @@ class DAFormerHead(BaseDecodeHead):
             else:
                 self.embed_layers[str(i)] = build_layer(
                     in_channels, embed_dim, **embed_cfg)
+
         self.embed_layers = nn.ModuleDict(self.embed_layers)
+
+        self.n_extensions = 0
+        self.has_pos_emb = False
+        if "pos_emb_dim" in decoder_params:
+            if decoder_params["pos_emb_dim"] > 0:
+                self.has_pos_emb = True
+                embed_dims.append(decoder_params["pos_emb_dim"])
+                self.n_extensions += 1
+
+                print("Debug: Daformer Head pos emb activated!") # debug
+
+        self.has_depthmap_emb = False
+        if "depthmap_emb_dim" in decoder_params:
+            if decoder_params["depthmap_emb_dim"] > 0:
+                self.has_depthmap_emb = True
+                embed_dims.append(decoder_params["depthmap_emb_dim"])
+                self.n_extensions += 1
+
+                print("Debug: Daformer Head depthmap emb activated!") # debug
 
         self.fuse_layer = build_layer(
             sum(embed_dims), self.channels, **fusion_cfg)
@@ -178,6 +198,18 @@ class DAFormerHead(BaseDecodeHead):
                     size=os_size,
                     mode='bilinear',
                     align_corners=self.align_corners)
+
+        for i_plus in range(self.n_extensions):
+            if self.has_pos_emb:
+                i = self.in_index[-1]+i+1
+                if x[i].size()[2:] != os_size:
+                    _c[i] = resize(
+                        x[i],
+                        size=os_size,
+                        mode='bilinear',
+                        align_corners=self.align_corners)
+                else:
+                    _c[i] = x[i] * 1.0
 
         x = self.fuse_layer(torch.cat(list(_c.values()), dim=1))
         x = self.cls_seg(x)
