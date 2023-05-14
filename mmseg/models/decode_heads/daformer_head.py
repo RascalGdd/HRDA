@@ -182,6 +182,8 @@ class DAFormerHead(BaseDecodeHead):
         # for f in x:
         #     mmcv.print_log(f'{f.shape}', 'mmseg')
 
+        print(len(x)) # debug
+
         os_size = x[0].size()[2:]
         _c = {}
         for i in self.in_index:
