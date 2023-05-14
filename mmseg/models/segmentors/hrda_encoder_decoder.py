@@ -132,7 +132,7 @@ class PositionalEncoding2D(nn.Module):
         emb[:, :, : self.channels] = emb_x
         emb[:, :, self.channels : 2 * self.channels] = emb_y
 
-        self.cached_penc = emb[None, :, :, :orig_ch].repeat(tensor.shape[0], 1, 1, 1)
+        self.cached_penc = emb[None, :, :, :self.org_channels].repeat(tensor.shape[0], 1, 1, 1)
         return self.cached_penc
 
 class PositionalEncodingPermute2D(nn.Module):
