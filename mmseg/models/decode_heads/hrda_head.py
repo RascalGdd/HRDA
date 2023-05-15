@@ -60,6 +60,8 @@ class HRDAHead(BaseDecodeHead):
                     act_cfg=dict(type='ReLU'),
                     norm_cfg=attn_cfg['decoder_params']['fusion_cfg']
                     ['norm_cfg'])
+            head_cfg['pos_emb_dim'] = 0
+            head_cfg['depthmap_emb_dim'] = 0
             kwargs['init_cfg'] = None
             kwargs['input_transform'] = 'multiple_select'
             self.os = 4
