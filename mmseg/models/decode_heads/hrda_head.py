@@ -214,6 +214,7 @@ class HRDAHead(BaseDecodeHead):
                 mask[:, :, slc[0], slc[1]] = 1
                 att = att * mask
             elif has_batch_crop:
+                print("Debug: using vanishing point") # debug
                 mask = lr_seg.new_zeros([lr_seg.shape[0], 1, *lr_seg.shape[2:]])
                 sc_os = self.os / lr_scale
                 slc_ys, slc_xs = self.hr_batch_crop_slice(sc_os)
