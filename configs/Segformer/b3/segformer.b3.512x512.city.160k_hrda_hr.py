@@ -1,6 +1,6 @@
 _base_ = [
     '../../_base_/models/daformer_conv1_mitb3.py',
-    '../../_base_/datasets/cityscapes_1024x1024_repeat.py',
+    '../../_base_/datasets/cityscapes_512x512_repeat_lr.py',
     '../../_base_/default_runtime.py',
     '../../_base_/schedules/schedule_160k_adamw.py'
 ]
@@ -10,7 +10,8 @@ norm_cfg = dict(type='SyncBN', requires_grad=True)
 find_unused_parameters = True
 model = dict(
     type='HRDAEncoderDecoder',
-    decode_head=dict(decoder_params=dict(
+    decode_head=dict(
+        decoder_params=dict(
             fusion_cfg=dict(
                 _delete_=True,
                 type='aspp',
@@ -18,7 +19,9 @@ model = dict(
                 dilations=(1, 6, 12, 18),
                 pool=False,
                 act_cfg=dict(type='ReLU'),
-                norm_cfg=norm_cfg)),
+                norm_cfg=norm_cfg
+            )
+        ),
         type='HRDAHead',
         # Use the DAFormer decoder for each scale.
         single_scale_head='DAFormerHead',
@@ -28,7 +31,7 @@ model = dict(
         hr_loss_weight=0.1),
     # Use the full resolution for the detail crop and half the resolution for
     # the context crop.
-    scales=[1, 0.5],
+    scales=[1],
     # Use a relative crop size of 0.5 (=512/1024) for the detail crop.
     hr_crop_size=[512, 512],
     # Use LR features for the Feature Distance as in the original DAFormer.
@@ -38,13 +41,12 @@ model = dict(
     crop_coord_divisible=8,
     # Use overlapping slide inference for detail crops for pseudo-labels.
     hr_slide_inference=True,
-    hr_slide_overlapping=False,
     # Use overlapping slide inference for fused crops during test time.
     test_cfg=dict(
         mode='slide',
         batched_slide=True,
-        stride=[512, 512],
-        crop_size=[1024, 1024]))
+        stride=[256, 256],
+        crop_size=[512, 512]))
 
 # data
 data = dict(samples_per_gpu=1)

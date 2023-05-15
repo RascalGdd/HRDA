@@ -45,6 +45,7 @@ class HRDAHead(BaseDecodeHead):
                  fixed_attention=None,
                  debug_output_attention=False,
                  lr_only=False,
+                 hr_only=False,
                  **kwargs):
 
         decoder_params = kwargs['decoder_params']
@@ -96,6 +97,7 @@ class HRDAHead(BaseDecodeHead):
         self.hr_slide_inference = hr_slide_inference
         self.debug_output_attention = debug_output_attention
         self.lr_only = lr_only
+        self.hr_only = hr_only
 
         self.pos_emb_dim = 0
         if "pos_emb_dim" in decoder_params:
@@ -184,7 +186,13 @@ class HRDAHead(BaseDecodeHead):
             up_lr_seg = self.resize(lr_seg, 1/self.scales[0])
             fused_seg = up_lr_seg * 1.0
             return fused_seg, lr_seg, None
-
+        elif self.hr_only:
+            # print("high-resolution-only mode")
+            hr_inp = inputs[0]
+            hr_seg = self.head(hr_inp)
+            dwn_hr_seg = self.resize(hr_seg, 1/self.scales[0])
+            fused_seg = dwn_hr_seg * 1.0
+            return fused_seg, None, hr_seg
         else:
             assert len(inputs) == 2
             hr_inp = inputs[1]
@@ -301,14 +309,21 @@ class HRDAHead(BaseDecodeHead):
         """Compute losses."""
         fused_seg, lr_seg, hr_seg = seg_logit
         loss = super(HRDAHead, self).losses(fused_seg, seg_label, seg_weight)
+
+        if lr_seg is None:
+            self.lr_loss_weight = 0
+        if hr_seg is None:
+            self.hr_loss_weight = 0
+
         if self.hr_loss_weight == 0 and self.lr_loss_weight == 0:
             return loss
 
-        if self.lr_loss_weight > 0:
-            loss.update(
-                add_prefix(
-                    super(HRDAHead, self).losses(lr_seg, seg_label,
-                                                 seg_weight), 'lr'))
+        if lr_seg is not None:
+            if self.lr_loss_weight > 0:
+                loss.update(
+                    add_prefix(
+                        super(HRDAHead, self).losses(lr_seg, seg_label,
+                                                     seg_weight), 'lr'))
 
         if hr_seg is not None:
             if self.hr_loss_weight > 0 and self.enable_hr_crop:
@@ -328,9 +343,6 @@ class HRDAHead(BaseDecodeHead):
                     add_prefix(
                         super(HRDAHead, self).losses(hr_seg, seg_label,
                                                      seg_weight), 'hr'))
-
-        if hr_seg is None:
-            self.hr_loss_weight = 0
 
         loss['loss_seg'] *= (1 - self.lr_loss_weight - self.hr_loss_weight)
         if self.lr_loss_weight > 0:
