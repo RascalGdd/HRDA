@@ -289,7 +289,7 @@ class HRDAHead(BaseDecodeHead):
                       train_cfg,
                       seg_weight=None):
         """Forward function for training."""
-        if self.enable_hr_crop and not self.lr_only:
+        if self.enable_hr_crop and not self.lr_only and not self.hr_only:
             assert self.hr_crop_box is not None
         seg_logits = self.forward(inputs)
         losses = self.losses(seg_logits, gt_semantic_seg, seg_weight)
