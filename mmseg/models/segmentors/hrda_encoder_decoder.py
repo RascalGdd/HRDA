@@ -322,10 +322,10 @@ class HRDAEncoderDecoder(EncoderDecoder):
             scaled_img = resize(
                 input=img,
                 scale_factor=s,
-                mode='bilinear',
-                align_corners=self.align_corners
+                # mode='bilinear',
+                # align_corners=self.align_corners
             )
-            if self.crop_size is not None and i >= 1:
+            if i >= 1 and (self.crop_size is not None) and (not self.hr_slide_inference):
                 crop_boxes = []
                 scaled_imgs = []
                 for b in range(batch_size):
