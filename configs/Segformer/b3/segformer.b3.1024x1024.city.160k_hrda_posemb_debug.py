@@ -43,6 +43,7 @@ model = dict(
     crop_coord_divisible=8,
     # Use overlapping slide inference for detail crops for pseudo-labels.
     hr_slide_inference=True,
+    hr_slide_overlapping=False,
     # Use overlapping slide inference for fused crops during test time.
     test_cfg=dict(
         mode='slide',
