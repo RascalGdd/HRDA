@@ -32,6 +32,7 @@ model = dict(
     # Use the full resolution for the detail crop and half the resolution for
     # the context crop.
     scales=[1],
+    hr_only=True,
     # Use a relative crop size of 0.5 (=512/1024) for the detail crop.
     hr_crop_size=[512, 512],
     # Use LR features for the Feature Distance as in the original DAFormer.
@@ -40,7 +41,7 @@ model = dict(
     # downscale factor = 2) to ensure alignment during fusion.
     crop_coord_divisible=8,
     # Use overlapping slide inference for detail crops for pseudo-labels.
-    hr_slide_inference=False,
+    hr_slide_inference=True,
     # Use overlapping slide inference for fused crops during test time.
     test_cfg=dict(
         mode='slide',
