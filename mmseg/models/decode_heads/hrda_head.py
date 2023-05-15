@@ -179,20 +179,13 @@ class HRDAHead(BaseDecodeHead):
 
     def forward(self, inputs):
         # debug: lr-only
-        if self.lr_only:
+        if self.lr_only or self.hr_only:
             # print("low-resolution-only mode")
-            lr_inp = inputs[0]
-            lr_seg = self.head(lr_inp)
-            up_lr_seg = self.resize(lr_seg, 1/self.scales[0])
-            fused_seg = up_lr_seg * 1.0
-            return fused_seg, lr_seg, None
-        elif self.hr_only:
-            # print("high-resolution-only mode")
-            hr_inp = inputs[0]
-            hr_seg = self.head(hr_inp)
-            dwn_hr_seg = self.resize(hr_seg, 1/self.scales[0])
-            fused_seg = dwn_hr_seg * 1.0
-            return fused_seg, None, hr_seg
+            inp = inputs[0]
+            seg = self.head(inp)
+            resized_seg = self.resize(seg, 1/self.scales[0])
+            fused_seg = resized_seg * 1.0
+            return fused_seg, resized_seg, None
         else:
             assert len(inputs) == 2
             hr_inp = inputs[1]
@@ -312,8 +305,6 @@ class HRDAHead(BaseDecodeHead):
 
         if lr_seg is None:
             self.lr_loss_weight = 0
-        if hr_seg is None:
-            self.hr_loss_weight = 0
 
         if self.hr_loss_weight == 0 and self.lr_loss_weight == 0:
             return loss
