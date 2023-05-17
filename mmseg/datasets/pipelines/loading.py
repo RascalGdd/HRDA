@@ -22,7 +22,7 @@ def generate_template_depth_mask(image_size, level_configs = np.arange(0,2,0.002
         depth_mask_template[x1_min:x1_max, x2_min:x2_max] += 1
     return depth_mask_template / num_levels
 
-def vanishing_point_to_depth_mask(vvanishing_mode, vanishing_point, image_size, level_configs = np.arange(0,2,0.002)):
+def vanishing_point_to_depth_mask(vanishing_mode, vanishing_point, image_size, level_configs = np.arange(0,2,0.002)):
 # vanishing_points: tuple, in pixel
 # image_size: tuple (H, W)
     if not hasattr(vanishing_point_to_depth_mask, "template"):
