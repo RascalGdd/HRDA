@@ -5,29 +5,43 @@ import numpy as np
 
 from ..builder import PIPELINES
 
-def vanishing_point_to_depth_mask(vanishing_mode, vanishing_point, image_size, level_configs = np.arange(0,2,0.002)):
-# vanishing_points: sequence of tuples, in pixel
-# image_size: tuple (H, W)
+def generate_template_depth_mask(image_size, level_configs = np.arange(0,2,0.002)):
+    H2, W2 = image_size[0]*2, image_size[1]*2
     H, W = image_size[0], image_size[1]
     num_levels = len(level_configs) + 1
+    central_point = [H, W]
+    depth_mask_template = np.zeros((H2, W2), dtype=float)
+    print(depth_mask_template.shape)
+    for level_scale in level_configs:
+        x1_bias = int(H * level_scale / 2)
+        x2_bias = int(W * level_scale / 2)
+        x1_min = max(0, H - x1_bias)
+        x1_max = min(H2, H + x1_bias)
+        x2_min = max(0, W - x2_bias)
+        x2_max = min(W2, W + x2_bias)
+        depth_mask_template[x1_min:x1_max, x2_min:x2_max] += 1
+    return depth_mask_template / num_levels
+
+def vanishing_point_to_depth_mask(vvanishing_mode, vanishing_point, image_size, level_configs = np.arange(0,2,0.002)):
+# vanishing_points: tuple, in pixel
+# image_size: tuple (H, W)
+    if not hasattr(vanishing_point_to_depth_mask, "template"):
+        vanishing_point_to_depth_mask.template = generate_template_depth_mask(image_size, level_configs) #(2H, 2W)
+
+    H, W = image_size[0], image_size[1]
     if not vanishing_point:
         if vanishing_mode == "night":
             vanishing_point = [int(H/2), int(W/2)]
         elif vanishing_mode == "day":
             vanishing_point = [int((2*H) / 3), int(W / 2)]
-    depth_masks = torch.zeros(H, W, dtype=float)
     x1, x2 = int(vanishing_point[0]), int(vanishing_point[1])
-    for level_scale in level_configs:
-        x1_bias = int(H * level_scale / 2)
-        x2_bias = int(W * level_scale / 2)
-        x1_min = max(0, x1 - x1_bias)
-        x1_max = min(H, x1 + x1_bias)
-        x2_min = max(0, x2 - x2_bias)
-        x2_max = min(W, x2 + x2_bias)
-        if x2_max > 0 and x1_max > 0:
-            depth_masks[x1_min:x1_max, x2_min:x2_max] += 1
-    depth_masks = np.asarray(depth_masks)
-    return depth_masks / num_levels
+    bias1, bias2 = int(x1-H/2), int(x2-W/2)
+    c1, c2 = H+bias1, W+bias2
+    x1_min = int(c1-H/2)
+    x1_max = int(c1+H/2)
+    x2_min = int(c2-W/2)
+    x2_max = int(c2+W/2)
+    return vanishing_point_to_depth_mask.template[x1_min:x1_max, x2_min:x2_max]
 
 
 @PIPELINES.register_module()
