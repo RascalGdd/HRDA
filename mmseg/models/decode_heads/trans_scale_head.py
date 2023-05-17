@@ -15,7 +15,8 @@ from .aspp_head import ASPPModule
 from .decode_head import BaseDecodeHead
 from .sep_aspp_head import DepthwiseSeparableASPPModule
 import math
-
+import fvcore.nn.weight_init as weight_init
+from detectron2.layers import Conv2d
 
 class PositionEmbeddingSine(nn.Module):
     """
@@ -401,11 +402,17 @@ class TransHead(BaseDecodeHead):
         self.fuse_layer = build_layer(
             sum(embed_dims), self.channels, **fusion_cfg)
 
-        hidden_dim = decoder_params["hidden_dim"]
-        nheads = decoder_params["n_heads"]
-        dec_layers = decoder_params["dec_layers"]
-        pre_norm = decoder_params["pre_norm"]
-        dim_feedforward = decoder_params["dim_feedforward"]
+        # hidden_dim = decoder_params["hidden_dim"]
+        # nheads = decoder_params["n_heads"]
+        # dec_layers = decoder_params["dec_layers"]
+        # pre_norm = decoder_params["pre_norm"]
+        # dim_feedforward = decoder_params["dim_feedforward"]
+
+        hidden_dim = 256
+        nheads = 8
+        dec_layers = 8
+        pre_norm = False
+        dim_feedforward = 2048
 
         # positional encoding
         N_steps = hidden_dim // 2
@@ -429,15 +436,13 @@ class TransHead(BaseDecodeHead):
         self.num_feature_levels = 3
         self.level_embed = nn.Embedding(self.num_feature_levels, hidden_dim)
         self.input_proj = nn.ModuleList()
-        for _ in range(self.num_feature_levels):
-            if in_channels != hidden_dim or enforce_input_project:
-                self.input_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
-                weight_init.c2_xavier_fill(self.input_proj[-1])
-            else:
-                self.input_proj.append(nn.Sequential())
+        for in_channels in [64, 128, 320, 512]:
+            self.input_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
+            weight_init.c2_xavier_fill(self.input_proj[-1])
 
         # output FFNs
-        self.mask_embed = MLP(hidden_dim, hidden_dim, mask_dim, 3)
+        mask_embed = 256
+        self.mask_embed = MLP(hidden_dim, hidden_dim, mask_embed, 3)
 
         for _ in range(self.num_layers):
             self.transformer_self_attention_layers.append(
@@ -467,7 +472,7 @@ class TransHead(BaseDecodeHead):
                 )
             )
 
-    def forward_prediction_heads(self, output, mask_features, attn_mask_target_size):
+    def forward_prediction_heads(self, output, mask_features):
         decoder_output = self.decoder_norm(output)
         decoder_output = decoder_output.transpose(0, 1)
 
@@ -476,8 +481,12 @@ class TransHead(BaseDecodeHead):
 
         return outputs_mask
 
-    def forward(self, x, mask_features):
+    def forward(self, x):
         # x is a list of multi-scale feature
+        # torch.Size([1, 64, 128, 128])
+        # torch.Size([1, 128, 64, 64])
+        # torch.Size([1, 320, 32, 32])
+        # torch.Size([1, 512, 16, 16])
         assert len(x) == self.num_feature_levels
         src = []
         pos = []
@@ -492,6 +501,7 @@ class TransHead(BaseDecodeHead):
             pos[-1] = pos[-1].permute(2, 0, 1)
             src[-1] = src[-1].permute(2, 0, 1)
 
+        mask_features = self.input_proj[0](x[0])
         _, bs, _ = src[0].shape
 
         # QxNxC
@@ -500,13 +510,11 @@ class TransHead(BaseDecodeHead):
         predictions_mask = []
 
         # prediction heads on learnable query features
-        outputs_class, outputs_mask, attn_mask = self.forward_prediction_heads(output, mask_features,
-                                                                               attn_mask_target_size=size_list[0])
+        outputs_mask = self.forward_prediction_heads(output, mask_features)
         predictions_mask.append(outputs_mask)
 
         for i in range(self.num_layers):
             level_index = i % self.num_feature_levels
-            attn_mask[torch.where(attn_mask.sum(-1) == attn_mask.shape[-1])] = False
             # attention: cross-attention first
             output = self.transformer_cross_attention_layers[i](
                 output, src[level_index],
@@ -523,17 +531,12 @@ class TransHead(BaseDecodeHead):
                 output
             )
 
-            outputs_mask = self.forward_prediction_heads(output, mask_features,
-                                                                                   attn_mask_target_size=size_list[(
-
+            outputs_mask = self.forward_prediction_heads(output, mask_features)
             predictions_mask.append(outputs_mask)
 
         assert len(predictions_mask) == self.num_layers + 1
 
         out = {
             'pred_attn': predictions_mask[-1],
-            'aux_outputs': self._set_aux_loss(
-                predictions_class if self.mask_classification else None, predictions_mask
-            )
         }
         return out
