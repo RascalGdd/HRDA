@@ -73,7 +73,8 @@ class HRDAHead(BaseDecodeHead):
         head_cfg['type'] = single_scale_head
         self.head = builder.build_head(head_cfg)
 
-        attn_cfg['type'] = single_scale_head
+        # attn_cfg['type'] = single_scale_head
+        attn_cfg['type'] = "TransHead"
         if not attention_classwise:
             attn_cfg['num_classes'] = 1
         if fixed_attention is None:
