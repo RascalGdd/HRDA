@@ -192,6 +192,8 @@ class HRDAHead(BaseDecodeHead):
             hr_scale = self.scales[1]
             lr_inp = inputs[0]
             lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
+            for feat in lr_sc_att_inp: # add detach
+                feat.detach()
             lr_scale = self.scales[0]
             batch_size = lr_inp[0].shape[0]
             assert lr_scale <= hr_scale
@@ -226,11 +228,12 @@ class HRDAHead(BaseDecodeHead):
                 att = att * mask
 
             # print_log(f'att {att.shape}', 'mmseg')
-            lr_seg = (1 - att) * lr_seg
+            # lr_seg = (1 - att) * lr_seg
             # print_log(f'scaled lr_seg {lr_seg.shape}', 'mmseg')
             up_lr_seg = self.resize(lr_seg, hr_scale / lr_scale)
             if torch.is_tensor(att):
                 att = self.resize(att, hr_scale / lr_scale)
+            up_lr_seg = (1 - att) * up_lr_seg # lr attn modified
 
             if has_crop:
                 hr_seg_inserted = torch.zeros_like(up_lr_seg)
