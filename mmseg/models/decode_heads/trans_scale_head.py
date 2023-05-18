@@ -414,7 +414,7 @@ class TransHead(BaseDecodeHead):
             input_transform='multiple_select', **kwargs)
 
         assert not self.align_corners
-        decoder_params = kwargs['trans_params']
+        decoder_params = kwargs['decoder_params']
         embed_dims = decoder_params['embed_dims']
         if isinstance(embed_dims, int):
             embed_dims = [embed_dims] * len(self.in_index)
@@ -426,20 +426,6 @@ class TransHead(BaseDecodeHead):
         for cfg in [embed_cfg, embed_neck_cfg, fusion_cfg]:
             if cfg is not None and 'aspp' in cfg['type']:
                 cfg['align_corners'] = self.align_corners
-
-        self.embed_layers = {}
-        for i, in_channels, embed_dim in zip(self.in_index, self.in_channels,
-                                             embed_dims):
-            if i == self.in_index[-1]:
-                self.embed_layers[str(i)] = build_layer(
-                    in_channels, embed_dim, **embed_neck_cfg)
-            else:
-                self.embed_layers[str(i)] = build_layer(
-                    in_channels, embed_dim, **embed_cfg)
-        self.embed_layers = nn.ModuleDict(self.embed_layers)
-
-        self.fuse_layer = build_layer(
-            sum(embed_dims), self.channels, **fusion_cfg)
 
         # hidden_dim = decoder_params["hidden_dim"]
         # nheads = decoder_params["n_heads"]
@@ -463,6 +449,7 @@ class TransHead(BaseDecodeHead):
         self.transformer_self_attention_layers = nn.ModuleList()
         self.transformer_cross_attention_layers = nn.ModuleList()
         self.transformer_ffn_layers = nn.ModuleList()
+        self.decoder_norm = nn.LayerNorm(hidden_dim)
 
 
         self.num_queries = 19
@@ -471,8 +458,8 @@ class TransHead(BaseDecodeHead):
         # learnable query p.e.
         self.query_embed = nn.Embedding(self.num_queries, hidden_dim)
 
-        # level embedding (we always use 3 scales)
-        self.num_feature_levels = 3
+        # level embedding (we always use 4 scales)
+        self.num_feature_levels = 4
         self.level_embed = nn.Embedding(self.num_feature_levels, hidden_dim)
         self.input_proj = nn.ModuleList()
         for in_channels in [64, 128, 320, 512]:
@@ -578,4 +565,4 @@ class TransHead(BaseDecodeHead):
         out = {
             'pred_attn': predictions_mask[-1],
         }
-        return out
+        return out['pred_attn']
