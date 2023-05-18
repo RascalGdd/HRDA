@@ -426,7 +426,7 @@ class TransHead(BaseDecodeHead):
         self.transformer_ffn_layers = nn.ModuleList()
 
 
-        self.num_queries = decoder_params["num_queries"]
+        self.num_queries = 19
         # learnable query features
         self.query_feat = nn.Embedding(self.num_queries, hidden_dim)
         # learnable query p.e.
