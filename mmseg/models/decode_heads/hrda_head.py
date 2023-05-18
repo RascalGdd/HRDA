@@ -150,6 +150,8 @@ class HRDAHead(BaseDecodeHead):
         hr_scale = self.scales[1]
         lr_inp = inputs[0]
         lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
+        for i in lr_sc_att_inp:
+            i.detach()
         lr_scale = self.scales[0]
         batch_size = lr_inp[0].shape[0]
         assert lr_scale <= hr_scale
