@@ -326,13 +326,18 @@ class HRDAEncoderDecoder(EncoderDecoder):
         batch_size = img.shape[0]
         # assert len(self.scales) <= 2, 'Only up to 2 scales are supported.'
         for i, s in enumerate(self.scales):
-            scaled_img = resize(
-                input=img,
-                scale_factor=s,
-                # mode='bilinear',
-                # align_corners=self.align_corners
-            )
-            if i >= 1 and (self.crop_size is not None) and (not self.hr_slide_inference):
+            if s == 1 and self.blur_hr_crop:
+                scaled_img = self.blur_downup(img)
+            else:
+                scaled_img = self.resize(img, s)
+
+
+            if i >= 1 and self.hr_slide_inference:
+                mres_feats.append(self.extract_slide_feat(scaled_img))
+                if self.debug_count < 10:
+                    print("using slide inference")
+
+            elif i >= 1 and (self.crop_size is not None) and (not self.hr_slide_inference):
                 crop_boxes = []
                 scaled_imgs = []
                 for b in range(batch_size):
@@ -359,16 +364,20 @@ class HRDAEncoderDecoder(EncoderDecoder):
                     # else:
                     #     break_debug
 
-                self.debug_count += 1
                 scaled_img = torch.cat(scaled_imgs, dim=0)
                 self.decode_head.set_batch_hr_crop_box(crop_boxes)
                 mres_feats.append(self.extract_unscaled_feat(scaled_img))
 
-            elif i >= 1 and self.hr_slide_inference:
-                mres_feats.append(self.extract_slide_feat(scaled_img))
+                if self.debug_count < 10:
+                    print("using roi inference")
 
             else:
                 mres_feats.append(self.extract_unscaled_feat(scaled_img))
+
+                if self.debug_count < 10:
+                    print("using whole inference")
+
+            self.debug_count += 1
 
         out = self._decode_head_forward_test(mres_feats, img_metas)
         out = resize(
