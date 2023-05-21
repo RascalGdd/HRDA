@@ -16,7 +16,7 @@ from .decode_head import BaseDecodeHead
 from .sep_aspp_head import DepthwiseSeparableASPPModule
 import math
 import fvcore.nn.weight_init as weight_init
-
+from mmcv.cnn import ConvModule
 class Conv2d(torch.nn.Conv2d):
     """
     A wrapper around :class:`torch.nn.Conv2d` to support empty inputs and more features.
@@ -471,7 +471,12 @@ class TransHead(BaseDecodeHead):
             self.mask_feature_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
             weight_init.c2_xavier_fill(self.mask_feature_proj[-1])
 
-        self.out_proj = MLP(4 * hidden_dim, 4 * hidden_dim, hidden_dim, 3)
+        self.out_proj = ConvModule(
+            in_channels=hidden_dim * 4,
+            out_channels=hidden_dim,
+            kernel_size=1,
+            padding=0,
+            norm_cfg=dict(type='SyncBN', requires_grad=True))
         # output FFNs
         mask_embed = 256
         self.mask_embed = MLP(hidden_dim, hidden_dim, mask_embed, 3)
@@ -546,9 +551,7 @@ class TransHead(BaseDecodeHead):
                     mode='bilinear',
                     align_corners=False)
             mask_feats.append(feat)
-        mask_features = self.out_proj(torch.cat(mask_feats, 0))
-        print(mask_features.shape)
-        asd
+        mask_features = self.out_proj(torch.cat(mask_feats, 1))
 
         _, bs, _ = src[0].shape
 
