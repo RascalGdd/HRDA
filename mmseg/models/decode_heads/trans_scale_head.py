@@ -462,10 +462,16 @@ class TransHead(BaseDecodeHead):
         self.num_feature_levels = 4
         self.level_embed = nn.Embedding(self.num_feature_levels, hidden_dim)
         self.input_proj = nn.ModuleList()
+        self.mask_feature_proj = nn.ModuleList()
         for in_channels in [64, 128, 320, 512]:
             self.input_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
             weight_init.c2_xavier_fill(self.input_proj[-1])
 
+        for in_channels in [64, 128, 320, 512]:
+            self.mask_feature_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
+            weight_init.c2_xavier_fill(self.mask_feature_proj[-1])
+
+        self.out_proj = MLP(4 * hidden_dim, 4 * hidden_dim, hidden_dim, 3)
         # output FFNs
         mask_embed = 256
         self.mask_embed = MLP(hidden_dim, hidden_dim, mask_embed, 3)
@@ -527,7 +533,23 @@ class TransHead(BaseDecodeHead):
             pos[-1] = pos[-1].permute(2, 0, 1)
             src[-1] = src[-1].permute(2, 0, 1)
 
-        mask_features = self.input_proj[0](x[0])
+        # mask_features = self.input_proj[0](x[0])
+
+        mask_feats = []
+        for i in range(self.num_feature_levels):
+            # mmcv.print_log(f'{i}: {x[i].shape}, {self.linear_c[str(i)]}')
+            feat = self.mask_feature_proj[i](x[i])
+            if i != 0:
+                feat = resize(
+                    feat,
+                    size=x[0].size()[2:],
+                    mode='bilinear',
+                    align_corners=False)
+            mask_feats.append(feat)
+        mask_features = self.out_proj(torch.cat(mask_feats, 0))
+        print(mask_features.shape)
+        asd
+
         _, bs, _ = src[0].shape
 
         # QxNxC
