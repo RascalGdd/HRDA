@@ -48,8 +48,8 @@ def get_global_pos_emb(image_size):
         get_global_pos_emb.image_size = image_size
     if not hasattr(get_global_pos_emb, "pos_emb") or image_size != get_global_pos_emb.image_size:
         total_size = int(image_size[0] * image_size[1])
-        idx_map = np.arange(total_size)
-        get_global_pos_emb.pos_emb = np.reshape(idx_map, (image_size[0],image_size[1])).astype(float)
+        idx_map = np.arange(total_size, dtype=float)
+        get_global_pos_emb.pos_emb = np.reshape(idx_map, (image_size[0],image_size[1]))
     return get_global_pos_emb.pos_emb
 
 @PIPELINES.register_module()
