@@ -448,6 +448,17 @@ class Resize(object):
                 results[key], results['scale'], interpolation='nearest')
         results[key] = map
 
+    def _resize_pos(self, results):
+        """Resize semantic segmentation map with ``results['scale']``."""
+        key = "pos_emb"
+        if self.keep_ratio:
+            pos_emb = mmcv.imrescale(
+                results[key], results['scale'], interpolation='nearest')
+        else:
+            pos_emb = mmcv.imresize(
+                results[key], results['scale'], interpolation='nearest')
+        results[key] = pos_emb
+
     def __call__(self, results):
         """Call function to resize images, bounding boxes, masks, semantic
         segmentation map.
@@ -465,6 +476,7 @@ class Resize(object):
         self._resize_img(results)
         self._resize_seg(results)
         self._resize_map(results)
+        self._resize_pos(results)
         return results
 
     def __repr__(self):
@@ -527,8 +539,12 @@ class RandomFlip(object):
                     results[key], direction=results['flip_direction']).copy()
 
             # flip map
-
             key = "vanishing_mask"
+            results[key] = mmcv.imflip(
+                results[key], direction=results['flip_direction']).copy()
+
+            # flip pos_emb
+            key = "pos_emb"
             results[key] = mmcv.imflip(
                 results[key], direction=results['flip_direction']).copy()
 
@@ -594,7 +610,15 @@ class Pad(object):
         results[key] = mmcv.impad(
             results[key],
             shape=results['pad_shape'][:2],
-            pad_val=self.seg_pad_val)
+            pad_val=0)
+
+    def _pad_pos(self, results):
+        """Pad pos embs according to ``results['pad_shape']``."""
+        key = "pos_emb"
+        results[key] = mmcv.impad(
+            results[key],
+            shape=results['pad_shape'][:2],
+            pad_val=-1)
 
     def __call__(self, results):
         """Call function to pad images, masks, semantic segmentation maps.
@@ -609,6 +633,7 @@ class Pad(object):
         self._pad_img(results)
         self._pad_seg(results)
         self._pad_map(results)
+        self._pad_pos(results)
         return results
 
     def __repr__(self):
@@ -819,8 +844,11 @@ class RandomCrop(object):
             results[key] = self.crop(results[key], crop_bbox)
 
         # crop the map
-
         key = "vanishing_mask"
+        results[key] = self.crop(results[key], crop_bbox)
+
+        # crop pos emb
+        key = "pos_emb"
         results[key] = self.crop(results[key], crop_bbox)
 
         return results

@@ -3,6 +3,8 @@ from collections.abc import Sequence
 import mmcv
 import numpy as np
 import torch
+from torchvision.utils import save_image
+
 from mmcv.parallel import DataContainer as DC
 
 from ..builder import PIPELINES
@@ -95,9 +97,18 @@ class ImageToTensor(object):
             if len(img.shape) < 3:
                 img = np.expand_dims(img, -1)
             img = img.transpose(2, 0, 1)
-            mask = np.expand_dims(results["vanishing_mask"], axis=0)
-            img = np.concatenate([img, mask], axis=0)
+            if key == 'img':
+                mask = np.expand_dims(results["vanishing_mask"], axis=0)
+                pos_emb = np.expand_dims(results["pos_emb"], axis=0)
+                img = np.concatenate([img, mask, pos_emb], axis=0)
             results[key] = to_tensor(img).to(torch.float32)
+
+            # debug
+            if key == 'img':
+                save_image(img, 'debug/debug_img.png')
+                save_image(mask, 'debug/debug_depth_map.png')
+                save_image(pos_emb, 'debug/debug_pos_emb.png')
+
         return results
 
     def __repr__(self):
@@ -206,7 +217,8 @@ class DefaultFormatBundle(object):
                 img = np.expand_dims(img, -1)
             img = np.ascontiguousarray(img.transpose(2, 0, 1))
             mask = np.expand_dims(results["vanishing_mask"], axis=0)
-            img = np.concatenate([img, mask], axis=0)
+            pos_emb = np.expand_dims(results["pos_emb"], axis=0)
+            img = np.concatenate([img, mask, pos_emb], axis=0)
             # with open("/cluster/work/cvl/denfan/diandian/seg/SegFormer/hello.txt", "w") as my_file:
             #     my_file.write(str(img.shape))
             # asd

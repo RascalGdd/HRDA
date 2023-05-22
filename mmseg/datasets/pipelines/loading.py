@@ -43,6 +43,14 @@ def vanishing_point_to_depth_mask(vanishing_mode, vanishing_point, image_size, l
     x2_max = int(c2+W/2)
     return vanishing_point_to_depth_mask.template[x1_min:x1_max, x2_min:x2_max]
 
+def get_global_pos_emb(image_size):
+    if not hasattr(get_global_pos_emb, "image_size"):
+        get_global_pos_emb.image_size = image_size
+    if not hasattr(get_global_pos_emb, "pos_emb") or image_size != get_global_pos_emb.image_size:
+        total_size = int(image_size[0] * image_size[1])
+        idx_map = np.arange(total_size)
+        get_global_pos_emb.pos_emb = np.reshape(idx_map, (image_size[0],image_size[1])).astype(float)
+    return get_global_pos_emb.pos_emb
 
 @PIPELINES.register_module()
 class LoadImageFromFile(object):
@@ -123,10 +131,11 @@ class LoadImageFromFile(object):
         #     my_file.write("ori_file_name")
         #     my_file.write(str(results['ori_filename']))
 
-        vanishing_mask = vanishing_point_to_depth_mask(vanishing_mode, None, (img.shape[0], img.shape[1]))
-        # results["img"] = np.concatenate((results["img"], vanishing_mask), axis=2)
+        image_size = (img.shape[0], img.shape[1])
+        vanishing_mask = vanishing_point_to_depth_mask(vanishing_mode, None, image_size)
         results["vanishing_mask"] = vanishing_mask.astype(np.float32)
-
+        pos_emb = get_global_pos_emb(image_size)
+        results["pos_emb"] = pos_emb.astype(np.float32)
         return results
 
     def __repr__(self):
