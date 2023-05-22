@@ -215,7 +215,7 @@ class DefaultFormatBundle(object):
             img = np.concatenate([img, mask, pos_emb], axis=0)
 
             # debug
-            Image.fromarray(img.transpose(1, 2, 0)).save('debug/debug_img.jpg')
+            Image.fromarray(img[:3,:,:].transpose(1, 2, 0)).save('debug/debug_img.jpg')
             Image.fromarray(mask.transpose(1, 2, 0)).save('debug/debug_depth_map.png')
             Image.fromarray(pos_emb.transpose(1, 2, 0)).save('debug/debug_pos_emb.png')
 
