@@ -3,7 +3,7 @@ from collections.abc import Sequence
 import mmcv
 import numpy as np
 import torch
-from torchvision.utils import save_image
+from PIL import Image
 
 from mmcv.parallel import DataContainer as DC
 
@@ -215,9 +215,9 @@ class DefaultFormatBundle(object):
             img = np.concatenate([img, mask, pos_emb], axis=0)
 
             # debug
-            save_image(img, 'debug/debug_img.png')
-            save_image(mask, 'debug/debug_depth_map.png')
-            save_image(pos_emb, 'debug/debug_pos_emb.png')
+            Image.fromarray(img.transpose(1, 2, 0)).save('debug/debug_img.jpg')
+            Image.fromarray(mask.transpose(1, 2, 0)).save('debug/debug_depth_map.png')
+            Image.fromarray(pos_emb.transpose(1, 2, 0)).save('debug/debug_pos_emb.png')
 
             results['img'] = DC(to_tensor(img), stack=True)
         if 'gt_semantic_seg' in results:
