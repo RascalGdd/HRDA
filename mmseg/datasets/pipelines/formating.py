@@ -103,12 +103,6 @@ class ImageToTensor(object):
                 img = np.concatenate([img, mask, pos_emb], axis=0)
             results[key] = to_tensor(img).to(torch.float32)
 
-            # debug
-            if key == 'img':
-                save_image(img, 'debug/debug_img.png')
-                save_image(mask, 'debug/debug_depth_map.png')
-                save_image(pos_emb, 'debug/debug_pos_emb.png')
-
         return results
 
     def __repr__(self):
@@ -219,9 +213,12 @@ class DefaultFormatBundle(object):
             mask = np.expand_dims(results["vanishing_mask"], axis=0)
             pos_emb = np.expand_dims(results["pos_emb"], axis=0)
             img = np.concatenate([img, mask, pos_emb], axis=0)
-            # with open("/cluster/work/cvl/denfan/diandian/seg/SegFormer/hello.txt", "w") as my_file:
-            #     my_file.write(str(img.shape))
-            # asd
+
+            # debug
+            save_image(img, 'debug/debug_img.png')
+            save_image(mask, 'debug/debug_depth_map.png')
+            save_image(pos_emb, 'debug/debug_pos_emb.png')
+
             results['img'] = DC(to_tensor(img), stack=True)
         if 'gt_semantic_seg' in results:
             # convert to long
