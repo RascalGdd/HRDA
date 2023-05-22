@@ -242,6 +242,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         save_image(img[0,:3,:,:], 'debug/debug_img.png')
         save_image(img[0,3:4,:,:], 'debug/debug_depth_map.png')
         save_image(img[0,4:5,:,:], 'debug/debug_pos_emb.png')
+        print(img[0,4:5,::16,::16])
 
         losses = dict()
 

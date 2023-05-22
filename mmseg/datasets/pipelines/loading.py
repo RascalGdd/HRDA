@@ -125,11 +125,6 @@ class LoadImageFromFile(object):
             vanishing_mode = "night"
         else:
             vanishing_mode = "day"
-        # with open("/cluster/work/cvl/denfan/diandian/seg/SegFormer/hello.txt", "a") as my_file:
-        #     my_file.write("file_name")
-        #     my_file.write(str(results['filename']))
-        #     my_file.write("ori_file_name")
-        #     my_file.write(str(results['ori_filename']))
 
         image_size = (img.shape[0], img.shape[1])
         vanishing_mask = vanishing_point_to_depth_mask(vanishing_mode, None, image_size)
