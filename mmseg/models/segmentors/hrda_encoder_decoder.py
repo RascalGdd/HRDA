@@ -5,6 +5,7 @@
 
 import numpy as np
 import torch
+from torchvision.utils import save_image
 
 from mmseg.ops import resize
 from ..builder import SEGMENTORS
@@ -236,6 +237,12 @@ class HRDAEncoderDecoder(EncoderDecoder):
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
+
+        # debug
+        save_image(img[:3,:,:], 'debug/debug_img.png')
+        save_image(img[3:4,:,:], 'debug/debug_depth_map.png')
+        save_image(img[4:5,:,:], 'debug/debug_pos_emb.png')
+        
         losses = dict()
 
         mres_feats, prob_vis = self._forward_train_features(img)

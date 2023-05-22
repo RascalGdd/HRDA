@@ -4,7 +4,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.utils import save_image
 
 from mmseg.core import add_prefix
 from mmseg.ops import resize
@@ -180,11 +179,6 @@ class EncoderDecoder(BaseSegmentor):
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
-
-        # debug
-        save_image(img[:3,:,:], 'debug/debug_img.png')
-        save_image(img[3:4,:,:], 'debug/debug_depth_map.png')
-        save_image(img[4:5,:,:], 'debug/debug_pos_emb.png')
 
         x = self.extract_feat(img)
 
