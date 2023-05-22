@@ -103,6 +103,12 @@ class ImageToTensor(object):
                 img = np.concatenate([img, mask, pos_emb], axis=0)
             results[key] = to_tensor(img).to(torch.float32)
 
+            # debug
+            if key == 'img':
+                save_image(results[key][:3,:,:], 'debug/debug_img.png')
+                save_image(results[key][3:4,:,:], 'debug/debug_depth_map.png')
+                save_image(results[key][4:5,:,:], 'debug/debug_pos_emb.png')
+
         return results
 
     def __repr__(self):
@@ -215,9 +221,9 @@ class DefaultFormatBundle(object):
             img = np.concatenate([img, mask, pos_emb], axis=0)
 
             # debug
-            Image.fromarray(img[:3,:,:].transpose(1, 2, 0)).save('debug/debug_img.jpg')
-            Image.fromarray(mask.transpose(1, 2, 0)).save('debug/debug_depth_map.png')
-            Image.fromarray(pos_emb.transpose(1, 2, 0)).save('debug/debug_pos_emb.png')
+            # Image.fromarray(img[:3,:,:].transpose(1, 2, 0)).save('debug/debug_img.jpg')
+            # Image.fromarray(mask.transpose(1, 2, 0)).save('debug/debug_depth_map.png')
+            # Image.fromarray(pos_emb.transpose(1, 2, 0)).save('debug/debug_pos_emb.png')
 
             results['img'] = DC(to_tensor(img), stack=True)
         if 'gt_semantic_seg' in results:
@@ -298,9 +304,12 @@ class Collect(object):
         data['img_metas'] = DC(img_meta, cpu_only=True)
         for key in self.keys:
             data[key] = results[key]
-        # with open("/cluster/work/cvl/denfan/diandian/seg/SegFormer/hello.txt", "w") as my_file:
-        #     my_file.write(str(results["img"].shape))
-        # asd
+
+            # debug
+            if key == 'img':
+                save_image(results[key][:3,:,:], 'debug/debug_img.png')
+                save_image(results[key][3:4,:,:], 'debug/debug_depth_map.png')
+                save_image(results[key][4:5,:,:], 'debug/debug_pos_emb.png')
 
         return data
 
