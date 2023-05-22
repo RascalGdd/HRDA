@@ -1,6 +1,3 @@
-# Obtained from: https://github.com/open-mmlab/mmsegmentation/tree/v0.16.0
-# Modifications: Support valid_pseudo_mask
-
 from collections.abc import Sequence
 
 import mmcv
@@ -97,7 +94,10 @@ class ImageToTensor(object):
             img = results[key]
             if len(img.shape) < 3:
                 img = np.expand_dims(img, -1)
-            results[key] = to_tensor(img.transpose(2, 0, 1))
+            img = img.transpose(2, 0, 1)
+            mask = np.expand_dims(results["vanishing_mask"], axis=0)
+            img = np.concatenate([img, mask], axis=0)
+            results[key] = to_tensor(img).to(torch.float32)
         return results
 
     def __repr__(self):
@@ -205,6 +205,11 @@ class DefaultFormatBundle(object):
             if len(img.shape) < 3:
                 img = np.expand_dims(img, -1)
             img = np.ascontiguousarray(img.transpose(2, 0, 1))
+            mask = np.expand_dims(results["vanishing_mask"], axis=0)
+            img = np.concatenate([img, mask], axis=0)
+            # with open("/cluster/work/cvl/denfan/diandian/seg/SegFormer/hello.txt", "w") as my_file:
+            #     my_file.write(str(img.shape))
+            # asd
             results['img'] = DC(to_tensor(img), stack=True)
         if 'gt_semantic_seg' in results:
             # convert to long
@@ -212,9 +217,6 @@ class DefaultFormatBundle(object):
                 to_tensor(results['gt_semantic_seg'][None,
                                                      ...].astype(np.int64)),
                 stack=True)
-        if 'valid_pseudo_mask' in results:
-            results['valid_pseudo_mask'] = DC(
-                to_tensor(results['valid_pseudo_mask'][None, ...]), stack=True)
         return results
 
     def __repr__(self):
@@ -287,6 +289,10 @@ class Collect(object):
         data['img_metas'] = DC(img_meta, cpu_only=True)
         for key in self.keys:
             data[key] = results[key]
+        # with open("/cluster/work/cvl/denfan/diandian/seg/SegFormer/hello.txt", "w") as my_file:
+        #     my_file.write(str(results["img"].shape))
+        # asd
+
         return data
 
     def __repr__(self):
