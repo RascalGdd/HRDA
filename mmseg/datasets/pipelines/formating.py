@@ -305,12 +305,6 @@ class Collect(object):
         for key in self.keys:
             data[key] = results[key]
 
-            # debug
-            if key == 'img':
-                save_image(results[key][:3,:,:], 'debug/debug_img.png')
-                save_image(results[key][3:4,:,:], 'debug/debug_depth_map.png')
-                save_image(results[key][4:5,:,:], 'debug/debug_pos_emb.png')
-
         return data
 
     def __repr__(self):
