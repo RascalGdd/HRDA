@@ -3,7 +3,7 @@ from collections.abc import Sequence
 import mmcv
 import numpy as np
 import torch
-from PIL import Image
+from torchvision.utils import save_image
 
 from mmcv.parallel import DataContainer as DC
 
