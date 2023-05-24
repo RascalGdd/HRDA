@@ -469,7 +469,7 @@ class TransHead(BaseDecodeHead):
             weight_init.c2_xavier_fill(self.input_proj[-1])
 
         for in_channels in self.in_channels:
-            self.mask_feature_proj.append(Conv2d(in_channels+self.glob_pos_emb_dim, hidden_dim, kernel_size=1))
+            self.mask_feature_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
             weight_init.c2_xavier_fill(self.mask_feature_proj[-1])
 
         self.out_proj = ConvModule(
@@ -549,7 +549,7 @@ class TransHead(BaseDecodeHead):
         mask_feats = []
         for i in range(self.num_feature_levels):
             # mmcv.print_log(f'{i}: {x[i].shape}, {self.linear_c[str(i)]}')
-            feat = self.mask_feature_proj[i](torch.cat([x[i], pos_embs[i]], dim=1))
+            feat = self.mask_feature_proj[i](x[i])
             if i != 0:
                 feat = resize(
                     feat,
