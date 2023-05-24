@@ -615,6 +615,7 @@ class Pad(object):
     def _pad_pos(self, results):
         """Pad pos embs according to ``results['pad_shape']``."""
         key = "pos_emb"
+        print(results[key].shape)
         results[key] = mmcv.impad(
             results[key],
             shape=results['pad_shape'][:2],
