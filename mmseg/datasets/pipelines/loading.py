@@ -43,31 +43,31 @@ def vanishing_point_to_depth_mask(vanishing_mode, vanishing_point, image_size, l
     x2_max = int(c2+W/2)
     return vanishing_point_to_depth_mask.template[x1_min:x1_max, x2_min:x2_max]
 
-def get_global_pos_emb(image_size, emb_dim):
-    if not hasattr(get_global_pos_emb, "image_size"):
-        get_global_pos_emb.image_size = image_size
-    if not hasattr(get_global_pos_emb, "pos") or image_size != get_global_pos_emb.image_size:
-        temperature = 10000
-        half_emb_dim = emb_dim // 2
-        mask = torch.zeros((image_size[0],image_size[1]), dtype=int)
-        not_mask = 1 - mask
-        y_embed = not_mask.cumsum(0, dtype=torch.float32)
-        x_embed = not_mask.cumsum(1, dtype=torch.float32)
-        dim_t = torch.arange(half_emb_dim, dtype=torch.float32)
-        dim_t = temperature ** (2 * (dim_t // 2) / half_emb_dim)
-        pos_x = x_embed[:, :, None] / dim_t
-        pos_y = y_embed[:, :, None] / dim_t
-        pos_x = torch.stack(
-            (pos_x[:, :, 0::2].sin(), pos_x[:, :, 1::2].cos()), dim=3
-        ).flatten(2)
-        pos_y = torch.stack(
-            (pos_y[:, :, 0::2].sin(), pos_y[:, :, 1::2].cos()), dim=3
-        ).flatten(2)
+# def get_global_pos_emb(image_size, emb_dim):
+#     if not hasattr(get_global_pos_emb, "image_size"):
+#         get_global_pos_emb.image_size = image_size
+#     if not hasattr(get_global_pos_emb, "pos") or image_size != get_global_pos_emb.image_size:
+#         temperature = 10000
+#         half_emb_dim = emb_dim // 2
+#         mask = torch.zeros((image_size[0],image_size[1]), dtype=int)
+#         not_mask = 1 - mask
+#         y_embed = not_mask.cumsum(0, dtype=torch.float32)
+#         x_embed = not_mask.cumsum(1, dtype=torch.float32)
+#         dim_t = torch.arange(half_emb_dim, dtype=torch.float32)
+#         dim_t = temperature ** (2 * (dim_t // 2) / half_emb_dim)
+#         pos_x = x_embed[:, :, None] / dim_t
+#         pos_y = y_embed[:, :, None] / dim_t
+#         pos_x = torch.stack(
+#             (pos_x[:, :, 0::2].sin(), pos_x[:, :, 1::2].cos()), dim=3
+#         ).flatten(2)
+#         pos_y = torch.stack(
+#             (pos_y[:, :, 0::2].sin(), pos_y[:, :, 1::2].cos()), dim=3
+#         ).flatten(2)
 
-        get_global_pos_emb.pos = torch.cat((pos_y, pos_x), dim=2) #(H, W, D)
-        get_global_pos_emb.pos = get_global_pos_emb.pos.numpy()
+#         get_global_pos_emb.pos = torch.cat((pos_y, pos_x), dim=2) #(H, W, D)
+#         get_global_pos_emb.pos = get_global_pos_emb.pos.numpy()
 
-    return get_global_pos_emb.pos
+#     return get_global_pos_emb.pos
 
 # def get_global_pos_emb(image_size):
 #     if not hasattr(get_global_pos_emb, "image_size"):
@@ -80,14 +80,15 @@ def get_global_pos_emb(image_size, emb_dim):
 #             get_global_pos_emb.pos_emb[h,:] = idx_map[h*image_size[1]:(h+1)*image_size[1]]
 #     return get_global_pos_emb.pos_emb
 
-# def get_global_pos_emb(image_size):
-#     if not hasattr(get_global_pos_emb, "image_size"):
-#         get_global_pos_emb.image_size = image_size
-#     if not hasattr(get_global_pos_emb, "pos_emb") or image_size != get_global_pos_emb.image_size:
-#         total_size = int(image_size[0] * image_size[1])
-#         idx_map = np.arange(total_size, dtype=float)
-#         get_global_pos_emb.pos_emb = np.reshape(idx_map, (image_size[0],image_size[1]))
-#     return get_global_pos_emb.pos_emb
+def get_global_pos_emb(image_size):
+    if not hasattr(get_global_pos_emb, "image_size"):
+        get_global_pos_emb.image_size = image_size
+    if not hasattr(get_global_pos_emb, "pos_emb") or image_size != get_global_pos_emb.image_size:
+        H, W = int(image_size[0]), int(image_size[1])
+        total_size = int(H * W)
+        idx_map = torch.arange(total_size).view(H,W)
+        get_global_pos_emb.pos_emb = idx_map.numpy()
+    return get_global_pos_emb.pos_emb
 
 @PIPELINES.register_module()
 class LoadImageFromFile(object):
@@ -166,7 +167,7 @@ class LoadImageFromFile(object):
         image_size = (img.shape[0], img.shape[1])
         vanishing_mask = vanishing_point_to_depth_mask(vanishing_mode, None, image_size)
         results["vanishing_mask"] = vanishing_mask.astype(np.float32)
-        pos_emb = get_global_pos_emb(image_size, 64)
+        pos_emb = get_global_pos_emb(image_size)
         results["pos_emb"] = pos_emb.astype(np.float32)
         return results
 

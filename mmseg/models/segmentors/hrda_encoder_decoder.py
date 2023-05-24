@@ -44,6 +44,51 @@ def crop(img, crop_bbox):
         raise NotImplementedError(img.dim())
     return img
 
+class GlobalPosEmbedding(nn.Module):
+
+    def __init__(self, image_size = (1024, 2048), emb_dim = 64):
+        super().__init__()
+        self.image_size = image_size
+        self.H, self.W = int(image_size[0]), int(image_size[1])
+        temperature = 10000
+        self.emb_dim = emb_dim
+        self.half_emb_dim = emb_dim // 2
+        mask = torch.zeros((image_size[0],image_size[1]), dtype=int)
+        not_mask = 1 - mask
+        y_embed = not_mask.cumsum(0, dtype=torch.float32)
+        x_embed = not_mask.cumsum(1, dtype=torch.float32)
+        dim_t = torch.arange(self.half_emb_dim, dtype=torch.float32)
+        dim_t = temperature ** (2 * (dim_t // 2) / self.half_emb_dim)
+        pos_x = x_embed[:, :, None] / dim_t
+        pos_y = y_embed[:, :, None] / dim_t
+        pos_x = torch.stack(
+            (pos_x[:, :, 0::2].sin(), pos_x[:, :, 1::2].cos()), dim=3
+        ).flatten(2)
+        pos_y = torch.stack(
+            (pos_y[:, :, 0::2].sin(), pos_y[:, :, 1::2].cos()), dim=3
+        ).flatten(2)
+
+        pe = torch.cat((pos_y, pos_x), dim=2).permute(2,0,1) #(D, H, W)
+        self.register_buffer('pe', pe)
+
+    def forward(self, id_map):
+        # id_map: [B, 1, H, W]
+        batch_size, _, input_H, input_W = id_map.shape
+        pe_all = torch.zeros_like(id_map).repeat(1,self.emb_dim,1,1)
+        id_map = id_map.to(int)
+        for b in range(batch_size):
+            this_id_map = id_map.to(int)[b,0,:,:]
+
+            print(this_id_map.shape)
+            print(this_id_map)
+            this_H_ids = this_id_map[:,0] // self.W
+            this_W_ids = this_id_map[0,:] % self.W
+
+            print(this_H_ids, this_W_ids)
+
+            pe_all[b,:,:,:] = self.pe[:,this_H_ids, this_W_ids]
+        return pe_all
+
 # class GlobalPosEmbedding(nn.Module):
 
 #     def __init__(self, image_size = (1024, 2048), emb_dim = 64):
