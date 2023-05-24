@@ -46,7 +46,7 @@ def crop(img, crop_bbox):
 
 class GlobalPosEmbedding(nn.Module):
 
-    def __init__(self, image_size = (1024, 2048), emb_dim = 64):
+    def __init__(self, image_size = (1024, 2048), emb_dim = 32):
         super().__init__()
         self.image_size = image_size
         self.H, self.W = int(image_size[0]), int(image_size[1])
@@ -187,14 +187,15 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
 
-        self.global_pos_emb = GlobalPosEmbedding(image_size = (1024, 2048), emb_dim = 64)
+        self.global_pos_emb = GlobalPosEmbedding(image_size = (1024, 2048), emb_dim = 32)
 
     # Debug: add pos emb
     def extract_unscaled_feat(self, img):
         x = self.backbone(img[:,:3,:,:])
         if self.with_neck:
             x = self.neck(x)
-        pos_emb = self.global_pos_emb(img[:,4:5,:,:])
+        with torch.no_grad():
+            pos_emb = self.global_pos_emb(img[:,4:5,:,:])
         x.append(pos_emb)
         return x
 

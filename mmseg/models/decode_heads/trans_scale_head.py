@@ -451,7 +451,7 @@ class TransHead(BaseDecodeHead):
         self.transformer_ffn_layers = nn.ModuleList()
         self.decoder_norm = nn.LayerNorm(hidden_dim)
         self.in_channels = [64, 128, 320, 512]
-        self.glob_pos_emb_dim = 64
+        self.glob_pos_emb_dim = 32
 
         self.num_queries = 19
         # learnable query features
