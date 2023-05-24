@@ -188,7 +188,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
 
-        # self.global_pos_emb = GlobalPosEmbedding(image_size = (1024, 2048), emb_dim = 64)
+        self.global_pos_emb = GlobalPosEmbedding(image_size = (1024, 2048), emb_dim = 64)
 
     def extract_unscaled_feat(self, img):
         x = self.backbone(img)
@@ -343,9 +343,9 @@ class HRDAEncoderDecoder(EncoderDecoder):
         # debug
         save_image(img[0,:3,:,:], 'debug/debug_img.png')
         save_image(img[0,3:4,:,:], 'debug/debug_depth_map.png')
-        print(img[0,4,:,:].shape)
+        save_image(img[0,4:5,:,:]/(1.0*1024*2048), 'debug/debug_pos_emb.png')
 
-        pos_emb = img[0,4:,:,:]
+        pos_emb = self.global_pos_emb(img[:,4:5,:,:])
         for i in range(64):
             save_image(pos_emb[0,i:i+1,:,:], 'debug/debug_pos_emb_{}.png'.format(i))
 
