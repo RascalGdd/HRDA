@@ -461,11 +461,15 @@ class TransHead(BaseDecodeHead):
         # level embedding (we always use 4 scales)
         self.num_feature_levels = 4
         self.level_embed = nn.Embedding(self.num_feature_levels, hidden_dim)
+        self.level_embed_hr = nn.Embedding(self.num_feature_levels, hidden_dim)
         self.input_proj = nn.ModuleList()
+        self.input_proj_hr = nn.ModuleList()
         self.mask_feature_proj = nn.ModuleList()
         for in_channels in [64, 128, 320, 512]:
             self.input_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
             weight_init.c2_xavier_fill(self.input_proj[-1])
+            self.input_proj_hr.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
+            weight_init.c2_xavier_fill(self.input_proj_hr[-1])
 
         for in_channels in [64, 128, 320, 512]:
             self.mask_feature_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
@@ -524,13 +528,15 @@ class TransHead(BaseDecodeHead):
         # torch.Size([1, 128, 64, 64])
         # torch.Size([1, 320, 32, 32])
         # torch.Size([1, 512, 16, 16])
-        assert len(x) == self.num_feature_levels
+        assert len(x) == self.num_feature_levels * 2
+        x, y = x[:self.num_feature_levels], x[self.num_feature_levels:]
         src = []
         pos = []
-        size_list = []
+
+        src_hr = []
+        pos_hr = []
 
         for i in range(self.num_feature_levels):
-            size_list.append(x[i].shape[-2:])
             pos.append(self.pe_layer(x[i], None).flatten(2))
             src.append(self.input_proj[i](x[i]).flatten(2) + self.level_embed.weight[i][None, :, None])
 
@@ -538,7 +544,13 @@ class TransHead(BaseDecodeHead):
             pos[-1] = pos[-1].permute(2, 0, 1)
             src[-1] = src[-1].permute(2, 0, 1)
 
-        # mask_features = self.input_proj[0](x[0])
+        for j in range(self.num_feature_levels):
+            pos_hr.append(self.pe_layer(y[j], None).flatten(2))
+            src_hr.append(self.input_proj_hr[j](y[j]).flatten(2) + self.level_embed_hr.weight[j][None, :, None])
+
+            # flatten NxCxHxW to HWxNxC
+            pos_hr[-1] = pos_hr[-1].permute(2, 0, 1)
+            src_hr[-1] = src_hr[-1].permute(2, 0, 1)
 
         mask_feats = []
         for i in range(self.num_feature_levels):
@@ -571,6 +583,12 @@ class TransHead(BaseDecodeHead):
                 output, src[level_index],
                 pos=pos[level_index], query_pos=query_embed
             )
+
+            output = self.transformer_cross_attention_layers[i](
+                output, src_hr[level_index],
+                pos=pos_hr[level_index], query_pos=query_embed
+            )
+
 
             output = self.transformer_self_attention_layers[i](
                 output,

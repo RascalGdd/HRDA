@@ -144,6 +144,18 @@ class HRDAHead(BaseDecodeHead):
             att = self.fixed_attention
         return att
 
+    def get_scale_attention_combined(self, inp):
+        if isinstance(inp[], dict) and 'boxes' in inp.keys():
+
+
+
+
+        if self.scale_attention is not None:
+            att = torch.sigmoid(self.scale_attention(inp))
+        else:
+            att = self.fixed_attention
+        return att
+
     def forward(self, inputs):
         assert len(inputs) == 2
         hr_inp = inputs[1]
@@ -152,6 +164,10 @@ class HRDAHead(BaseDecodeHead):
         lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
         for i in lr_sc_att_inp:
             i.detach()
+        hr_sc_att_inp = inputs[1]  # separate var necessary for stack hr_fusion
+        for j in hr_sc_att_inp:
+            j.detach()
+        total_sc_att_inp = lr_sc_att_inp + hr_sc_att_inp
         lr_scale = self.scales[0]
         batch_size = lr_inp[0].shape[0]
         assert lr_scale <= hr_scale
@@ -166,7 +182,8 @@ class HRDAHead(BaseDecodeHead):
 
         hr_seg = self.decode_hr(hr_inp, batch_size)
 
-        att = self.get_scale_attention(lr_sc_att_inp)
+        # att = self.get_scale_attention(lr_sc_att_inp)
+        att = self.get_scale_attention_combined(total_sc_att_inp)
         if has_crop:
             mask = lr_seg.new_zeros([lr_seg.shape[0], 1, *lr_seg.shape[2:]])
             sc_os = self.os / lr_scale
