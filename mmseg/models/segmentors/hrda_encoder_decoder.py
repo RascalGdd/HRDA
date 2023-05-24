@@ -294,7 +294,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         save_image(img[0,4:5,:,:]/(1024*1024*1.0), 'debug/debug_pos_emb.png')
         print(img[0,4:5,::16,::16])
 
-        pos_emb = self.global_pos_emb(img[0,4:5,:,:])
+        pos_emb = self.global_pos_emb(img[:,4:5,:,:])
         for i in range(64):
             save_image(pos_emb[0,i:i+1,:,:], 'debug/debug_pos_emb_{}.png'.format(i))
 
