@@ -80,20 +80,10 @@ class GlobalPosEmbedding(nn.Module):
         for b in range(batch_size):
             this_id_map = id_map[b,0,:,:]
             zero_emb_ids = this_id_map[this_id_map == -1]
-
-            print(this_id_map.shape)
-            print(this_id_map)
             this_H_ids = this_id_map[:,0] // self.W
             this_W_ids = this_id_map[0,:] % self.W
-
-            print(this_H_ids, this_W_ids)
-            print(this_H_ids.shape, this_W_ids.shape)
-
             this_pe = torch.index_select(self.pe, 1, this_H_ids)
-            print(this_pe.shape)
             this_pe = torch.index_select(this_pe, 2, this_W_ids)
-            print(this_pe.shape)
-            print(pe_all[b,:,:,:].shape)
             pe_all[b,:,:,:] = this_pe * 1.0
             pe_all[b,:,zero_emb_ids] *= 0
         return pe_all
@@ -199,11 +189,13 @@ class HRDAEncoderDecoder(EncoderDecoder):
 
         self.global_pos_emb = GlobalPosEmbedding(image_size = (1024, 2048), emb_dim = 64)
 
+    # Debug: add pos emb
     def extract_unscaled_feat(self, img):
-        x = self.backbone(img)
+        x = self.backbone(img[:,:3,:,:])
         if self.with_neck:
             x = self.neck(x)
-        return x
+        pos_emb = self.global_pos_emb(img[:,4:5,:,:])
+        return torch.cat([x,pos_emb], dim=1)
 
     def extract_slide_feat(self, img):
         if self.hr_slide_overlapping:
@@ -349,14 +341,14 @@ class HRDAEncoderDecoder(EncoderDecoder):
             dict[str, Tensor]: a dictionary of loss components
         """
 
-        # debug
-        save_image(img[0,:3,:,:], 'debug/debug_img.png')
-        save_image(img[0,3:4,:,:], 'debug/debug_depth_map.png')
-        save_image(img[0,4:5,:,:]/(1.0*1024*2048), 'debug/debug_pos_emb.png')
+        # # debug
+        # save_image(img[0,:3,:,:], 'debug/debug_img.png')
+        # save_image(img[0,3:4,:,:], 'debug/debug_depth_map.png')
+        # save_image(img[0,4:5,:,:]/(1.0*1024*2048), 'debug/debug_pos_emb.png')
 
-        pos_emb = self.global_pos_emb(img[:,4:5,:,:])
-        for i in range(64):
-            save_image(pos_emb[0,i:i+1,:,:], 'debug/debug_pos_emb_{}.png'.format(i))
+        # pos_emb = self.global_pos_emb(img[:,4:5,:,:])
+        # for i in range(64):
+        #     save_image(pos_emb[0,i:i+1,:,:], 'debug/debug_pos_emb_{}.png'.format(i))
 
         losses = dict()
 
