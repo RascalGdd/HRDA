@@ -618,7 +618,7 @@ class Pad(object):
         results[key] = mmcv.impad(
             results[key],
             shape=results['pad_shape'][:2],
-            pad_val=-1)
+            pad_val=[-1]*64)
 
     def __call__(self, results):
         """Call function to pad images, masks, semantic segmentation maps.
