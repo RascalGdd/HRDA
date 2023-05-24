@@ -452,7 +452,6 @@ class Resize(object):
         """Resize semantic segmentation map with ``results['scale']``."""
         key = "pos_emb"
         if self.keep_ratio:
-            for 
             pos_emb = mmcv.imrescale(
                 results[key], results['scale'], interpolation='nearest')
         else:
