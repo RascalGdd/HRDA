@@ -48,12 +48,13 @@ def get_global_pos_emb(image_size, emb_dim):
         get_global_pos_emb.image_size = image_size
     if not hasattr(get_global_pos_emb, "pos") or image_size != get_global_pos_emb.image_size:
         temperature = 10000
+        half_emb_dim = emb_dim // 2
         mask = torch.zeros((image_size[0],image_size[1]), dtype=int)
         not_mask = 1 - mask
         y_embed = not_mask.cumsum(0, dtype=torch.float32)
         x_embed = not_mask.cumsum(1, dtype=torch.float32)
-        dim_t = torch.arange(emb_dim, dtype=torch.float32)
-        dim_t = temperature ** (2 * (dim_t // 2) / emb_dim)
+        dim_t = torch.arange(half_emb_dim, dtype=torch.float32)
+        dim_t = temperature ** (2 * (dim_t // 2) / half_emb_dim)
         pos_x = x_embed[:, :, None] / dim_t
         pos_y = y_embed[:, :, None] / dim_t
         pos_x = torch.stack(
