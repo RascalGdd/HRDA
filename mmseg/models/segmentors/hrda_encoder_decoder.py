@@ -54,8 +54,8 @@ class GlobalPosEmbedding(nn.Module):
         half_emb_dim = emb_dim // 2
         self.half_emb_dim = half_emb_dim
 
-        position_H = torch.arange(self.H).unsqueeze(1)
-        position_W = torch.arange(self.W).unsqueeze(1)
+        position_H = torch.arange(self.H).unsqueeze(0)
+        position_W = torch.arange(self.W).unsqueeze(0)
         div_term = torch.exp(torch.arange(0, half_emb_dim, 2) * (-math.log(10000.0) / half_emb_dim))
         pe_H = torch.zeros(half_emb_dim, self.H)
         pe_W = torch.zeros(half_emb_dim, self.W)
