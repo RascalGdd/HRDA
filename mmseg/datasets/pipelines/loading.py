@@ -165,7 +165,7 @@ class LoadImageFromFile(object):
         image_size = (img.shape[0], img.shape[1])
         vanishing_mask = vanishing_point_to_depth_mask(vanishing_mode, None, image_size)
         results["vanishing_mask"] = vanishing_mask.astype(np.float32)
-        pos_emb = get_global_pos_emb(image_size)
+        pos_emb = get_global_pos_emb(image_size, 64)
         results["pos_emb"] = pos_emb.astype(np.float32)
         return results
 
