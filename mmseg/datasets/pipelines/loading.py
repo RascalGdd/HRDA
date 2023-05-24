@@ -43,16 +43,25 @@ def vanishing_point_to_depth_mask(vanishing_mode, vanishing_point, image_size, l
     x2_max = int(c2+W/2)
     return vanishing_point_to_depth_mask.template[x1_min:x1_max, x2_min:x2_max]
 
+# def get_global_pos_emb(image_size):
+#     if not hasattr(get_global_pos_emb, "image_size"):
+#         get_global_pos_emb.image_size = image_size
+#     if not hasattr(get_global_pos_emb, "pos_emb") or image_size != get_global_pos_emb.image_size:
+#         total_size = int(image_size[0] * image_size[1])
+#         idx_map = np.arange(total_size, dtype=float)
+#         get_global_pos_emb.pos_emb = np.zeros((image_size[0],image_size[1]), dtype=float)
+#         for h in range(image_size[0]):
+#             get_global_pos_emb.pos_emb[h,:] = idx_map[h*image_size[1]:(h+1)*image_size[1]]
+
+#     return get_global_pos_emb.pos_emb
+
 def get_global_pos_emb(image_size):
     if not hasattr(get_global_pos_emb, "image_size"):
         get_global_pos_emb.image_size = image_size
     if not hasattr(get_global_pos_emb, "pos_emb") or image_size != get_global_pos_emb.image_size:
         total_size = int(image_size[0] * image_size[1])
         idx_map = np.arange(total_size, dtype=float)
-        get_global_pos_emb.pos_emb = np.zeros((image_size[0],image_size[1]), dtype=float)
-        for h in range(image_size[0]):
-            get_global_pos_emb.pos_emb[h,:] = idx_map[h*image_size[1]:(h+1)*image_size[1]]
-
+        get_global_pos_emb.pos_emb = np.reshape(idx_map, (image_size[0],image_size[1]))
     return get_global_pos_emb.pos_emb
 
 @PIPELINES.register_module()
