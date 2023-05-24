@@ -79,6 +79,7 @@ class GlobalPosEmbedding(nn.Module):
         id_map = id_map.to(int)
         for b in range(batch_size):
             this_id_map = id_map[b,0,:,:]
+            zero_emb_ids = this_id_map[this_id_map == -1]
 
             print(this_id_map.shape)
             print(this_id_map)
@@ -94,6 +95,7 @@ class GlobalPosEmbedding(nn.Module):
             print(this_pe.shape)
             print(pe_all[b,:,:,:].shape)
             pe_all[b,:,:,:] = this_pe * 1.0
+            pe_all[b,:,zero_emb_ids] *= 0
         return pe_all
 
 # class GlobalPosEmbedding(nn.Module):
