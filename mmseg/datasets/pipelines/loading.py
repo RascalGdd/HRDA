@@ -63,7 +63,7 @@ def get_global_pos_emb(image_size, emb_dim):
             (pos_y[:, :, 0::2].sin(), pos_y[:, :, 1::2].cos()), dim=3
         ).flatten(2)
 
-        get_global_pos_emb.pos = torch.cat((pos_y, pos_x), dim=2).permute(2, 0, 1) #(D, H, W)
+        get_global_pos_emb.pos = torch.cat((pos_y, pos_x), dim=2) #(H, W, D)
         get_global_pos_emb.pos = get_global_pos_emb.pos.numpy()
 
     return get_global_pos_emb.pos
