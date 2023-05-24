@@ -83,9 +83,9 @@ class GlobalPosEmbedding(nn.Module):
 
         for b in range(batch_size):
             min_1D_id = torch.min(id_map[b])
-            h_min, w_min = min_1D_id % self.H, min_1D_id % self.W
+            h_min, w_min = int(min_1D_id / self.H), int(min_1D_id / self.W)
             max_1D_id = torch.max(id_map[b])
-            h_max, w_max = max_1D_id % self.H, max_1D_id % self.W
+            h_max, w_max = int(max_1D_id / self.H), int(max_1D_id / self.W)
 
             this_pe_H = self.pe_H[:,h_min:h_max].unsqueeze(-1).repeat(1,1,input_W)
             this_pe_W = self.pe_W[:,w_min:w_max].unsqueeze(-2).repeat(1,input_H,1)
