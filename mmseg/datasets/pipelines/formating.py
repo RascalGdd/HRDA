@@ -99,7 +99,7 @@ class ImageToTensor(object):
             img = img.transpose(2, 0, 1)
             if key == 'img':
                 mask = np.expand_dims(results["vanishing_mask"], axis=0)
-                pos_emb = np.expand_dims(results["pos_emb"], axis=0)
+                pos_emb = results["pos_emb"]
                 img = np.concatenate([img, mask, pos_emb], axis=0)
             results[key] = to_tensor(img).to(torch.float32)
 

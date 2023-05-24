@@ -44,59 +44,59 @@ def crop(img, crop_bbox):
         raise NotImplementedError(img.dim())
     return img
 
-class GlobalPosEmbedding(nn.Module):
+# class GlobalPosEmbedding(nn.Module):
 
-    def __init__(self, image_size = (1024, 2048), emb_dim = 64):
-        super().__init__()
-        self.H, self.W = image_size
-        self.emb_dim = emb_dim
+#     def __init__(self, image_size = (1024, 2048), emb_dim = 64):
+#         super().__init__()
+#         self.H, self.W = image_size
+#         self.emb_dim = emb_dim
 
-        half_emb_dim = emb_dim // 2
-        self.half_emb_dim = half_emb_dim
+#         half_emb_dim = emb_dim // 2
+#         self.half_emb_dim = half_emb_dim
 
-        position_H = torch.arange(self.H).unsqueeze(0).to(float)
-        position_W = torch.arange(self.W).unsqueeze(0).to(float)
-        div_term = torch.exp(torch.arange(0, half_emb_dim, 2) * (-math.log(10000.0) / half_emb_dim)).unsqueeze(1).to(float)
+#         position_H = torch.arange(self.H).unsqueeze(0).to(float)
+#         position_W = torch.arange(self.W).unsqueeze(0).to(float)
+#         div_term = torch.exp(torch.arange(0, half_emb_dim, 2) * (-math.log(10000.0) / half_emb_dim)).unsqueeze(1).to(float)
 
-        print(position_H.shape, position_W.shape, div_term.shape)
+#         print(position_H.shape, position_W.shape, div_term.shape)
 
-        pe_H = torch.zeros(half_emb_dim, self.H)
-        pe_W = torch.zeros(half_emb_dim, self.W)
-        pe_H[0::2, :] = torch.sin(div_term @ position_H)
-        pe_H[1::2, :] = torch.cos(div_term @ position_H)
-        pe_W[0::2, :] = torch.sin(div_term @ position_W)
-        pe_W[1::2, :] = torch.cos(div_term @ position_W)
+#         pe_H = torch.zeros(half_emb_dim, self.H)
+#         pe_W = torch.zeros(half_emb_dim, self.W)
+#         pe_H[0::2, :] = torch.sin(div_term @ position_H)
+#         pe_H[1::2, :] = torch.cos(div_term @ position_H)
+#         pe_W[0::2, :] = torch.sin(div_term @ position_W)
+#         pe_W[1::2, :] = torch.cos(div_term @ position_W)
 
-        self.register_buffer('pe_H', pe_H)
-        self.register_buffer('pe_W', pe_W)
+#         self.register_buffer('pe_H', pe_H)
+#         self.register_buffer('pe_W', pe_W)
 
-    def forward(self, id_map):
-        """
-        Arguments:
-            id_map: Tensor, shape ``[B, 1, H, W]``
-        """
-        batch_size, _, input_H, input_W = id_map.shape
-        pe_all = torch.zeros_like(id_map).repeat(1,self.emb_dim,1,1)
-        id_map = id_map.to(int)
-        min_ids = []
-        max_ids = []
+#     def forward(self, id_map):
+#         """
+#         Arguments:
+#             id_map: Tensor, shape ``[B, 1, H, W]``
+#         """
+#         batch_size, _, input_H, input_W = id_map.shape
+#         pe_all = torch.zeros_like(id_map).repeat(1,self.emb_dim,1,1)
+#         id_map = id_map.to(int)
+#         min_ids = []
+#         max_ids = []
 
-        for b in range(batch_size):
-            min_1D_id = torch.min(id_map[b])
-            h_min, w_min = int(min_1D_id / self.W), min_1D_id % self.W
-            max_1D_id = torch.max(id_map[b])
-            h_max, w_max = int(max_1D_id / self.W), max_1D_id % self.W
+#         for b in range(batch_size):
+#             min_1D_id = torch.min(id_map[b])
+#             h_min, w_min = int(min_1D_id / self.W), min_1D_id % self.W
+#             max_1D_id = torch.max(id_map[b])
+#             h_max, w_max = int(max_1D_id / self.W), max_1D_id % self.W
 
-            this_pe_H = self.pe_H[:,h_min:h_max].unsqueeze(-1).repeat(1,1,input_W)
-            this_pe_W = self.pe_W[:,w_min:w_max].unsqueeze(-2).repeat(1,input_H,1)
+#             this_pe_H = self.pe_H[:,h_min:h_max].unsqueeze(-1).repeat(1,1,input_W)
+#             this_pe_W = self.pe_W[:,w_min:w_max].unsqueeze(-2).repeat(1,input_H,1)
 
-            print(h_min, h_max, h_max-h_min, w_min, w_max, w_max-w_min)
-            print(this_pe_H.shape, this_pe_W.shape, pe_all[b,:self.half_emb_dim,:,:].shape, pe_all[b,self.half_emb_dim:,:,:].shape)
+#             print(h_min, h_max, h_max-h_min, w_min, w_max, w_max-w_min)
+#             print(this_pe_H.shape, this_pe_W.shape, pe_all[b,:self.half_emb_dim,:,:].shape, pe_all[b,self.half_emb_dim:,:,:].shape)
 
-            pe_all[b,:self.half_emb_dim,:,:] += this_pe_H
-            pe_all[b,self.half_emb_dim:,:,:] += this_pe_W
+#             pe_all[b,:self.half_emb_dim,:,:] += this_pe_H
+#             pe_all[b,self.half_emb_dim:,:,:] += this_pe_W
 
-        return pe_all
+#         return pe_all
 
 @SEGMENTORS.register_module()
 class HRDAEncoderDecoder(EncoderDecoder):
@@ -143,7 +143,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
 
-        self.global_pos_emb = GlobalPosEmbedding(image_size = (1024, 2048), emb_dim = 64)
+        # self.global_pos_emb = GlobalPosEmbedding(image_size = (1024, 2048), emb_dim = 64)
 
     def extract_unscaled_feat(self, img):
         x = self.backbone(img)
@@ -298,10 +298,9 @@ class HRDAEncoderDecoder(EncoderDecoder):
         # debug
         save_image(img[0,:3,:,:], 'debug/debug_img.png')
         save_image(img[0,3:4,:,:], 'debug/debug_depth_map.png')
-        save_image(img[0,4:5,:,:]/(1024*1024*1.0), 'debug/debug_pos_emb.png')
-        print(img[0,4:5,:,:])
+        print(img[0,4,:,:].shape)
 
-        pos_emb = self.global_pos_emb(img[:,4:5,:,:])
+        pos_emb = img[0,4:,:,:]
         for i in range(64):
             save_image(pos_emb[0,i:i+1,:,:], 'debug/debug_pos_emb_{}.png'.format(i))
 

@@ -43,17 +43,41 @@ def vanishing_point_to_depth_mask(vanishing_mode, vanishing_point, image_size, l
     x2_max = int(c2+W/2)
     return vanishing_point_to_depth_mask.template[x1_min:x1_max, x2_min:x2_max]
 
-def get_global_pos_emb(image_size):
+def get_global_pos_emb(image_size, emb_dim):
     if not hasattr(get_global_pos_emb, "image_size"):
         get_global_pos_emb.image_size = image_size
-    if not hasattr(get_global_pos_emb, "pos_emb") or image_size != get_global_pos_emb.image_size:
-        total_size = int(image_size[0] * image_size[1])
-        idx_map = np.arange(total_size).astype(float)
-        get_global_pos_emb.pos_emb = np.zeros((image_size[0],image_size[1]), dtype=float)
-        for h in range(image_size[0]):
-            get_global_pos_emb.pos_emb[h,:] = idx_map[h*image_size[1]:(h+1)*image_size[1]]
+    if not hasattr(get_global_pos_emb, "pos") or image_size != get_global_pos_emb.image_size:
+        temperature = 10000
+        mask = torch.zeros((image_size[0],image_size[1]), dtype=int)
+        not_mask = 1 - mask
+        y_embed = not_mask.cumsum(0, dtype=torch.float32)
+        x_embed = not_mask.cumsum(1, dtype=torch.float32)
+        dim_t = torch.arange(emb_dim, dtype=torch.float32)
+        dim_t = temperature ** (2 * (dim_t // 2) / emb_dim)
+        pos_x = x_embed[:, :, None] / dim_t
+        pos_y = y_embed[:, :, None] / dim_t
+        pos_x = torch.stack(
+            (pos_x[:, :, :, 0::2].sin(), pos_x[:, :, :, 1::2].cos()), dim=3
+        ).flatten(2)
+        pos_y = torch.stack(
+            (pos_y[:, :, :, 0::2].sin(), pos_y[:, :, :, 1::2].cos()), dim=3
+        ).flatten(2)
 
-    return get_global_pos_emb.pos_emb
+        get_global_pos_emb.pos = torch.cat((pos_y, pos_x), dim=2).permute(2, 0, 1) #(D, H, W)
+        get_global_pos_emb.pos = get_global_pos_emb.pos.numpy()
+
+    return get_global_pos_emb.pos
+
+# def get_global_pos_emb(image_size):
+#     if not hasattr(get_global_pos_emb, "image_size"):
+#         get_global_pos_emb.image_size = image_size
+#     if not hasattr(get_global_pos_emb, "pos_emb") or image_size != get_global_pos_emb.image_size:
+#         total_size = int(image_size[0] * image_size[1])
+#         idx_map = np.arange(total_size).astype(float)
+#         get_global_pos_emb.pos_emb = np.zeros((image_size[0],image_size[1]), dtype=float)
+#         for h in range(image_size[0]):
+#             get_global_pos_emb.pos_emb[h,:] = idx_map[h*image_size[1]:(h+1)*image_size[1]]
+#     return get_global_pos_emb.pos_emb
 
 # def get_global_pos_emb(image_size):
 #     if not hasattr(get_global_pos_emb, "image_size"):
