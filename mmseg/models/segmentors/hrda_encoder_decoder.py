@@ -84,8 +84,8 @@ class GlobalPosEmbedding(nn.Module):
             this_W_ids = this_id_map[0,:] % self.W
             this_pe = torch.index_select(self.pe, 1, this_H_ids)
             this_pe = torch.index_select(this_pe, 2, this_W_ids)
-            pe_all[b,:,:,:] = this_pe * 1.0
-            pe_all[b,:,zero_emb_ids] *= 0
+            pe_all[b,:,:,:] += this_pe
+            pe_all[b,:,zero_emb_ids] = 0
         return pe_all
 
 # class GlobalPosEmbedding(nn.Module):
