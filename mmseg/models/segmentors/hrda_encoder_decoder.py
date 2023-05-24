@@ -75,8 +75,7 @@ class GlobalPosEmbedding(nn.Module):
         Arguments:
             id_map: Tensor, shape ``[B, 1, H, W]``
         """
-        batch_size = id_map.shape[0]
-        input_H, input_W = id_map.shape
+        batch_size, _, input_H, input_W = id_map.shape
         pe_all = torch.zeros_like(id_map).repeat(1,self.emb_dim,1,1)
         id_map = id_map.to(int)
         min_ids = []
