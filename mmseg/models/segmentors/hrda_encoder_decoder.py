@@ -195,7 +195,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         if self.with_neck:
             x = self.neck(x)
         pos_emb = self.global_pos_emb(img[:,4:5,:,:])
-        return torch.cat([x,pos_emb], dim=1)
+        return x.append(pos_emb)
 
     def extract_slide_feat(self, img):
         if self.hr_slide_overlapping:
