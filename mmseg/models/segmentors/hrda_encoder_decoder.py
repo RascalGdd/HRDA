@@ -86,8 +86,8 @@ class GlobalPosEmbedding(nn.Module):
             h_min, w_min = min_1D_id % self.H, min_1D_id % self.W
             max_1D_id = torch.max(id_map[b])
             h_max, w_max = max_1D_id % self.H, max_1D_id % self.W
-            pe_all[b,:self.half_emb_dim,:,:] += self.pe_H.unsqueeze(-1).repeat(1,1,input_W)
-            pe_all[b,self.half_emb_dim:,:,:] += self.pe_W.unsqueeze(-2).repeat(1,input_H,1)
+            pe_all[b,:self.half_emb_dim,:,:] += self.pe_H[:,h_min:h_max].unsqueeze(-1).repeat(1,1,input_W)
+            pe_all[b,self.half_emb_dim:,:,:] += self.pe_W[:,w_min:w_max].unsqueeze(-2).repeat(1,input_H,1)
 
         return pe_all
 
