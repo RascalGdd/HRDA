@@ -87,9 +87,13 @@ class GlobalPosEmbedding(nn.Module):
 
             print(this_H_ids, this_W_ids)
             print(this_H_ids.shape, this_W_ids.shape)
-            print(self.pe[:,this_H_ids, this_W_ids].shape)
+
+            this_pe = torch.index_select(self.pe, 1, this_H_ids)
+            print(this_pe.shape)
+            this_pe = torch.index_select(this_pe, 2, this_W_ids)
+            print(this_pe.shape)
             print(pe_all[b,:,:,:].shape)
-            pe_all[b,:,:,:] = self.pe[:,this_H_ids, this_W_ids]
+            pe_all[b,:,:,:] = this_pe * 1.0
         return pe_all
 
 # class GlobalPosEmbedding(nn.Module):
