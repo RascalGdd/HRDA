@@ -70,6 +70,7 @@ class GlobalPosEmbedding(nn.Module):
 
         pe = torch.cat((pos_y, pos_x), dim=2).permute(2,0,1) #(D, H, W)
         self.register_buffer('pe', pe)
+        print(self.pe.shape)
 
     def forward(self, id_map):
         # id_map: [B, 1, H, W]
@@ -77,7 +78,7 @@ class GlobalPosEmbedding(nn.Module):
         pe_all = torch.zeros_like(id_map).repeat(1,self.emb_dim,1,1)
         id_map = id_map.to(int)
         for b in range(batch_size):
-            this_id_map = id_map.to(int)[b,0,:,:]
+            this_id_map = id_map[b,0,:,:]
 
             print(this_id_map.shape)
             print(this_id_map)
@@ -85,7 +86,9 @@ class GlobalPosEmbedding(nn.Module):
             this_W_ids = this_id_map[0,:] % self.W
 
             print(this_H_ids, this_W_ids)
-
+            print(this_H_ids.shape, this_W_ids.shape)
+            print(self.pe[:,this_H_ids, this_W_ids].shape)
+            print(pe_all[b,:,:,:].shape)
             pe_all[b,:,:,:] = self.pe[:,this_H_ids, this_W_ids]
         return pe_all
 
