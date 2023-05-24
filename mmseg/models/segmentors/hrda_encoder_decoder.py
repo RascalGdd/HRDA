@@ -42,6 +42,49 @@ def crop(img, crop_bbox):
         raise NotImplementedError(img.dim())
     return img
 
+class GlobalPosEmbedding(nn.Module):
+
+    def __init__(self, image_size = (1024, 2048), emb_dim = 64):
+        super().__init__()
+        self.H, self.W = image_size
+        self.emb_dim = emb_dim
+
+        half_emb_dim = emb_dim // 2
+        self.half_emb_dim = half_emb_dim
+
+        position_H = torch.arange(self.H).unsqueeze(1)
+        position_W = torch.arange(self.W).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, half_emb_dim, 2) * (-math.log(10000.0) / half_emb_dim))
+        pe_H = torch.zeros(half_emb_dim, self.H)
+        pe_W = torch.zeros(half_emb_dim, self.W)
+        pe_H[0::2, :] = torch.sin(position_H * div_term)
+        pe_H[1::2, :] = torch.cos(position_H * div_term)
+        pe_W[0::2, :] = torch.sin(position_W * div_term)
+        pe_W[1::2, :] = torch.cos(position_W * div_term)
+
+        self.register_buffer('pe_H', pe_H)
+        self.register_buffer('pe_W', pe_W)
+
+    def forward(self, id_map):
+        """
+        Arguments:
+            id_map: Tensor, shape ``[B, 1, H, W]``
+        """
+        batch_size = id_map.shape[0]
+        pe_all = torch.zeros_like(id_map).repeat(1,self.emb_dim,1,1)
+        id_map = id_map.to(int)
+        min_ids = []
+        max_ids = []
+
+        for b in range(batch_size):
+            min_1D_id = torch.min(im_map[b])
+            h_min, w_min = min_1D_id % self.H, min_1D_id % self.W
+            max_1d_id = torch.max(im_map[b])
+            h_max, w_max = max_1D_id % self.H, max_1D_id % self.W
+            pe_all[b,:half_emb_dim,:,:] += pe_H.unsqueeze(-1).repeat(1,1,self.W)
+            pe_all[b,half_emb_dim:,:,:] += pe_W.unsqueeze(-2).repeat(1,self.H,1)
+
+        return pe_all
 
 @SEGMENTORS.register_module()
 class HRDAEncoderDecoder(EncoderDecoder):
@@ -87,6 +130,8 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.hr_slide_overlapping = hr_slide_overlapping
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
+
+        self.global_pos_emb = GlobalPosEmbedding(image_size = (1024, 2048), emb_dim = 64)
 
     def extract_unscaled_feat(self, img):
         x = self.backbone(img)
@@ -241,8 +286,12 @@ class HRDAEncoderDecoder(EncoderDecoder):
         # debug
         save_image(img[0,:3,:,:], 'debug/debug_img.png')
         save_image(img[0,3:4,:,:], 'debug/debug_depth_map.png')
-        save_image(img[0,4:5,:,:], 'debug/debug_pos_emb.png')
+        save_image(img[0,4:5,:,:]/(1024*1024*1.0), 'debug/debug_pos_emb.png')
         print(img[0,4:5,::16,::16])
+
+        pos_emb = self.global_pos_emb(img[0,4:5,:,:])
+        for i in range(64):
+            save_image(pos_emb[0,i:i+1,:,:], 'debug/debug_pos_emb_{}.png'.format(i))
 
         losses = dict()
 

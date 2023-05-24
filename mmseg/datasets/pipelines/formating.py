@@ -104,10 +104,10 @@ class ImageToTensor(object):
             results[key] = to_tensor(img).to(torch.float32)
 
             # debug
-            if key == 'img':
-                save_image(results[key][:3,:,:], 'debug/debug_img.png')
-                save_image(results[key][3:4,:,:], 'debug/debug_depth_map.png')
-                save_image(results[key][4:5,:,:], 'debug/debug_pos_emb.png')
+            # if key == 'img':
+            #     save_image(results[key][:3,:,:], 'debug/debug_img.png')
+            #     save_image(results[key][3:4,:,:], 'debug/debug_depth_map.png')
+            #     save_image(results[key][4:5,:,:], 'debug/debug_pos_emb.png')
 
         return results
 
