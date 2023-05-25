@@ -88,59 +88,24 @@ class GlobalPosEmbedding(nn.Module):
             pe_all[b,:,zero_emb_ids] = 0
         return pe_all
 
-# class GlobalPosEmbedding(nn.Module):
+class DepthMapEmbedding(nn.Module):
 
-#     def __init__(self, image_size = (1024, 2048), emb_dim = 64):
-#         super().__init__()
-#         self.H, self.W = image_size
-#         self.emb_dim = emb_dim
+    def __init__(self, emb_dim = 32):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, emb_dim, kernel_size=(3,3), stride=1, padding=1)
+        self.act1 = nn.ReLU()
+        self.drop1 = nn.Dropout(0.3)
+ 
+        self.conv2 = nn.Conv2d(emb_dim, emb_dim, kernel_size=(3,3), stride=1, padding=1)
+        self.act2 = nn.ReLU()
 
-#         half_emb_dim = emb_dim // 2
-#         self.half_emb_dim = half_emb_dim
-
-#         position_H = torch.arange(self.H).unsqueeze(0).to(float)
-#         position_W = torch.arange(self.W).unsqueeze(0).to(float)
-#         div_term = torch.exp(torch.arange(0, half_emb_dim, 2) * (-math.log(10000.0) / half_emb_dim)).unsqueeze(1).to(float)
-
-#         print(position_H.shape, position_W.shape, div_term.shape)
-
-#         pe_H = torch.zeros(half_emb_dim, self.H)
-#         pe_W = torch.zeros(half_emb_dim, self.W)
-#         pe_H[0::2, :] = torch.sin(div_term @ position_H)
-#         pe_H[1::2, :] = torch.cos(div_term @ position_H)
-#         pe_W[0::2, :] = torch.sin(div_term @ position_W)
-#         pe_W[1::2, :] = torch.cos(div_term @ position_W)
-
-#         self.register_buffer('pe_H', pe_H)
-#         self.register_buffer('pe_W', pe_W)
-
-#     def forward(self, id_map):
-#         """
-#         Arguments:
-#             id_map: Tensor, shape ``[B, 1, H, W]``
-#         """
-#         batch_size, _, input_H, input_W = id_map.shape
-#         pe_all = torch.zeros_like(id_map).repeat(1,self.emb_dim,1,1)
-#         id_map = id_map.to(int)
-#         min_ids = []
-#         max_ids = []
-
-#         for b in range(batch_size):
-#             min_1D_id = torch.min(id_map[b])
-#             h_min, w_min = int(min_1D_id / self.W), min_1D_id % self.W
-#             max_1D_id = torch.max(id_map[b])
-#             h_max, w_max = int(max_1D_id / self.W), max_1D_id % self.W
-
-#             this_pe_H = self.pe_H[:,h_min:h_max].unsqueeze(-1).repeat(1,1,input_W)
-#             this_pe_W = self.pe_W[:,w_min:w_max].unsqueeze(-2).repeat(1,input_H,1)
-
-#             print(h_min, h_max, h_max-h_min, w_min, w_max, w_max-w_min)
-#             print(this_pe_H.shape, this_pe_W.shape, pe_all[b,:self.half_emb_dim,:,:].shape, pe_all[b,self.half_emb_dim:,:,:].shape)
-
-#             pe_all[b,:self.half_emb_dim,:,:] += this_pe_H
-#             pe_all[b,self.half_emb_dim:,:,:] += this_pe_W
-
-#         return pe_all
+    def forward(self, depth_map):
+        # input 3x32x32, output 32x32x32
+        x = self.act1(self.conv1(depth_map))
+        x = self.drop1(x)
+        # input 32x32x32, output 32x32x32
+        x = self.act2(self.conv2(x))
+        return x
 
 @SEGMENTORS.register_module()
 class HRDAEncoderDecoder(EncoderDecoder):
@@ -188,15 +153,21 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.blur_hr_crop = blur_hr_crop
 
         self.global_pos_emb = GlobalPosEmbedding(image_size = (1024, 2048), emb_dim = 32)
+        self.depth_map_emb = DepthMapEmbedding(emb_dim = 32)
 
     # Debug: add pos emb
     def extract_unscaled_feat(self, img):
         x = self.backbone(img[:,:3,:,:])
         if self.with_neck:
             x = self.neck(x)
+
+        dep_emb = self.depth_map_emb(img[:,3:4,:,:])
         with torch.no_grad():
             pos_emb = self.global_pos_emb(img[:,4:5,:,:])
+
+        x.append(dep_emb)
         x.append(pos_emb)
+
         return x
 
     def extract_slide_feat(self, img):

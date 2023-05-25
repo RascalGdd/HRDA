@@ -416,6 +416,7 @@ class TransHead(BaseDecodeHead):
         assert not self.align_corners
         decoder_params = kwargs['decoder_params']
         embed_dims = decoder_params['embed_dims']
+        
         if isinstance(embed_dims, int):
             embed_dims = [embed_dims] * len(self.in_index)
         embed_cfg = decoder_params['embed_cfg']
@@ -427,17 +428,22 @@ class TransHead(BaseDecodeHead):
             if cfg is not None and 'aspp' in cfg['type']:
                 cfg['align_corners'] = self.align_corners
 
-        # hidden_dim = decoder_params["hidden_dim"]
-        # nheads = decoder_params["n_heads"]
-        # dec_layers = decoder_params["dec_layers"]
-        # pre_norm = decoder_params["pre_norm"]
-        # dim_feedforward = decoder_params["dim_feedforward"]
+        self.glob_pos_emb = decoder_params['glob_pos_emb'] # new
+        self.rel_pos_emb = decoder_params['rel_pos_emb'] # new
+        self.depth_map_emb = decoder_params['depth_map_emb'] # new
+        self.level_emb = decoder_params['level_emb'] # new
+        hidden_dim = decoder_params["hidden_dim"]
+        nheads = decoder_params["n_heads"]
+        dec_layers = decoder_params["dec_layers"]
+        pre_norm = decoder_params["pre_norm"]
+        dim_feedforward = decoder_params["dim_feedforward"]
 
-        hidden_dim = 256
-        nheads = 8
-        dec_layers = 8
-        pre_norm = False
-        dim_feedforward = 2048
+        # default:
+        # hidden_dim = 256
+        # nheads = 8
+        # dec_layers = 8
+        # pre_norm = False
+        # dim_feedforward = 2048
 
         # positional encoding
         N_steps = hidden_dim // 2
@@ -452,6 +458,7 @@ class TransHead(BaseDecodeHead):
         self.decoder_norm = nn.LayerNorm(hidden_dim)
         self.in_channels = [64, 128, 320, 512]
         self.glob_pos_emb_dim = 32
+        self.depth_map_emb_dim = 32
 
         self.num_queries = 19
         # learnable query features
@@ -461,11 +468,17 @@ class TransHead(BaseDecodeHead):
 
         # level embedding (we always use 4 scales)
         self.num_feature_levels = 4
-        self.level_embed = nn.Embedding(self.num_feature_levels, hidden_dim)
+        if self.level_emb:
+            self.level_embed = nn.Embedding(self.num_feature_levels, hidden_dim)
         self.input_proj = nn.ModuleList()
         self.mask_feature_proj = nn.ModuleList()
-        for in_channels in self.in_channels:
-            self.input_proj.append(Conv2d(in_channels+self.glob_pos_emb_dim, hidden_dim, kernel_size=1))
+        for in_channel in self.in_channels:
+            channel = in_channel
+            if self.depth_map_emb:
+                channel += self.depth_map_emb_dim
+            if self.glob_pos_emb:
+                channel += self.glob_pos_emb_dim
+            self.input_proj.append(Conv2d(channel, hidden_dim, kernel_size=1))
             weight_init.c2_xavier_fill(self.input_proj[-1])
 
         for in_channels in self.in_channels:
@@ -526,10 +539,14 @@ class TransHead(BaseDecodeHead):
         # torch.Size([1, 320, 32, 32])
         # torch.Size([1, 512, 16, 16])
         pos_emb = x[-1]
+        dep_emb = x[-2]
         pos_embs = [None]*self.num_feature_levels
+        dep_embs = [None]*self.num_feature_levels
+
         x = x[:self.num_feature_levels]
         for i in range(self.num_feature_levels):
             pos_embs[i] = resize(pos_emb, size=x[i].size()[2:], mode='bilinear', align_corners=False)
+            dep_embs[i] = resize(dep_emb, size=x[i].size()[2:], mode='bilinear', align_corners=False)
 
         src = []
         pos = []
@@ -537,11 +554,27 @@ class TransHead(BaseDecodeHead):
 
         for i in range(self.num_feature_levels):
             size_list.append(x[i].shape[-2:])
-            pos.append(self.pe_layer(x[i], None).flatten(2))
-            src.append(self.input_proj[i](torch.cat([x[i], pos_embs[i]], dim=1)).flatten(2) + self.level_embed.weight[i][None, :, None])
+            if self.rel_pos_emb:
+                pos.append(self.pe_layer(x[i], None).flatten(2))
+            else:
+                pos.append(None)
+
+            this_feat = x[i] + 0.0
+            if self.depth_map_emb:
+                this_feat = torch.cat([x[i], dep_embs[i]], dim=1)
+            if self.glob_pos_emb:
+                this_feat = torch.cat([x[i], pos_embs[i]], dim=1)
+
+            this_feat = self.input_proj[i](this_feat).flatten(2)
+
+            if self.level_emb:
+                this_feat = this_feat + self.level_embed.weight[i][None, :, None]
+
+            src.append(this_feat + 0.0)
 
             # flatten NxCxHxW to HWxNxC
-            pos[-1] = pos[-1].permute(2, 0, 1)
+            if self.rel_pos_emb:
+                pos[-1] = pos[-1].permute(2, 0, 1)
             src[-1] = src[-1].permute(2, 0, 1)
 
         # mask_features = self.input_proj[0](x[0])
