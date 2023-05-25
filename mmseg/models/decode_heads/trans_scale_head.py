@@ -433,7 +433,7 @@ class TransHead(BaseDecodeHead):
         self.depth_map_emb = decoder_params['depth_map_emb'] # new
         self.level_emb = decoder_params['level_emb'] # new
         hidden_dim = decoder_params["hidden_dim"]
-        nheads = decoder_params["n_heads"]
+        nheads = decoder_params["nheads"]
         dec_layers = decoder_params["dec_layers"]
         pre_norm = decoder_params["pre_norm"]
         dim_feedforward = decoder_params["dim_feedforward"]
