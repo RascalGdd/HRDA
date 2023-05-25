@@ -561,9 +561,9 @@ class TransHead(BaseDecodeHead):
 
             this_feat = x[i] + 0.0
             if self.depth_map_emb:
-                this_feat = torch.cat([x[i], dep_embs[i]], dim=1)
+                this_feat = torch.cat([this_feat, dep_embs[i]], dim=1)
             if self.glob_pos_emb:
-                this_feat = torch.cat([x[i], pos_embs[i]], dim=1)
+                this_feat = torch.cat([this_feat, pos_embs[i]], dim=1)
 
             this_feat = self.input_proj[i](this_feat).flatten(2)
 
