@@ -570,7 +570,7 @@ class TransHead(BaseDecodeHead):
             if self.level_emb:
                 this_feat = this_feat + self.level_embed.weight[i][None, :, None]
 
-            src.append(this_feat + 0.0)
+            src.append(this_feat.clone())
 
             # flatten NxCxHxW to HWxNxC
             if self.rel_pos_emb:
