@@ -1,22 +1,44 @@
-# Obtained from: https://github.com/open-mmlab/mmsegmentation/tree/v0.16.0
-
 import os.path as osp
-
+import torch
 import mmcv
 import numpy as np
+import cv2
 
 from ..builder import PIPELINES
+
+class MidasHybrid(object):
+    def __init__(self):
+        self.model_type = "DPT_Hybrid"
+        self.midas = torch.hub.load("intel-isl/MiDaS", self.model_type)
+        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        self.midas.to(device)
+        self.midas.eval()
+        self.midas_transform = torch.hub.load("intel-isl/MiDaS", "transforms").dpt_transform
+
+    def pred_depth_map(img):
+        img_torch = torch.from_numpy(img).to(self.device)
+        input_batch = self.midas_transform(img_torch).to(device)
+
+        with torch.no_grad():
+            prediction = self.midas(input_batch)
+
+            prediction = torch.nn.functional.interpolate(
+                prediction.unsqueeze(1),
+                size=img.shape[:2],
+                mode="bicubic",
+                align_corners=False,
+            ).squeeze()
+
+        return prediction.unsqueeze(-1).cpu().numpy() #(B, H, 1)
 
 
 @PIPELINES.register_module()
 class LoadImageFromFile(object):
     """Load an image from file.
-
     Required keys are "img_prefix" and "img_info" (a dict that must contain the
     key "filename"). Added or updated keys are "filename", "img", "img_shape",
     "ori_shape" (same as `img_shape`), "pad_shape" (same as `img_shape`),
     "scale_factor" (1.0) and "img_norm_cfg" (means=0 and stds=1).
-
     Args:
         to_float32 (bool): Whether to convert the loaded image to a float32
             numpy array. If set to False, the loaded image is an uint8 array.
@@ -41,12 +63,12 @@ class LoadImageFromFile(object):
         self.file_client = None
         self.imdecode_backend = imdecode_backend
 
+        self.midas_predictor = MidasHybrid()
+
     def __call__(self, results):
         """Call functions to load image and get image meta information.
-
         Args:
             results (dict): Result dict from :obj:`mmseg.CustomDataset`.
-
         Returns:
             dict: The dict contains loaded image and meta information.
         """
@@ -78,6 +100,14 @@ class LoadImageFromFile(object):
             mean=np.zeros(num_channels, dtype=np.float32),
             std=np.ones(num_channels, dtype=np.float32),
             to_rgb=False)
+
+        # add depth map here!
+        img_midas = cv2.imread(filename)
+        img_midas = cv2.cvtColor(img_midas, cv2.COLOR_BGR2RGB)
+
+        depth_map = self.midas_predictor.pred_depth_map(img_midas) / depth_map.max()
+        results["depth_map"] = depth_map.astype(np.float32)
+
         return results
 
     def __repr__(self):
@@ -91,7 +121,6 @@ class LoadImageFromFile(object):
 @PIPELINES.register_module()
 class LoadAnnotations(object):
     """Load annotations for semantic segmentation.
-
     Args:
         reduce_zero_label (bool): Whether reduce all label value by 1.
             Usually used for datasets where 0 is background label.
@@ -114,10 +143,8 @@ class LoadAnnotations(object):
 
     def __call__(self, results):
         """Call function to load multiple types annotations.
-
         Args:
             results (dict): Result dict from :obj:`mmseg.CustomDataset`.
-
         Returns:
             dict: The dict contains loaded semantic segmentation annotations.
         """

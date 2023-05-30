@@ -1,5 +1,3 @@
-# Obtained from: https://github.com/open-mmlab/mmsegmentation/tree/v0.16.0
-
 import collections
 
 from mmcv.utils import build_from_cfg
