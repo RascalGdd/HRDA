@@ -167,6 +167,11 @@ class HRDAEncoderDecoder(EncoderDecoder):
     def encode_decode(self, img, img_metas):
         """Encode images with backbone and decode into a semantic segmentation
         map of the same size as input."""
+
+        # debug
+        save_image(img[0,:3,:,:], 'debug/debug_img_test.png')
+        save_image(img[0,3:4,:,:], 'debug/debug_depth_map_test.png')
+
         mres_feats = []
         self.decode_head.debug_output = {}
         for i, s in enumerate(self.scales):
@@ -239,7 +244,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
             dict[str, Tensor]: a dictionary of loss components
         """
 
-        # # debug
+        # debug
         save_image(img[0,:3,:,:], 'debug/debug_img.png')
         save_image(img[0,3:4,:,:], 'debug/debug_depth_map.png')
 
