@@ -10,7 +10,7 @@ class MidasHybrid(object):
     def __init__(self):
         self.model_type = "DPT_Hybrid"
         self.midas = torch.hub.load("intel-isl/MiDaS", self.model_type)
-        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        self.device = "cpu" # torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.midas.to(self.device)
         self.midas.eval()
         self.midas_transform = torch.hub.load("intel-isl/MiDaS", "transforms").dpt_transform
