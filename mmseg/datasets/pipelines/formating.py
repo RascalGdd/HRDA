@@ -95,7 +95,16 @@ class ImageToTensor(object):
             if len(img.shape) < 3:
                 img = np.expand_dims(img, -1)
             img = img.transpose(2, 0, 1)
-            results[key] = to_tensor(img).to(torch.float32)
+
+            if key == 'img' and key != 'depth_map':
+                depth_map = results['depth_map']
+                if len(depth_map.shape) < 3:
+                    depth_map = np.expand_dims(depth_map, -1)
+                depth_map = depth_map.transpose(2, 0, 1)
+                results[key] = to_tensor(np.concatenate([img, depth_map], axis=0)).to(torch.float32)
+            else:
+                results[key] = to_tensor(img).to(torch.float32)
+
         return results
 
     def __repr__(self):
@@ -203,14 +212,13 @@ class DefaultFormatBundle(object):
             if len(img.shape) < 3:
                 img = np.expand_dims(img, -1)
             img = np.ascontiguousarray(img.transpose(2, 0, 1))
-            results['img'] = DC(to_tensor(img), stack=True)
 
-        if 'depth_map' in results:
             depth_map = results['depth_map']
             if len(depth_map.shape) < 3:
                 depth_map = np.expand_dims(depth_map, -1)
             depth_map = np.ascontiguousarray(depth_map.transpose(2, 0, 1))
-            results['depth_map'] = DC(to_tensor(depth_map), stack=True)
+
+            results['img'] = DC(to_tensor(np.concatenate([img, depth_map], axis=0)), stack=True)
 
         if 'gt_semantic_seg' in results:
             # convert to long
