@@ -11,13 +11,13 @@ class MidasHybrid(object):
         self.model_type = "DPT_Hybrid"
         self.midas = torch.hub.load("intel-isl/MiDaS", self.model_type)
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.midas.to(device)
+        self.midas.to(self.device)
         self.midas.eval()
         self.midas_transform = torch.hub.load("intel-isl/MiDaS", "transforms").dpt_transform
 
     def pred_depth_map(img):
         img_torch = torch.from_numpy(img).to(self.device)
-        input_batch = self.midas_transform(img_torch).to(device)
+        input_batch = self.midas_transform(img_torch).to(self.device)
 
         with torch.no_grad():
             prediction = self.midas(input_batch)
