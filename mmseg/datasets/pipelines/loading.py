@@ -6,32 +6,6 @@ import cv2
 
 from ..builder import PIPELINES
 
-class MidasHybrid(object):
-    def __init__(self):
-        self.model_type = "DPT_Hybrid"
-        self.midas = torch.hub.load("intel-isl/MiDaS", self.model_type)
-        self.device = "cpu" # torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.midas.to(self.device)
-        self.midas.eval()
-        self.midas_transform = torch.hub.load("intel-isl/MiDaS", "transforms").dpt_transform
-
-    def pred_depth_map(img):
-        img_torch = torch.from_numpy(img).to(self.device)
-        input_batch = self.midas_transform(img_torch).to(self.device)
-
-        with torch.no_grad():
-            prediction = self.midas(input_batch)
-
-            prediction = torch.nn.functional.interpolate(
-                prediction.unsqueeze(1),
-                size=img.shape[:2],
-                mode="bicubic",
-                align_corners=False,
-            ).squeeze()
-
-        return prediction.unsqueeze(-1).cpu().numpy() #(B, H, 1)
-
-
 @PIPELINES.register_module()
 class LoadImageFromFile(object):
     """Load an image from file.
@@ -102,11 +76,17 @@ class LoadImageFromFile(object):
             to_rgb=False)
 
         # add depth map here!
-        img_midas = cv2.imread(filename)
-        img_midas = cv2.cvtColor(img_midas, cv2.COLOR_BGR2RGB)
-
-        depth_map = self.midas_predictor.pred_depth_map(img_midas) / depth_map.max()
-        results["depth_map"] = depth_map.astype(np.float32)
+        if results.get('dep_prefix') is not None:
+            filename = osp.join(results['dep_prefix'],
+                                results['dep_info']['depth_map'])
+        else:
+            filename = results['dep_info']['depth_map']
+        img_bytes_dep = self.file_client.get(filename)
+        depth_map = mmcv.imfrombytes(
+            img_bytes_dep, flag='unchanged',
+            backend=self.imdecode_backend).squeeze().astype(np.uint8)
+        if self.to_float32:
+            results["depth_map"] = depth_map.astype(np.float32)
 
         return results
 
