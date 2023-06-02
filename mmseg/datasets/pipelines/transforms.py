@@ -635,8 +635,8 @@ class Normalize(object):
         self.std = np.array(std, dtype=np.float32)
         self.to_rgb = to_rgb
 
-        self.depth_mean = np.array([100.0], dtype=np.float32)
-        self.depth_std = np.array([50], dtype=np.float32)
+        self.depth_mean = np.array([0.0], dtype=np.float32)
+        self.depth_std = np.array([255.0], dtype=np.float32)
 
     def __call__(self, results):
         """Call function to normalize images.
