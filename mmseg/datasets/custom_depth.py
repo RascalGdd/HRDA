@@ -114,6 +114,8 @@ class CustomDatasetDepth(Dataset):
                 self.img_dir = osp.join(self.data_root, self.img_dir)
             if not (self.ann_dir is None or osp.isabs(self.ann_dir)):
                 self.ann_dir = osp.join(self.data_root, self.ann_dir)
+            if not (self.dep_dir is None or osp.isabs(self.dep_dir)):
+                self.dep_dir = osp.join(self.data_root, self.dep_dir)
             if not (self.split is None or osp.isabs(self.split)):
                 self.split = osp.join(self.data_root, self.split)
 
