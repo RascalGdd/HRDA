@@ -149,12 +149,10 @@ class DAFormerHead(BaseDecodeHead):
                 self.embed_layers[str(i)] = build_layer(in_channels, embed_dim, **embed_neck_cfg)
             else:
                 self.embed_layers[str(i)] = build_layer(in_channels, embed_dim, **embed_cfg)
+        self.embed_layers = nn.ModuleDict(self.embed_layers)
 
         self.dep_embed_layer = build_layer(64, embed_dim, **embed_cfg) # depth map
         embed_dims.append(decoder_params['embed_dims'])
-
-        self.embed_layers = nn.ModuleDict(self.embed_layers)
-
 
         self.fuse_layer = build_layer(
             sum(embed_dims), self.channels, **fusion_cfg)
@@ -162,13 +160,15 @@ class DAFormerHead(BaseDecodeHead):
     def forward(self, inputs):
         x = inputs
         n, _, h, w = x[-1].shape
-        # for f in x:
-        #     mmcv.print_log(f'{f.shape}', 'mmseg')
+
+        # debug
+        for f in x:
+            mmcv.print_log(f'{f.shape}', 'mmseg')
+        print(x[3].shape, x[-1].shape, len(x))
 
         os_size = x[0].size()[2:]
         _c = {}
         for i in self.in_index:
-            # mmcv.print_log(f'{i}: {x[i].shape}', 'mmseg')
             _c[i] = self.embed_layers[str(i)](x[i])
             if _c[i].dim() == 3:
                 _c[i] = _c[i].permute(0, 2, 1).contiguous()\
@@ -181,7 +181,7 @@ class DAFormerHead(BaseDecodeHead):
                     align_corners=self.align_corners)
 
         DEPMAP_ID = 3
-        _c[DEPMAP_ID] = self.dep_embed_layer(x[3])
+        _c[DEPMAP_ID] = self.dep_embed_layer(x[DEPMAP_ID])
         if _c[DEPMAP_ID].dim() == 3:
             _c[DEPMAP_ID] = _c[DEPMAP_ID].permute(0, 2, 1).contiguous()\
                 .reshape(n, -1, x[DEPMAP_ID].shape[2], x[DEPMAP_ID].shape[3])

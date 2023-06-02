@@ -185,8 +185,8 @@ class HRDAEncoderDecoder(EncoderDecoder):
         map of the same size as input."""
 
         # debug
-        save_image(img[0,:3,:,:], 'debug/debug_img_test.png')
-        save_image(img[0,3:4,:,:], 'debug/debug_depth_map_test.png')
+        # save_image(img[0,:3,:,:], 'debug/debug_img_test.png')
+        # save_image(img[0,3:4,:,:], 'debug/debug_depth_map_test.png')
 
         mres_feats = []
         self.decode_head.debug_output = {}
@@ -261,8 +261,8 @@ class HRDAEncoderDecoder(EncoderDecoder):
         """
 
         # debug
-        save_image(img[0,:3,:,:], 'debug/debug_img.png')
-        save_image(img[0,3:4,:,:], 'debug/debug_depth_map.png')
+        # save_image(img[0,:3,:,:], 'debug/debug_img.png')
+        # save_image(img[0,3:4,:,:], 'debug/debug_depth_map.png')
 
         losses = dict()
 
