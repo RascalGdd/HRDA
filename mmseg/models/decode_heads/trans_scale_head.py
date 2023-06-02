@@ -529,7 +529,8 @@ class TransHead(BaseDecodeHead):
         # torch.Size([1, 512, 16, 16])
         # torch.Size([1, 64, 512, 512]), depth map
 
-        dep_emb = x[-2]
+        DEPMAP_ID = 4
+        dep_emb = x[DEPMAP_ID]
         dep_embs = [None]*self.num_feature_levels
         x = x[:self.num_feature_levels]
         for i in range(self.num_feature_levels):

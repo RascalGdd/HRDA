@@ -163,9 +163,9 @@ class DAFormerHead(BaseDecodeHead):
         n, _, h, w = x[-1].shape
 
         # debug
-        for f in x:
-            mmcv.print_log(f'{f.shape}', 'mmseg')
-        print(x[3].shape, x[-1].shape, len(x))
+        # for f in x:
+        #     mmcv.print_log(f'{f.shape}', 'mmseg')
+        # print(x[3].shape, x[-1].shape, len(x))
 
         os_size = x[0].size()[2:]
         _c = {}
@@ -181,7 +181,7 @@ class DAFormerHead(BaseDecodeHead):
                     mode='bilinear',
                     align_corners=self.align_corners)
 
-        DEPMAP_ID = 3
+        DEPMAP_ID = 4
         _c[DEPMAP_ID] = self.dep_embed_layer(x[DEPMAP_ID])
         if _c[DEPMAP_ID].dim() == 3:
             _c[DEPMAP_ID] = _c[DEPMAP_ID].permute(0, 2, 1).contiguous()\
