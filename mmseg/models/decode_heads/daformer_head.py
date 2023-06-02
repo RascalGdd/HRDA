@@ -152,7 +152,7 @@ class DAFormerHead(BaseDecodeHead):
                 self.embed_layers[str(i)] = build_layer(in_channels, embed_dim, **embed_cfg)
         self.embed_layers = nn.ModuleDict(self.embed_layers)
 
-        self.dep_embed_layer = build_layer(64, embed_dim, **embed_cfg) # depth map
+        self.dep_embed_layer = build_layer(16, embed_dim, **embed_cfg) # depth map
         embed_dims.append(decoder_params['embed_dims'])
 
         self.fuse_layer = build_layer(

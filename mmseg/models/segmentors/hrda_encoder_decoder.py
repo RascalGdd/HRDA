@@ -101,7 +101,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
 
-        self.depth_map_emb = DepthMapEmbedding(emb_dim = 64)
+        self.depth_map_emb = DepthMapEmbedding(emb_dim = 16)
 
     def extract_unscaled_feat(self, img):
         x = self.backbone(img[:,:3,:,:])

@@ -440,7 +440,7 @@ class TransHead(BaseDecodeHead):
         dim_feedforward = 2048
 
         in_channels = [64, 128, 320, 512]
-        dep_emb_dim = 64
+        dep_emb_dim = 16
 
         # positional encoding
         N_steps = hidden_dim // 2
