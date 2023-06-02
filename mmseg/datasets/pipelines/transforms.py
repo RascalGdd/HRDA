@@ -654,7 +654,7 @@ class Normalize(object):
             mean=self.mean, std=self.std, to_rgb=self.to_rgb)
 
         if 'depth_map' in results:
-            results['depth_map'] = mmcv.imnormalize(results['img'], [self.depth_mean], [self.depth_std])
+            results['depth_map'] = mmcv.imnormalize(results['depth_map'], [self.depth_mean], [self.depth_std])
             results['depth_map_norm_cfg'] = dict(
                 mean=self.depth_mean, std=self.depth_std)
         return results
