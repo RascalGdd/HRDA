@@ -635,6 +635,9 @@ class Normalize(object):
         self.std = np.array(std, dtype=np.float32)
         self.to_rgb = to_rgb
 
+        self.depth_mean = 100.0
+        self.depth_std = 50
+
     def __call__(self, results):
         """Call function to normalize images.
 
@@ -646,10 +649,14 @@ class Normalize(object):
                 result dict.
         """
 
-        results['img'] = mmcv.imnormalize(results['img'], self.mean, self.std,
-                                          self.to_rgb)
+        results['img'] = mmcv.imnormalize(results['img'], self.mean, self.std, self.to_rgb)
         results['img_norm_cfg'] = dict(
             mean=self.mean, std=self.std, to_rgb=self.to_rgb)
+
+        if 'depth_map' in results:
+            results['depth_map'] = mmcv.imnormalize(results['img'], [self.depth_mean], [self.depth_std])
+            results['depth_map_norm_cfg'] = dict(
+                mean=self.depth_mean, std=self.depth_std)
         return results
 
     def __repr__(self):
