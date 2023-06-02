@@ -146,12 +146,15 @@ class DAFormerHead(BaseDecodeHead):
         for i, in_channels, embed_dim in zip(self.in_index, self.in_channels,
                                              embed_dims):
             if i == self.in_index[-1]:
-                self.embed_layers[str(i)] = build_layer(
-                    in_channels, embed_dim, **embed_neck_cfg)
+                self.embed_layers[str(i)] = build_layer(in_channels, embed_dim, **embed_neck_cfg)
             else:
-                self.embed_layers[str(i)] = build_layer(
-                    in_channels, embed_dim, **embed_cfg)
+                self.embed_layers[str(i)] = build_layer(in_channels, embed_dim, **embed_cfg)
+
+        self.dep_embed_layer = build_layer(64, embed_dim, **embed_cfg) # depth map
+        embed_dims.append(decoder_params['embed_dims'])
+
         self.embed_layers = nn.ModuleDict(self.embed_layers)
+
 
         self.fuse_layer = build_layer(
             sum(embed_dims), self.channels, **fusion_cfg)
@@ -170,14 +173,24 @@ class DAFormerHead(BaseDecodeHead):
             if _c[i].dim() == 3:
                 _c[i] = _c[i].permute(0, 2, 1).contiguous()\
                     .reshape(n, -1, x[i].shape[2], x[i].shape[3])
-            # mmcv.print_log(f'_c{i}: {_c[i].shape}', 'mmseg')
             if _c[i].size()[2:] != os_size:
-                # mmcv.print_log(f'resize {i}', 'mmseg')
                 _c[i] = resize(
                     _c[i],
                     size=os_size,
                     mode='bilinear',
                     align_corners=self.align_corners)
+
+        DEPMAP_ID = 3
+        _c[DEPMAP_ID] = self.dep_embed_layer(x[3])
+        if _c[DEPMAP_ID].dim() == 3:
+            _c[DEPMAP_ID] = _c[DEPMAP_ID].permute(0, 2, 1).contiguous()\
+                .reshape(n, -1, x[DEPMAP_ID].shape[2], x[DEPMAP_ID].shape[3])
+        if _c[DEPMAP_ID].size()[2:] != os_size:
+            _c[DEPMAP_ID] = resize(
+                _c[DEPMAP_ID],
+                size=os_size,
+                mode='bilinear',
+                align_corners=self.align_corners)
 
         x = self.fuse_layer(torch.cat(list(_c.values()), dim=1))
         x = self.cls_seg(x)

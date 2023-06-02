@@ -439,6 +439,9 @@ class TransHead(BaseDecodeHead):
         pre_norm = False
         dim_feedforward = 2048
 
+        in_channels = [64, 128, 320, 512]
+        dep_emb_dim = 64
+
         # positional encoding
         N_steps = hidden_dim // 2
         self.pe_layer = PositionEmbeddingSine(N_steps, normalize=True)
@@ -463,12 +466,12 @@ class TransHead(BaseDecodeHead):
         self.level_embed = nn.Embedding(self.num_feature_levels, hidden_dim)
         self.input_proj = nn.ModuleList()
         self.mask_feature_proj = nn.ModuleList()
-        for in_channels in [64, 128, 320, 512]:
-            self.input_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
+        for in_channel in in_channels:
+            self.input_proj.append(Conv2d(in_channel+dep_emb_dim, hidden_dim, kernel_size=1))
             weight_init.c2_xavier_fill(self.input_proj[-1])
 
-        for in_channels in [64, 128, 320, 512]:
-            self.mask_feature_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
+        for in_channel in in_channels:
+            self.mask_feature_proj.append(Conv2d(in_channel+dep_emb_dim, hidden_dim, kernel_size=1))
             weight_init.c2_xavier_fill(self.mask_feature_proj[-1])
 
         self.out_proj = ConvModule(
@@ -524,7 +527,14 @@ class TransHead(BaseDecodeHead):
         # torch.Size([1, 128, 64, 64])
         # torch.Size([1, 320, 32, 32])
         # torch.Size([1, 512, 16, 16])
-        assert len(x) == self.num_feature_levels
+        # torch.Size([1, 64, 512, 512]), depth map
+
+        dep_emb = x[-2]
+        dep_embs = [None]*self.num_feature_levels
+        x = x[:self.num_feature_levels]
+        for i in range(self.num_feature_levels):
+            dep_embs[i] = resize(dep_emb, size=x[i].size()[2:], mode='bilinear', align_corners=False)
+
         src = []
         pos = []
         size_list = []
@@ -532,7 +542,7 @@ class TransHead(BaseDecodeHead):
         for i in range(self.num_feature_levels):
             size_list.append(x[i].shape[-2:])
             pos.append(self.pe_layer(x[i], None).flatten(2))
-            src.append(self.input_proj[i](x[i]).flatten(2) + self.level_embed.weight[i][None, :, None])
+            src.append(self.input_proj[i](torch.cat([x[i], dep_embs[i]], dim=1)).flatten(2) + self.level_embed.weight[i][None, :, None])
 
             # flatten NxCxHxW to HWxNxC
             pos[-1] = pos[-1].permute(2, 0, 1)
@@ -543,7 +553,7 @@ class TransHead(BaseDecodeHead):
         mask_feats = []
         for i in range(self.num_feature_levels):
             # mmcv.print_log(f'{i}: {x[i].shape}, {self.linear_c[str(i)]}')
-            feat = self.mask_feature_proj[i](x[i])
+            feat = self.mask_feature_proj[i](torch.cat([x[i], dep_embs[i]], dim=1))
             if i != 0:
                 feat = resize(
                     feat,

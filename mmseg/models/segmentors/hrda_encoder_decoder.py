@@ -44,6 +44,20 @@ def crop(img, crop_bbox):
     return img
 
 
+class DepthMapEmbedding(nn.Module):
+
+    def __init__(self, emb_dim = 64):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, emb_dim, kernel_size=(3,3), stride=1, padding=1)
+        self.act1 = nn.ReLU()
+        self.conv2 = nn.Conv2d(emb_dim, emb_dim, kernel_size=(3,3), stride=1, padding=1)
+        self.act2 = nn.ReLU()
+
+    def forward(self, depth_map):
+        x = self.act1(self.conv1(depth_map))
+        x = self.act2(self.conv2(x))
+        return x
+
 @SEGMENTORS.register_module()
 class HRDAEncoderDecoder(EncoderDecoder):
     last_train_crop_box = {}
@@ -89,10 +103,14 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
 
+        self.depth_map_emb = DepthMapEmbedding(emb_dim = 64)
+
     def extract_unscaled_feat(self, img):
         x = self.backbone(img[:,:3,:,:])
         if self.with_neck:
             x = self.neck(x)
+        dep_emb = self.depth_map_emb(img[:,3:4,:,:])
+        x.append(dep_emb)
         return x
 
     def extract_slide_feat(self, img):
