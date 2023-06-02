@@ -37,8 +37,6 @@ class LoadImageFromFile(object):
         self.file_client = None
         self.imdecode_backend = imdecode_backend
 
-        self.midas_predictor = MidasHybrid()
-
     def __call__(self, results):
         """Call functions to load image and get image meta information.
         Args:
