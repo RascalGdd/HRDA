@@ -44,7 +44,6 @@ def crop(img, crop_bbox):
         raise NotImplementedError(img.dim())
     return img
 
-@HEADS.register_module()
 class DepthMapEmbedding(nn.Module):
     def __init__(self, emb_dim = 64):
         super().__init__()
