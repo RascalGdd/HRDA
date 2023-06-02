@@ -148,24 +148,24 @@ class CustomDatasetDepth(Dataset):
                     img_info = dict(filename=img_name + self.mg_suffix)
                     if self.ann_dir is not None:
                         seg_map = img_name + self.seg_map_suffix
-                        img_info_ann['ann'] = dict(seg_map=seg_map)
-                        img_infos.append(img_info_ann)
+                        img_info['ann'] = dict(seg_map=seg_map)
+                        img_infos.append(img_info)
                     if self.dep_dir is not None:
                         depth_map = img_name + self.depth_map_suffix
-                        img_info_dep['dep'] = dict(depth_map=depth_map)
-                        img_infos.append(img_info_dep)
+                        img_info['dep'] = dict(depth_map=depth_map)
+                        img_infos.append(img_info)
                     
         else:
             for img in mmcv.scandir(self.img_dir, self.img_suffix, recursive=True):
                 img_info = dict(filename=img)
                 if self.ann_dir is not None:
                     seg_map = img.replace(self.img_suffix, self.seg_map_suffix)
-                    img_info_ann['ann'] = dict(seg_map=seg_map)
-                    img_infos.append(img_info_ann)
+                    img_info['ann'] = dict(seg_map=seg_map)
+                    img_infos.append(img_info)
                 if self.dep_dir is not None:
                     depth_map = img.replace(self.img_suffix, self.depth_map_suffix)
-                    img_info_dep['dep'] = dict(depth_map=depth_map)
-                    img_infos.append(img_info_dep)
+                    img_info['dep'] = dict(depth_map=depth_map)
+                    img_infos.append(img_info)
 
         print_log(
             f'Loaded {len(img_infos)} images from {img_dir}',
