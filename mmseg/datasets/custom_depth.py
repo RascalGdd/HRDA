@@ -168,7 +168,7 @@ class CustomDatasetDepth(Dataset):
                     img_infos.append(img_info)
 
         print_log(
-            f'Loaded {len(img_infos)} images from {img_dir}',
+            f'Loaded {len(img_infos)} images from {self.img_dir}',
             logger=get_root_logger())
         return img_infos
 
