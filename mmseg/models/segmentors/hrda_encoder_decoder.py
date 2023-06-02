@@ -5,6 +5,7 @@
 
 import numpy as np
 import torch
+import torch.nn as nn
 import math
 from torchvision.utils import save_image
 
@@ -43,16 +44,14 @@ def crop(img, crop_bbox):
         raise NotImplementedError(img.dim())
     return img
 
-
+@HEADS.register_module()
 class DepthMapEmbedding(nn.Module):
-
     def __init__(self, emb_dim = 64):
         super().__init__()
         self.conv1 = nn.Conv2d(1, emb_dim, kernel_size=(3,3), stride=1, padding=1)
         self.act1 = nn.ReLU()
         self.conv2 = nn.Conv2d(emb_dim, emb_dim, kernel_size=(3,3), stride=1, padding=1)
         self.act2 = nn.ReLU()
-
     def forward(self, depth_map):
         x = self.act1(self.conv1(depth_map))
         x = self.act2(self.conv2(x))
