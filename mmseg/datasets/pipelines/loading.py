@@ -83,8 +83,7 @@ class LoadImageFromFile(object):
         depth_map = mmcv.imfrombytes(
             img_bytes_dep, flag='unchanged',
             backend=self.imdecode_backend).squeeze().astype(np.uint8)
-        if self.to_float32:
-            results["depth_map"] = depth_map.astype(np.float32)
+        results["depth_map"] = depth_map.astype(np.float32)
 
         return results
 
