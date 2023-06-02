@@ -90,7 +90,7 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.blur_hr_crop = blur_hr_crop
 
     def extract_unscaled_feat(self, img):
-        x = self.backbone(img)
+        x = self.backbone(img[0,:3,:,:])
         if self.with_neck:
             x = self.neck(x)
         return x
