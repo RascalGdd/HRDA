@@ -6,6 +6,7 @@
 
 import torch
 import torch.nn as nn
+import mmcv
 from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
 
 from mmseg.models.decode_heads.isa_head import ISALayer
