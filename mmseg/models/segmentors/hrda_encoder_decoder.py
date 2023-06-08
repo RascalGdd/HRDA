@@ -56,6 +56,13 @@ class DepthMapEmbedding(nn.Module):
         x = self.act2(self.conv2(x))
         return x
 
+class DepthMapEmbeddingIdentity(nn.Module):
+    def __init__(self):
+        super().__init__()
+        pass
+    def forward(self, depth_map):
+        return depth_map
+
 @SEGMENTORS.register_module()
 class HRDAEncoderDecoder(EncoderDecoder):
     last_train_crop_box = {}
@@ -101,7 +108,8 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
 
-        self.depth_map_emb = DepthMapEmbedding(emb_dim = 16)
+        # self.depth_map_emb = DepthMapEmbedding(emb_dim = 16)
+        self.depth_map_emb = DepthMapEmbeddingIdentity()
 
     def extract_unscaled_feat(self, img):
         x = self.backbone(img[:,:3,:,:])
