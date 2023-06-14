@@ -105,6 +105,49 @@ class ImageToTensor(object):
 
 
 @PIPELINES.register_module()
+class ImageToTensor_clips(object):
+    """Convert image to :obj:`torch.Tensor` by given keys.
+
+    The dimension order of input image is (H, W, C). The pipeline will convert
+    it to (C, H, W). If only 2 dimension (H, W) is given, the output would be
+    (1, H, W).
+
+    Args:
+        keys (Sequence[str]): Key of images to be converted to Tensor.
+    """
+
+    def __init__(self, keys):
+        self.keys = keys
+
+    def __call__(self, results):
+        """Call function to convert image in results to :obj:`torch.Tensor` and
+        transpose the channel order.
+
+        Args:
+            results (dict): Result dict contains the image data to convert.
+
+        Returns:
+            dict: The result dict contains the image converted
+                to :obj:`torch.Tensor` and transposed to (C, H, W) order.
+        """
+
+        for key in self.keys:
+            assert isinstance(results[key], list)
+            img_all=[]
+            for im_one in results[key]:
+                img = im_one
+                if len(img.shape) < 3:
+                    img = np.expand_dims(img, -1)
+                img=to_tensor(img.transpose(2, 0, 1))
+                img_all.append(img)
+            results[key] = img_all
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__ + f'(keys={self.keys})'
+
+
+@PIPELINES.register_module()
 class Transpose(object):
     """Transpose some results by given keys.
 
@@ -215,6 +258,61 @@ class DefaultFormatBundle(object):
         if 'valid_pseudo_mask' in results:
             results['valid_pseudo_mask'] = DC(
                 to_tensor(results['valid_pseudo_mask'][None, ...]), stack=True)
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__
+
+
+@PIPELINES.register_module()
+class DefaultFormatBundle_clips(object):
+    """Default formatting bundle.
+
+    It simplifies the pipeline of formatting common fields, including "img"
+    and "gt_semantic_seg". These fields are formatted as follows.
+
+    - img: (1)transpose, (2)to tensor, (3)to DataContainer (stack=True)
+    - gt_semantic_seg: (1)unsqueeze dim-0 (2)to tensor,
+                       (3)to DataContainer (stack=True)
+    """
+
+    def __call__(self, results):
+        """Call function to transform and format common fields in results.
+
+        Args:
+            results (dict): Result dict contains the data to convert.
+
+        Returns:
+            dict: The result dict contains the data that is formatted with
+                default bundle.
+        """
+
+        if 'img' in results:
+            assert isinstance(results['img'], list)
+            img_all=[]
+
+            for im in results['img']:
+                # img = results['img']
+                if len(im.shape) < 3:
+                    im = np.expand_dims(im, -1)
+                img = np.ascontiguousarray(im.transpose(2, 0, 1))
+                img_all.append(to_tensor(img))
+
+            print_log(len(img_all))
+            img_all=torch.stack(img_all)
+            results['img'] = DC(img_all, stack=True)
+
+        if 'gt_semantic_seg' in results:
+            # convert to long
+            gt_seg_all=[]
+            assert isinstance(results['gt_semantic_seg'], list)
+            for gt in results['gt_semantic_seg']:
+                gt_one= to_tensor(gt[None,...].astype(np.int64))
+                gt_seg_all.append(gt_one)
+
+            print_log(len(gt_seg_all))
+            gt_seg_all=torch.stack(gt_seg_all)
+            results['gt_semantic_seg']=DC(gt_seg_all, stack=True)
         return results
 
     def __repr__(self):
