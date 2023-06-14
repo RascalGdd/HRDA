@@ -188,6 +188,9 @@ class HRDAEncoderDecoder(EncoderDecoder):
         return out
 
     def _forward_train_features(self, img):
+
+        print(img.shape)
+
         mres_feats = []
         self.decode_head.debug_output = {}
         assert len(self.scales) <= 2, 'Only up to 2 scales are supported.'
