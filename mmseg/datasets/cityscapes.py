@@ -10,7 +10,7 @@ from mmcv.utils import print_log
 from PIL import Image
 
 from .builder import DATASETS
-from .custom import CustomDataset
+from .custom import CustomDataset, CustomDataset_cityscape_clips
 
 
 @DATASETS.register_module()
