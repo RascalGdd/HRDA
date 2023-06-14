@@ -49,7 +49,8 @@ class Resize(object):
                  multiscale_mode='range',
                  ratio_range=None,
                  keep_ratio=True,
-                 override_scale=False):
+                 override_scale=False,
+                 process_clips=False):
         if img_scale is None:
             self.img_scale = None
         else:
@@ -71,6 +72,7 @@ class Resize(object):
         self.ratio_range = ratio_range
         self.keep_ratio = keep_ratio
         self.override_scale = override_scale
+        self.process_clips = process_clips
 
     @staticmethod
     def random_select(img_scales):
@@ -215,6 +217,90 @@ class Resize(object):
                     results[key], results['scale'], interpolation='nearest')
             results[key] = gt_seg
 
+    def _random_scale_clips(self, results):
+        """Randomly sample an img_scale according to ``ratio_range`` and
+        ``multiscale_mode``.
+
+        If ``ratio_range`` is specified, a ratio will be sampled and be
+        multiplied with ``img_scale``.
+        If multiple scales are specified by ``img_scale``, a scale will be
+        sampled according to ``multiscale_mode``.
+        Otherwise, single scale will be used.
+
+        Args:
+            results (dict): Result dict from :obj:`dataset`.
+
+        Returns:
+            dict: Two new keys 'scale` and 'scale_idx` are added into
+                ``results``, which would be used by subsequent pipelines.
+        """
+
+        if self.ratio_range is not None:
+            if self.img_scale is None:
+                h, w = results['img'][-1].shape[:2]
+                scale, scale_idx = self.random_sample_ratio((w, h),
+                                                            self.ratio_range)
+            else:
+                scale, scale_idx = self.random_sample_ratio(
+                    self.img_scale[0], self.ratio_range)
+        elif len(self.img_scale) == 1:
+            scale, scale_idx = self.img_scale[0], 0
+        elif self.multiscale_mode == 'range':
+            scale, scale_idx = self.random_sample(self.img_scale)
+        elif self.multiscale_mode == 'value':
+            scale, scale_idx = self.random_select(self.img_scale)
+        else:
+            raise NotImplementedError
+
+        results['scale'] = scale
+        results['scale_idx'] = scale_idx
+
+    def _resize_img_clips(self, results):
+        """Resize images with ``results['scale']``."""
+        assert isinstance(results['img'], list)
+        img_all=[]
+        if self.keep_ratio:
+            for im_one in results['img']:
+                img, scale_factor = mmcv.imrescale(
+                    im_one, results['scale'], return_scale=True)
+                img_all.append(img)
+            # the w_scale and h_scale has minor difference
+            # a real fix should be done in the mmcv.imrescale in the future
+            new_h, new_w = img.shape[:2]
+            h, w = results['img'][-1].shape[:2]
+            w_scale = new_w / w
+            h_scale = new_h / h
+        else:
+            for im_one in results['img']:
+                img, w_scale, h_scale = mmcv.imresize(
+                    im_one, results['scale'], return_scale=True)
+                img_all.append(img)
+        scale_factor = np.array([w_scale, h_scale, w_scale, h_scale],
+                                dtype=np.float32)
+        results['img'] = img_all
+        results['img_shape'] = img_all[-1].shape
+        results['pad_shape'] = img_all[-1].shape  # in case that there is no padding
+        results['scale_factor'] = scale_factor
+        results['keep_ratio'] = self.keep_ratio
+
+    def _resize_seg_clips(self, results):
+        """Resize semantic segmentation map with ``results['scale']``."""
+
+        for key in results.get('seg_fields', []):
+            assert isinstance(results[key], list)
+            gt_seg_all=[]
+            if self.keep_ratio:
+                for gt_one in results[key]:
+                    gt_seg = mmcv.imrescale(
+                        gt_one, results['scale'], interpolation='nearest')
+                    gt_seg_all.append(gt_seg)
+            else:
+                for gt_one in results[key]:
+                    gt_seg = mmcv.imresize(
+                        gt_one, results['scale'], interpolation='nearest')
+                    gt_seg_all.append(gt_seg)
+            results[key] = gt_seg_all
+
     def __call__(self, results):
         """Call function to resize images, bounding boxes, masks, semantic
         segmentation map.
@@ -226,11 +312,16 @@ class Resize(object):
             dict: Resized results, 'img_shape', 'pad_shape', 'scale_factor',
                 'keep_ratio' keys are added into result dict.
         """
-
-        if 'scale' not in results or self.override_scale:
-            self._random_scale(results)
-        self._resize_img(results)
-        self._resize_seg(results)
+        if self.process_clips:
+            if 'scale' not in results:
+                self._random_scale_clips(results)
+            self._resize_img_clips(results)
+            self._resize_seg_clips(results)
+        else:
+            if 'scale' not in results:
+                self._random_scale(results)
+            self._resize_img(results)
+            self._resize_seg(results)
         return results
 
     def __repr__(self):
