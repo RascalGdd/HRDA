@@ -7,6 +7,7 @@ import mmcv
 import numpy as np
 import torch
 from mmcv.parallel import DataContainer as DC
+from mmcv.utils import print_log
 
 from ..builder import PIPELINES
 
