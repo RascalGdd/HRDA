@@ -18,6 +18,8 @@ from mmseg.utils import get_root_logger
 from .builder import DATASETS
 from .pipelines import Compose
 
+import random
+from PIL import Image
 
 @DATASETS.register_module()
 class CustomDataset(Dataset):
