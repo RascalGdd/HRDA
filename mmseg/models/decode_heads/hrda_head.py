@@ -80,6 +80,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
                 num_clips=4
             )
+            attn_cfg.pop('num_clips')
         else:
             raise NotImplementedError(single_scale_head)
         super(HRDAHead, self).__init__(**kwargs)
