@@ -474,10 +474,10 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         """
 
         print(img.shape)
+        print(gt_semantic_seg.shape)
         for i in range(4):
             save_image(img[0,i,:,:,:], 'debug/img{}_debug.png'.format(i))
-        print(gt_semantic_seg.shape)
-        save_image(gt_semantic_seg[0,:,:,:], 'debug/gtseg_debug.png')
+            save_image(gt_semantic_seg[0,i,:,:,:].float() / gt_semantic_seg[0,i,:,:,:].max() * 255.0, 'debug/gtseg{}_debug.png'.format(i))
 
         if img.dim()==5:
             batch_size, num_clips, _, h, w = img.size()
