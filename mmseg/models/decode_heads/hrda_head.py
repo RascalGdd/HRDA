@@ -65,7 +65,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             kwargs.pop('dilations')
             kwargs['channels'] = 1
             self.os = 8
-        elif single_scale_head == 'CFFMHead': # only for video clips
+        elif single_scale_head == 'CFFMHead_clips_resize1_8': # only for video clips
             head_cfg = dict(
                 type='CFFMHead_clips_resize1_8',
                 in_channels=[64, 128, 320, 512],
