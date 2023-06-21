@@ -214,7 +214,7 @@ class BaseDecodeHead(BaseModule, metaclass=ABCMeta):
         Returns:
             Tensor: Output segmentation map.
         """
-        return self.forward(inputs)
+        return self.forward(inputs)[0]
 
     def cls_seg(self, feat):
         """Classify each pixel."""
@@ -438,7 +438,7 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
         Returns:
             Tensor: Output segmentation map.
         """
-        return self.forward(inputs, batch_size, num_clips,img)
+        return self.forward(inputs, batch_size, num_clips, img)
 
     def cls_seg(self, feat):
         """Classify each pixel."""
@@ -473,98 +473,48 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
         return loss_consis
 
 
-    @force_fp32(apply_to=('seg_logit', ))
-    def losses(self, seg_logit, seg_label):
+    def losses_base(self, seg_logit, seg_label):
         """Compute segmentation loss."""
-
-        # print(seg_logit.shape, seg_label.shape)
-        # print("sample: ", self.sampler)
-        # exit()
-        assert seg_logit.dim()==5 and seg_label.dim()==5
-
-        if seg_logit.shape[1]==seg_label.shape[1]+1:     # k+1
-            seg_logit_ori=seg_logit[:,:-1]
-            batch_size, num_clips, _, h ,w=seg_logit_ori.shape
-            seg_logit_ori=seg_logit_ori.reshape(batch_size*num_clips,-1,h,w)
-            seg_logit_lastframe=seg_logit[:,-1]
-
-            batch_size, num_clips, _, h ,w=seg_label.shape
-            seg_label_ori=seg_label.reshape(batch_size*num_clips,-1,h,w)
-            seg_label_lastframe=seg_label[:,-1]
-        elif seg_logit.shape[1]==seg_label.shape[1]+3:        # k+3
-            # print("here")
-            seg_logit_ori=seg_logit[:,:-3]
-            batch_size, num_clips, _, h ,w=seg_logit_ori.shape
-            seg_logit_ori=seg_logit_ori.reshape(batch_size*num_clips,-1,h,w)
-            seg_logit_lastframe=seg_logit[:,-3:]
-            seg_logit_lastframe=seg_logit_lastframe.reshape(batch_size*3,-1,h,w)
-
-            batch_size, num_clips, _, h ,w=seg_label.shape
-            seg_label_ori=seg_label.reshape(batch_size*num_clips,-1,h,w)
-            # seg_label_lastframe=seg_label[:,-1]
-            seg_label_lastframe=torch.cat([seg_label[:,-1:], seg_label[:,-1:], seg_label[:,-1:]], 1)
-            assert seg_label_lastframe.dim()==5
-            seg_label_lastframe=seg_label_lastframe.reshape(batch_size*3,-1,h,w)
-        elif seg_logit.shape[1]==2*seg_label.shape[1]:           # 2k
-            seg_logit_ori=seg_logit[:,:-1]
-            batch_size, num_clips, _, h ,w=seg_logit_ori.shape
-            seg_logit_ori=seg_logit_ori.reshape(batch_size*num_clips,-1,h,w)
-            seg_logit_lastframe=seg_logit[:,-1]
-            
-            seg_label_repeat=torch.cat([seg_label,seg_label],1)
-            seg_label_repeat=seg_label_repeat[:,:-1]
-            batch_size, num_clips, _, h ,w=seg_label_repeat.shape
-            seg_label_ori=seg_label_repeat.reshape(batch_size*num_clips,-1,h,w)
-            seg_label_lastframe=seg_label[:,-1]
-        elif seg_logit.shape[1]==2*seg_label.shape[1]+1:            # 2k+1
-            # print("here")
-            seg_logit_ori=seg_logit[:,:-2]
-            batch_size, num_clips, _, h ,w=seg_logit_ori.shape
-            seg_logit_ori=seg_logit_ori.reshape(batch_size*num_clips,-1,h,w)
-            seg_logit_lastframe=seg_logit[:,-2:]
-            seg_logit_lastframe=seg_logit_lastframe.reshape(batch_size*2,-1,h,w)
-            
-            seg_label_repeat=torch.cat([seg_label,seg_label],1)
-            seg_label_repeat=seg_label_repeat[:,:-1]
-            batch_size, num_clips, _, h ,w=seg_label_repeat.shape
-            seg_label_ori=seg_label_repeat.reshape(batch_size*num_clips,-1,h,w)
-            seg_label_lastframe=torch.cat([seg_label[:,-1:], seg_label[:,-1:]], 1)
-            assert seg_label_lastframe.dim()==5
-            seg_label_lastframe=seg_label_lastframe.reshape(batch_size*2,-1,h,w)
-        else:
-            assert (1==0)                    
-
         loss = dict()
-        seg_logit_ori = resize(
-            input=seg_logit_ori,
-            size=seg_label.shape[3:],
+        seg_logit = resize(
+            input=seg_logit,
+            size=seg_label.shape[2:],
             mode='bilinear',
             align_corners=self.align_corners)
-
-        seg_logit_lastframe = resize(
-            input=seg_logit_lastframe,
-            size=seg_label.shape[3:],
-            mode='bilinear',
-            align_corners=self.align_corners)
-
         if self.sampler is not None:
             seg_weight = self.sampler.sample(seg_logit, seg_label)
         else:
             seg_weight = None
-
-        seg_label_ori = seg_label_ori.squeeze(1)
-        seg_label_lastframe = seg_label_lastframe.squeeze(1)
-
-        loss['loss_seg'] = 0.5*self.loss_decode(
-            seg_logit_ori,
-            seg_label_ori,
-            weight=seg_weight,
-            ignore_index=self.ignore_index)+self.loss_decode(
-            seg_logit_lastframe,
-            seg_label_lastframe,
+        seg_label = seg_label.squeeze(1)
+        loss['loss_seg'] = self.loss_decode(
+            seg_logit,
+            seg_label,
             weight=seg_weight,
             ignore_index=self.ignore_index)
-        loss['acc_seg'] = accuracy(seg_logit_ori, seg_label_ori)
+        loss['acc_seg'] = accuracy(seg_logit, seg_label)
+        return loss
+
+    @force_fp32(apply_to=('seg_logit', ))
+    def losses(self, seg_logit, seg_label):
+        """Compute segmentation loss.
+            In our implementation, the seg_logit is a list containing [fused_logit, default_logit, focal_logit]
+
+        """
+        assert len(seg_logit) == 3
+        if seg_label.dim() == 5:
+            seg_label = seg_label[:,-1]
+
+        fused_logit, default_logit, focal_logit = seg_logit[0], seg_logit[1], seg_logit[2]
+
+        loss = dict()
+
+        loss_fused = self.losses_base(fused_logit, seg_label)
+        loss_default = self.losses_base(default_logit, seg_label)
+        loss_focal = self.losses_base(focal_logit, seg_label)
+
+        loss['loss_seg'] = 1.0*loss_fused['loss_seg'] + 0.5*loss_default['loss_seg'] + 0.75*loss_focal['loss_seg']
+        loss['acc_seg'] = loss_fused['acc_seg']
+
         return loss
 
 

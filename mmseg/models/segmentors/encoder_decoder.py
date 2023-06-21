@@ -381,6 +381,11 @@ class EncoderDecoder_clips(BaseSegmentor):
                  test_cfg=None,
                  pretrained=None):
         super(EncoderDecoder_clips, self).__init__()
+        if pretrained is not None:
+            assert backbone.get('pretrained') is None, \
+                'both backbone and segmentor set pretrained weight'
+            backbone.pretrained = pretrained
+            
         self.backbone = builder.build_backbone(backbone)
         if neck is not None:
             self.neck = builder.build_neck(neck)

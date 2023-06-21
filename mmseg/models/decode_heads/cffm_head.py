@@ -58,24 +58,10 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         )
 
         self.linear_pred = nn.Conv2d(embedding_dim, self.num_classes, kernel_size=1)
-
         self.linear_pred2 = nn.Conv2d(embedding_dim*2, self.num_classes, kernel_size=1)
+        self.simple_seg_fuse = nn.Conv2d(self.num_classes*2, self.num_classes, kernel_size=1)
 
         depths = decoder_params['depths']
-        # self.decoder_swin=BasicLayer_focal(
-        #         dim=embedding_dim,
-        #         depth=depths,
-        #         num_heads=8,
-        #         window_size=(2,7,7),
-        #         mlp_ratio=4.,
-        #         qkv_bias=True,
-        #         qk_scale=None,
-        #         drop=0.,
-        #         attn_drop=0.,
-        #         drop_path=0.,
-        #         norm_layer=nn.LayerNorm,
-        #         downsample=None,
-        #         use_checkpoint=False)
 
         self.decoder_focal=BasicLayer3d3(dim=embedding_dim,
                input_resolution=(60,
@@ -110,6 +96,7 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
     def forward(self, inputs, batch_size=None, num_clips=None, imgs=None):
         if self.training:
             assert self.num_clips==num_clips
+
         x = self._transform_inputs(inputs)  # len=4, 1/4,1/8,1/16,1/32
         c1, c2, c3, c4 = x
 
@@ -130,13 +117,10 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         _c = self.linear_fuse(torch.cat([_c4, _c3, _c2, _c1], dim=1))
 
         _, _, h, w=_c.shape
-        x = self.dropout(_c)
-        x = self.linear_pred(x)
-        x = x.reshape(batch_size, num_clips, -1, h, w)
+        x = self.dropout(_c) # Bk=4, C, H, W
+        default_logit = self.linear_pred(x[-1:]) # 1, C, H2, W2
 
-        # print("_c.shape: ", _c.shape)
         if not self.training and num_clips!=self.num_clips:
-        # if not self.training:
             return x[:,-1]
 
         h2=int(h/2)
@@ -144,26 +128,16 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         _c = resize(_c, size=(h2,w2),mode='bilinear',align_corners=False)
 
         _c_further=_c.reshape(batch_size, num_clips, -1, h2, w2)
-        # print(_c_further.shape)
-        # exit()
         _c2=self.decoder_focal(_c_further)
-        # _c_further=_c_further.permute(0,2,1,3,4)
-
-        # _c2=_c.reshape(batch_size, num_clips, -1, h, w)
-
         assert _c_further.shape==_c2.shape
 
-        _c_further2=torch.cat([_c_further[:,-1], _c2[:,-1]],1)
+        _c_further2=torch.cat([_c_further[:,-1], _c2[:,-1]],1) #  B, 2*Embdim, H2, W2
 
         x2 = self.dropout(_c_further2)
         x2 = self.linear_pred2(x2)
-        x2=resize(x2, size=(h,w),mode='bilinear',align_corners=False)
-        x2=x2.unsqueeze(1)
+        focal_logit = resize(x2, size=(h,w),mode='bilinear',align_corners=False) # B, C, H, W
 
-        x=torch.cat([x,x2],1)   ## b*(k+1)*124*h*w
+        fused_logit = self.simple_seg_fuse(torch.cat([default_logit, focal_logit], dim=1)) # B, C, H, W
 
-        if not self.training:
-            return x2.squeeze(1)
-
-        return x
+        return [fused_logit, default_logit, focal_logit]
 

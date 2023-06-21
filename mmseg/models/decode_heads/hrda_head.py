@@ -64,6 +64,21 @@ class HRDAHead(BaseDecodeHead):
             kwargs.pop('dilations')
             kwargs['channels'] = 1
             self.os = 8
+        elif single_scale_head == 'CFFMHead': # only for video clips
+            head_cfg = dict(
+                type='CFFMHead_clips_resize1_8',
+                in_channels=[64, 128, 320, 512],
+                in_index=[0, 1, 2, 3],
+                feature_strides=[4, 8, 16, 32],
+                channels=128,
+                dropout_ratio=0.1,
+                num_classes=124,
+                norm_cfg=dict(type='SyncBN', requires_grad=True),
+                align_corners=False,
+                decoder_params=dict(embed_dim=256, depths=2),
+                loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+                num_clips=4
+            )
         else:
             raise NotImplementedError(single_scale_head)
         super(HRDAHead, self).__init__(**kwargs)
