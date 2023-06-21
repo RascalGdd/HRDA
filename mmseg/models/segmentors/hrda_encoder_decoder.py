@@ -288,7 +288,6 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
                  test_cfg=None,
                  pretrained=None,
                  init_cfg=None,
-
                  scales=[1],
                  hr_crop_size=None,
                  hr_slide_inference=True,
@@ -311,8 +310,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             auxiliary_head=auxiliary_head,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
-            pretrained=pretrained,
-            init_cfg=init_cfg)
+            pretrained=pretrained)
 
         self.scales = scales
         self.feature_scale = feature_scale
