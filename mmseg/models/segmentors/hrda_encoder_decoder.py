@@ -189,11 +189,6 @@ class HRDAEncoderDecoder(EncoderDecoder):
         return out
 
     def _forward_train_features(self, img):
-
-        print(img.shape)
-        for i in range(4):
-            save_image(img[0,i,:,:,:], 'debug/img{}_debug.png'.format(i))
-
         mres_feats = []
         self.decode_head.debug_output = {}
         assert len(self.scales) <= 2, 'Only up to 2 scales are supported.'
@@ -242,6 +237,13 @@ class HRDAEncoderDecoder(EncoderDecoder):
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
+        print(img.shape)
+        for i in range(4):
+            save_image(img[0,i,:,:,:], 'debug/img{}_debug.png'.format(i))
+            
+        if img.dim()==5:
+            batch_size, num_clips, _, h, w =img.size()
+
         losses = dict()
 
         mres_feats, prob_vis = self._forward_train_features(img)

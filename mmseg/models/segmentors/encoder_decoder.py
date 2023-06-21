@@ -507,6 +507,10 @@ class EncoderDecoder_clips(BaseSegmentor):
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
+        print(img.shape)
+        for i in range(4):
+            save_image(img[0,i,:,:,:], 'debug/img{}_debug.png'.format(i))
+            
         if img.dim()==5:
             batch_size, num_clips, _, h, w =img.size()
 

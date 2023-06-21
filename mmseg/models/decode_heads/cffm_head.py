@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 from mmseg.ops import resize
 from ..builder import HEADS
-from .decode_head import BaseDecodeHead, BaseDecodeHead_clips, BaseDecodeHead_clips_flow
+from .decode_head import BaseDecodeHead, BaseDecodeHead_clips_flow
 from mmseg.models.utils import *
 import attr
 
