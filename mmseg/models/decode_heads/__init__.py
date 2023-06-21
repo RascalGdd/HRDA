@@ -13,6 +13,8 @@ from .segformer_head import SegFormerHead
 from .sep_aspp_head import DepthwiseSeparableASPPHead
 from .uper_head import UPerHead
 
+from .cffm_head import CFFMHead_clips_resize1_8
+
 __all__ = [
     'FCNHead',
     'PSPHead',
@@ -25,4 +27,5 @@ __all__ = [
     'DAFormerHead',
     'ISAHead',
     'HRDAHead',
+    'CFFMHead_clips_resize1_8'
 ]
