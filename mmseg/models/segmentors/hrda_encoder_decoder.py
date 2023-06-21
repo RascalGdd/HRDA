@@ -304,7 +304,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         decode_head['scales'] = scales
         decode_head['enable_hr_crop'] = hr_crop_size is not None
         decode_head['hr_slide_inference'] = hr_slide_inference
-        super(HRDAEncoderDecoder, self).__init__(
+        super(HRDAEncoderDecoder_clips, self).__init__(
             backbone=backbone,
             decode_head=decode_head,
             neck=neck,
