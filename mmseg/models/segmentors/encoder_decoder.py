@@ -390,8 +390,6 @@ class EncoderDecoder_clips(BaseSegmentor):
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
-        self.init_weights(pretrained=pretrained)
-
         assert self.with_decode_head
 
     def _init_decode_head(self, decode_head):
@@ -409,24 +407,6 @@ class EncoderDecoder_clips(BaseSegmentor):
                     self.auxiliary_head.append(builder.build_head(head_cfg))
             else:
                 self.auxiliary_head = builder.build_head(auxiliary_head)
-
-    def init_weights(self, pretrained=None):
-        """Initialize the weights in backbone and heads.
-
-        Args:
-            pretrained (str, optional): Path to pre-trained weights.
-                Defaults to None.
-        """
-
-        super(EncoderDecoder_clips, self).init_weights(pretrained)
-        self.backbone.init_weights(pretrained=pretrained)
-        self.decode_head.init_weights()
-        if self.with_auxiliary_head:
-            if isinstance(self.auxiliary_head, nn.ModuleList):
-                for aux_head in self.auxiliary_head:
-                    aux_head.init_weights()
-            else:
-                self.auxiliary_head.init_weights()
 
     def extract_feat(self, img):
         """Extract features from images."""
@@ -510,7 +490,7 @@ class EncoderDecoder_clips(BaseSegmentor):
         print(img.shape)
         for i in range(4):
             save_image(img[0,i,:,:,:], 'debug/img{}_debug.png'.format(i))
-            
+
         if img.dim()==5:
             batch_size, num_clips, _, h, w =img.size()
 
