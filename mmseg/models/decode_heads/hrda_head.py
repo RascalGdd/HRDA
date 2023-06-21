@@ -59,7 +59,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         kwargs['init_cfg'] = None
         kwargs['input_transform'] = 'multiple_select'
         self.os = 4
-        
+
         if single_scale_head == 'DLV2Head':
             kwargs['init_cfg'] = None
             kwargs.pop('dilations')
@@ -89,7 +89,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         head_cfg['type'] = single_scale_head
         self.head = builder.build_head(head_cfg)
 
-        attn_cfg['type'] = single_scale_head
+        attn_cfg['type'] = 'DAFormerHead'
         if not attention_classwise:
             attn_cfg['num_classes'] = 1
         if fixed_attention is None:
