@@ -294,7 +294,10 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
                  ignore_index=255,
                  sampler=None,
                  align_corners=False,
-                 num_clips=5):
+                 init_cfg=dict(
+                     type='Normal', std=0.01, override=dict(name='conv_seg')),
+                 num_clips=5
+    ):
         super(BaseDecodeHead_clips_flow, self).__init__()
         self._init_inputs(in_channels, in_index, input_transform)
         self.channels = channels
