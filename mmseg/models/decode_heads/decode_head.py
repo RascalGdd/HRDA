@@ -366,9 +366,9 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
             assert isinstance(in_index, int)
             self.in_channels = in_channels
 
-    def init_weights(self):
-        """Initialize weights of classification layer."""
-        normal_init(self.conv_seg, mean=0, std=0.01)
+    # def init_weights(self):
+    #     """Initialize weights of classification layer."""
+    #     normal_init(self.conv_seg, mean=0, std=0.01)
 
     def _transform_inputs(self, inputs):
         """Transform inputs for decoder.
