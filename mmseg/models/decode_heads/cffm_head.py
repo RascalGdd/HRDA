@@ -139,5 +139,5 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
 
         fused_logit = self.simple_seg_fuse(torch.cat([default_logit, focal_logit], dim=1)) # B, C, H, W
 
-        return [fused_logit, default_logit, focal_logit]
+        return fused_logit
 

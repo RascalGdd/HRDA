@@ -473,12 +473,6 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             dict[str, Tensor]: a dictionary of loss components
         """
 
-        print(img.shape)
-        print(gt_semantic_seg.shape)
-        for i in range(4):
-            save_image(img[0,i,:,:,:], 'debug/img{}_debug.png'.format(i))
-            save_image(gt_semantic_seg[0,i,:,:,:].float() / gt_semantic_seg[0,i,:,:,:].max(), 'debug/gtseg{}_debug.png'.format(i))
-
         if img.dim()==5:
             batch_size, num_clips, _, h, w = img.size()
             img = img.reshape(batch_size*num_clips, -1, h,w)

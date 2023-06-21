@@ -26,7 +26,8 @@ model = dict(
         # Learn a scale attention for each class channel of the prediction.
         attention_classwise=True,
         # Set the detail loss weight $\lambda_d=0.1$.
-        hr_loss_weight=0.1),
+        hr_loss_weight=0.1,
+        num_clips=4),
     # Use the full resolution for the detail crop and half the resolution for
     # the context crop.
     scales=[1, 0.5],

@@ -447,32 +447,6 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
         output = self.conv_seg(feat)
         return output
 
-    def consistency_loss(preds, gts, batch_size):
-        # preds: b*k
-        assert preds.dim()==4 and gts.dim()==3
-        assert preds.size(2)==gts.size(1) and preds.size(3)==gts.size(2)
-        dim1,h,w=preds.size(1),preds.size(2),preds.size(3)
-        preds=preds.reshape(batch_size,-1,dim1,h,w)
-        gts=gts.reshape(batch_size,-1,gts.size(1),gts.size(2))
-        preds1=preds[:,:-1,:,:,:]
-        preds2=preds[:,1:,:,:,:]
-        preds_diff=preds1*preds2
-        num_clips=preds.size(1)
-        gts_diff=[]
-        for i in range(num_clips-1):
-            gts_one=gts[:,i]
-            gts_one[~(gts[:,i]&gts[:,i+1])]=self.ignore_index
-            gts_diff.append(gts_one)
-        gts_diff=torch.stack(gts_diff,dim=1)
-        preds_diff=preds_diff.reshape(-1,preds_diff.size(2),preds_diff.size(),preds_diff.size())
-        loss_consis=self.loss_decode(
-            preds_diff,
-            gts_diff,
-            weight=None,
-            ignore_index=self.ignore_index)
-        return loss_consis
-
-
     def losses_base(self, seg_logit, seg_label):
         """Compute segmentation loss."""
         loss = dict()
@@ -500,19 +474,19 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
             In our implementation, the seg_logit is a list containing [fused_logit, default_logit, focal_logit]
 
         """
-        assert len(seg_logit) == 3
+        # assert len(seg_logit) == 3
         if seg_label.dim() == 5:
             seg_label = seg_label[:,-1]
 
-        fused_logit, default_logit, focal_logit = seg_logit[0], seg_logit[1], seg_logit[2]
+        # fused_logit, default_logit, focal_logit = seg_logit[0], seg_logit[1], seg_logit[2]
 
         loss = dict()
 
         loss_fused = self.losses_base(fused_logit, seg_label)
-        loss_default = self.losses_base(default_logit, seg_label)
-        loss_focal = self.losses_base(focal_logit, seg_label)
+        # loss_default = self.losses_base(default_logit, seg_label)
+        # loss_focal = self.losses_base(focal_logit, seg_label)
 
-        loss['loss_seg'] = 1.0*loss_fused['loss_seg'] + 0.5*loss_default['loss_seg'] + 0.75*loss_focal['loss_seg']
+        loss['loss_seg'] = 1.0*loss_fused['loss_seg'] # + 0.5*loss_default['loss_seg'] + 0.75*loss_focal['loss_seg']
         loss['acc_seg'] = loss_fused['acc_seg']
 
         return loss

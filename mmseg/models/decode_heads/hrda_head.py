@@ -13,7 +13,7 @@ from ...ops import resize as _resize
 from .. import builder
 from ..builder import HEADS
 from ..segmentors.hrda_encoder_decoder import crop
-from .decode_head import BaseDecodeHead
+from .decode_head import BaseDecodeHead, BaseDecodeHead_clips_flow
 
 
 def scale_box(box, scale):
@@ -30,7 +30,7 @@ def scale_box(box, scale):
 
 
 @HEADS.register_module()
-class HRDAHead(BaseDecodeHead):
+class HRDAHead(BaseDecodeHead_clips_flow):
 
     def __init__(self,
                  single_scale_head,
@@ -46,20 +46,21 @@ class HRDAHead(BaseDecodeHead):
                  **kwargs):
         head_cfg = deepcopy(kwargs)
         attn_cfg = deepcopy(kwargs)
-        if single_scale_head == 'DAFormerHead':
-            attn_cfg['channels'] = attention_embed_dim
-            attn_cfg['decoder_params']['embed_dims'] = attention_embed_dim
-            if attn_cfg['decoder_params']['fusion_cfg']['type'] == 'aspp':
-                attn_cfg['decoder_params']['fusion_cfg'] = dict(
-                    type='conv',
-                    kernel_size=1,
-                    act_cfg=dict(type='ReLU'),
-                    norm_cfg=attn_cfg['decoder_params']['fusion_cfg']
-                    ['norm_cfg'])
-            kwargs['init_cfg'] = None
-            kwargs['input_transform'] = 'multiple_select'
-            self.os = 4
-        elif single_scale_head == 'DLV2Head':
+
+        attn_cfg['channels'] = attention_embed_dim
+        attn_cfg['decoder_params']['embed_dims'] = attention_embed_dim
+        if attn_cfg['decoder_params']['fusion_cfg']['type'] == 'aspp':
+            attn_cfg['decoder_params']['fusion_cfg'] = dict(
+                type='conv',
+                kernel_size=1,
+                act_cfg=dict(type='ReLU'),
+                norm_cfg=attn_cfg['decoder_params']['fusion_cfg']
+                ['norm_cfg'])
+        kwargs['init_cfg'] = None
+        kwargs['input_transform'] = 'multiple_select'
+        self.os = 4
+        
+        if single_scale_head == 'DLV2Head':
             kwargs['init_cfg'] = None
             kwargs.pop('dilations')
             kwargs['channels'] = 1
