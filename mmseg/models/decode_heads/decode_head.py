@@ -450,7 +450,7 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
         output = self.conv_seg(feat)
         return output
 
-    def losses_base(self, seg_logit, seg_label):
+    def losses_base(self, seg_logit, seg_label, seg_weight=None):
         """Compute segmentation loss."""
         loss = dict()
         seg_logit = resize(
@@ -472,7 +472,7 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
         return loss
 
     @force_fp32(apply_to=('seg_logit', ))
-    def losses(self, seg_logit, seg_label):
+    def losses(self, seg_logit, seg_label, seg_weight=None):
         """Compute segmentation loss.
             In our implementation, the seg_logit is a list containing [fused_logit, default_logit, focal_logit]
 
@@ -485,7 +485,7 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
 
         loss = dict()
 
-        loss_fused = self.losses_base(fused_logit, seg_label)
+        loss_fused = self.losses_base(seg_logit, seg_label, seg_weight=seg_weight)
         # loss_default = self.losses_base(default_logit, seg_label)
         # loss_focal = self.losses_base(focal_logit, seg_label)
 
