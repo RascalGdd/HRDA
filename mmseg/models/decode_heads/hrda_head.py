@@ -143,7 +143,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                                 device=dev)
             count_mat = torch.zeros((bs, 1, h_img, w_img), device=dev)
 
-            crop_seg_logits = self.head(features, batch_size=int(bs/self.num_clips), num_clips=self.num_clips)
+            crop_seg_logits = self.head(features)
             for i in range(len(boxes)):
                 y1, y2, x1, x2 = boxes[i]
                 crop_seg_logit = crop_seg_logits[i * bs:(i + 1) * bs]
@@ -157,7 +157,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             preds = preds / count_mat
             return preds
         else:
-            return self.head(inp, batch_size=int(bs/self.num_clips), num_clips=self.num_clips)
+            return self.head(inp)
 
     def get_scale_attention(self, inp):
         if self.scale_attention is not None:
@@ -181,7 +181,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             crop_y1, crop_y2, crop_x1, crop_x2 = self.hr_crop_box
 
         # print_log(f'lr_inp {[f.shape for f in lr_inp]}', 'mmseg')
-        lr_seg = self.head(lr_inp, batch_size=int(batch_size/num_clips), num_clips=self.num_clips)
+        lr_seg = self.head(lr_inp)
         # print_log(f'lr_seg {lr_seg.shape}', 'mmseg')
 
         hr_seg = self.decode_hr(hr_inp, batch_size)

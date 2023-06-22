@@ -93,15 +93,18 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
 
         print(self.decoder_focal.blocks[0].focal_kernel_clips)
 
-    def forward(self, inputs, batch_size=None, num_clips=None):
-        if self.training:
-            assert self.num_clips==num_clips
+    def forward(self, inputs):
+        # if self.training:
+        #     assert self.num_clips==num_clips
+        num_clips = self.num_clips
 
         x = self._transform_inputs(inputs)  # len=4, 1/4,1/8,1/16,1/32
         c1, c2, c3, c4 = x
 
         ############## MLP decoder on C1-C4 ###########
         n, _, h, w = c4.shape
+
+        batch_size = int(n / num_clips)
 
         print("c1.shape", c1.shape)
         print("c2.shape", c2.shape)
@@ -125,8 +128,8 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         x = self.dropout(_c) # Bk=4, C, H, W
         default_logit = self.linear_pred(x[-1:]) # 1, C, H2, W2
 
-        if not self.training and num_clips!=self.num_clips:
-            return x[:,-1]
+        # if not self.training and num_clips!=self.num_clips:
+        #     return x[:,-1]
 
         h2=int(h/2)
         w2=int(w/2)
@@ -135,7 +138,7 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         _c_further=_c.reshape(batch_size, num_clips, -1, h2, w2)
 
         print("_c_further.shape", _c_further.shape)
-        
+
         _c2=self.decoder_focal(_c_further)
         assert _c_further.shape==_c2.shape
 
