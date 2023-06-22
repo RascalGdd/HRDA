@@ -76,7 +76,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 feature_strides=[4, 8, 16, 32],
                 channels=128,
                 dropout_ratio=0.1,
-                num_classes=124,
+                num_classes=19,
                 norm_cfg=dict(type='SyncBN', requires_grad=True),
                 align_corners=False,
                 decoder_params=dict(embed_dim=256, depths=2),
