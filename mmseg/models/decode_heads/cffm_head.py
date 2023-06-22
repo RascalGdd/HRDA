@@ -133,6 +133,9 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         _c = resize(_c, size=(h2,w2),mode='bilinear',align_corners=False)
 
         _c_further=_c.reshape(batch_size, num_clips, -1, h2, w2)
+
+        print("_c_further.shape", _c_further.shape)
+        
         _c2=self.decoder_focal(_c_further)
         assert _c_further.shape==_c2.shape
 
