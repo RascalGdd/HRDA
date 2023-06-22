@@ -614,7 +614,7 @@ class EncoderDecoder_clips(BaseSegmentor):
         img=torch.stack(img, dim=1)
         # print(img.shape)
 
-        assert img.dim()==5:
+        assert img.dim()==5
         batch_size, num_clips, _, h, w =img.size()
 
         img=img.reshape(batch_size*num_clips, -1, h,w)
