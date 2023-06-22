@@ -67,9 +67,11 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             self.os = 8
         elif single_scale_head == 'CFFMHead_clips_resize1_8': # only for video clips
             self.num_clips = kwargs['num_clips']
+
+            # TODO: this is only for debug version. change it according to mit_bx configs.
             head_cfg = dict(
                 type='CFFMHead_clips_resize1_8',
-                in_channels=[64, 128, 320, 512],
+                in_channels=[32, 64, 160, 256],
                 in_index=[0, 1, 2, 3],
                 feature_strides=[4, 8, 16, 32],
                 channels=128,
