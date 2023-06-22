@@ -450,7 +450,8 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
         output = self.conv_seg(feat)
         return output
 
-    def losses_base(self, seg_logit, seg_label, seg_weight=None):
+    @force_fp32(apply_to=('seg_logit', ))
+    def losses(self, seg_logit, seg_label, seg_weight=None):
         """Compute segmentation loss."""
         loss = dict()
         seg_logit = resize(
@@ -471,27 +472,50 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
         loss['acc_seg'] = accuracy(seg_logit, seg_label)
         return loss
 
+
     @force_fp32(apply_to=('seg_logit', ))
     def losses(self, seg_logit, seg_label, seg_weight=None):
-        """Compute segmentation loss.
-            In our implementation, the seg_logit is a list containing [fused_logit, default_logit, focal_logit]
-
-        """
-        # assert len(seg_logit) == 3
-        if seg_label.dim() == 5:
-            seg_label = seg_label[:,-1]
-
-        # fused_logit, default_logit, focal_logit = seg_logit[0], seg_logit[1], seg_logit[2]
-
+        """Compute segmentation loss."""
         loss = dict()
-
-        loss_fused = self.losses_base(seg_logit, seg_label, seg_weight=seg_weight)
-        # loss_default = self.losses_base(default_logit, seg_label)
-        # loss_focal = self.losses_base(focal_logit, seg_label)
-
-        loss['loss_seg'] = 1.0*loss_fused['loss_seg'] # + 0.5*loss_default['loss_seg'] + 0.75*loss_focal['loss_seg']
-        loss['acc_seg'] = loss_fused['acc_seg']
-
+        seg_logit = resize(
+            input=seg_logit,
+            size=seg_label.shape[2:],
+            mode='bilinear',
+            align_corners=self.align_corners)
+        if self.sampler is not None:
+            seg_weight = self.sampler.sample(seg_logit, seg_label)
+        else:
+            seg_weight = None
+        seg_label = seg_label.squeeze(1)
+        loss['loss_seg'] = self.loss_decode(
+            seg_logit,
+            seg_label,
+            weight=seg_weight,
+            ignore_index=self.ignore_index)
+        loss['acc_seg'] = accuracy(seg_logit, seg_label)
         return loss
+
+    # @force_fp32(apply_to=('seg_logit', ))
+    # def losses(self, seg_logit, seg_label, seg_weight=None):
+    #     """Compute segmentation loss.
+    #         In our implementation, the seg_logit is a list containing [fused_logit, default_logit, focal_logit]
+
+    #     """
+    #     # assert len(seg_logit) == 3
+    #     if seg_label.dim() == 5:
+    #         seg_label = seg_label[:,-1]
+
+    #     # fused_logit, default_logit, focal_logit = seg_logit[0], seg_logit[1], seg_logit[2]
+
+    #     loss = dict()
+
+    #     loss_fused = self.losses_base(seg_logit, seg_label, seg_weight=seg_weight)
+    #     # loss_default = self.losses_base(default_logit, seg_label)
+    #     # loss_focal = self.losses_base(focal_logit, seg_label)
+
+    #     loss['loss_seg'] = 1.0*loss_fused['loss_seg'] # + 0.5*loss_default['loss_seg'] + 0.75*loss_focal['loss_seg']
+    #     loss['acc_seg'] = loss_fused['acc_seg']
+
+    #     return loss
 
 
