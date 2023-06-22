@@ -319,7 +319,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         self.hr_slide_overlapping = hr_slide_overlapping
         self.crop_coord_divisible = crop_coord_divisible
         self.blur_hr_crop = blur_hr_crop
-        
+
     def extract_unscaled_feat(self, img):
         x = self.backbone(img)
         if self.with_neck:
@@ -426,8 +426,6 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         return out
 
     def _forward_train_features(self, img):
-
-        print(img.shape)
 
         mres_feats = []
         self.decode_head.debug_output = {}

@@ -262,18 +262,13 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
     def losses(self, seg_logit, seg_label, seg_weight=None):
         """Compute losses."""
-        print(seg_label.shape)
-        
+
         if seg_label.dim() == 5:
             seg_label = seg_label[:,-1]
         elif seg_label.shape[0] == self.num_clips:
             seg_label = seg_label[-1:]
 
-        print(seg_label.shape)
-
         fused_seg, lr_seg, hr_seg = seg_logit
-
-        print(fused_seg.shape, lr_seg.shape, hr_seg.shape)
 
         loss = super(HRDAHead, self).losses(fused_seg, seg_label, seg_weight)
         if self.hr_loss_weight == 0 and self.lr_loss_weight == 0:
