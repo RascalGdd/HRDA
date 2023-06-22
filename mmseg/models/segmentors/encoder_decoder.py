@@ -421,11 +421,11 @@ class EncoderDecoder_clips(BaseSegmentor):
             x = self.neck(x)
         return x
 
-    def encode_decode(self, img, img_metas, batch_size, num_clips):
+    def encode_decode(self, img, img_metas):
         """Encode images with backbone and decode into a semantic segmentation
         map of the same size as input."""
         x = self.extract_feat(img)
-        out = self._decode_head_forward_test(x, img_metas, batch_size, num_clips)
+        out = self._decode_head_forward_test(x, img_metas)
         # print(out.shape, img.shape[2:])
         out = resize(
             input=out,
@@ -434,21 +434,21 @@ class EncoderDecoder_clips(BaseSegmentor):
             align_corners=self.align_corners)
         return out
 
-    def _decode_head_forward_train(self, x, img_metas, gt_semantic_seg,batch_size, num_clips):
+    def _decode_head_forward_train(self, x, img_metas, gt_semantic_seg, seg_weight=None):
         """Run forward function and calculate loss for decode head in
         training."""
         losses = dict()
         loss_decode = self.decode_head.forward_train(x, img_metas,
                                                      gt_semantic_seg,
-                                                     self.train_cfg,batch_size, num_clips)
+                                                     self.train_cfg, seg_weight = seg_weight)
 
         losses.update(add_prefix(loss_decode, 'decode'))
         return losses
 
-    def _decode_head_forward_test(self, x, img_metas, batch_size, num_clips):
+    def _decode_head_forward_test(self, x, img_metas):
         """Run forward function and calculate loss for decode head in
         inference."""
-        seg_logits = self.decode_head.forward_test(x, img_metas, self.test_cfg, batch_size, num_clips)
+        seg_logits = self.decode_head.forward_test(x, img_metas, self.test_cfg)
         return seg_logits
 
     def _auxiliary_head_forward_train(self, x, img_metas, gt_semantic_seg):
@@ -474,7 +474,7 @@ class EncoderDecoder_clips(BaseSegmentor):
 
         return seg_logit
 
-    def forward_train(self, img, img_metas, gt_semantic_seg):
+    def forward_train(self, img, img_metas, gt_semantic_seg, seg_weight=None):
         """Forward function for training.
 
         Args:
@@ -501,7 +501,7 @@ class EncoderDecoder_clips(BaseSegmentor):
         losses = dict()
 
         loss_decode = self._decode_head_forward_train(x, img_metas,
-                                                      gt_semantic_seg,batch_size, num_clips)
+                                                      gt_semantic_seg, seg_weight = seg_weight)
         losses.update(loss_decode)
 
         if self.with_auxiliary_head:
@@ -512,7 +512,7 @@ class EncoderDecoder_clips(BaseSegmentor):
         return losses
 
     # TODO refactor
-    def slide_inference(self, img, img_meta, rescale, batch_size, num_clips):
+    def slide_inference(self, img, img_meta, rescale):
         """Inference by sliding-window with overlap.
 
         If h_crop > h_img or w_crop > w_img, the small patch will be used to
@@ -536,7 +536,7 @@ class EncoderDecoder_clips(BaseSegmentor):
                 y1 = max(y2 - h_crop, 0)
                 x1 = max(x2 - w_crop, 0)
                 crop_img = img[:, :, y1:y2, x1:x2]
-                crop_seg_logit = self.encode_decode(crop_img, img_meta, batch_size, num_clips)
+                crop_seg_logit = self.encode_decode(crop_img, img_meta)
                 preds += F.pad(crop_seg_logit,
                                (int(x1), int(preds.shape[3] - x2), int(y1),
                                 int(preds.shape[2] - y2)))
@@ -557,10 +557,10 @@ class EncoderDecoder_clips(BaseSegmentor):
                 warning=False)
         return preds
 
-    def whole_inference(self, img, img_meta, rescale, batch_size, num_clips):
+    def whole_inference(self, img, img_meta, rescale):
         """Inference with full image."""
 
-        seg_logit = self.encode_decode(img, img_meta, batch_size, num_clips)
+        seg_logit = self.encode_decode(img, img_meta)
         # print(seg_logit.shape)
         # print(img_meta[0]['ori_shape'][:2])
         if rescale:
@@ -573,7 +573,7 @@ class EncoderDecoder_clips(BaseSegmentor):
 
         return seg_logit
 
-    def inference(self, img, img_meta, rescale, batch_size, num_clips):
+    def inference(self, img, img_meta, rescale):
         """Inference with slide/whole style.
 
         Args:
@@ -593,9 +593,9 @@ class EncoderDecoder_clips(BaseSegmentor):
         ori_shape = img_meta[0]['ori_shape']
         assert all(_['ori_shape'] == ori_shape for _ in img_meta)
         if self.test_cfg.mode == 'slide':
-            seg_logit = self.slide_inference(img, img_meta, rescale, batch_size, num_clips)
+            seg_logit = self.slide_inference(img, img_meta, rescale)
         else:
-            seg_logit = self.whole_inference(img, img_meta, rescale, batch_size, num_clips)
+            seg_logit = self.whole_inference(img, img_meta, rescale)
         # print(seg_logit.shape)
         output = F.softmax(seg_logit, dim=1)
         flip = img_meta[0]['flip']
@@ -614,11 +614,12 @@ class EncoderDecoder_clips(BaseSegmentor):
         img=torch.stack(img, dim=1)
         # print(img.shape)
 
-        if img.dim()==5:
-            batch_size, num_clips, _, h, w =img.size()
+        assert img.dim()==5:
+        batch_size, num_clips, _, h, w =img.size()
+
         img=img.reshape(batch_size*num_clips, -1, h,w)
         # exit()
-        seg_logit = self.inference(img, img_meta, rescale, batch_size, num_clips)
+        seg_logit = self.inference(img, img_meta, rescale)
         seg_pred = seg_logit.argmax(dim=1)
         if torch.onnx.is_in_onnx_export():
             # our inference backend only support 4D output

@@ -398,6 +398,11 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
     def encode_decode(self, img, img_metas):
         """Encode images with backbone and decode into a semantic segmentation
         map of the same size as input."""
+
+        if img.dim()==5:
+            batch_size, num_clips, _, h, w = img.size()
+            img = img.reshape(batch_size*num_clips, -1, h,w)
+
         mres_feats = []
         self.decode_head.debug_output = {}
         for i, s in enumerate(self.scales):
@@ -492,7 +497,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
 
         loss_decode = self._decode_head_forward_train(mres_feats, img_metas,
                                                       gt_semantic_seg,
-                                                      seg_weight)
+                                                      seg_weight = seg_weight)
         losses.update(loss_decode)
 
         if self.decode_head.debug and prob_vis is not None:
