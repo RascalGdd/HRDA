@@ -288,8 +288,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 cropped_seg_weight = crop(seg_weight, self.hr_crop_box)
             else:
                 cropped_seg_weight = seg_weight
-            self.debug_output['Cropped GT'] = \
-                cropped_seg_label.squeeze(1).detach().cpu().numpy()
+            # self.debug_output['Cropped GT'] = \
+            #     cropped_seg_label.squeeze(1).detach().cpu().numpy()
             loss.update(
                 add_prefix(
                     super(HRDAHead, self).losses(hr_seg, cropped_seg_label,
