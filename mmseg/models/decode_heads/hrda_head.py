@@ -161,7 +161,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
     def get_scale_attention(self, inp):
 
-        # TODO: here is an assumption: num_per_gpu = 1, and the last clip is the current clip
+        # TODO: underlying assumption num_per_gpu = 1, and the last clip is the current clip
         if inp[0].shape[0] == self.num_clips:
             for i in range(len(inp)):
                 inp[i] = inp[i][-1:]
@@ -179,7 +179,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         lr_inp = inputs[0]
         lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
         lr_scale = self.scales[0]
-        batch_size = lr_inp[0].shape[0]
+        batch_size = int(lr_inp[0].shape[0] / self.num_clips)
         assert lr_scale <= hr_scale
 
         has_crop = self.hr_crop_box is not None
