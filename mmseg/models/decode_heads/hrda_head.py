@@ -160,6 +160,12 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             return self.head(inp)
 
     def get_scale_attention(self, inp):
+
+        # TODO: here is an assumption: num_per_gpu = 1, and the last clip is the current clip
+        if inp[0].shape[0] == self.num_clips:
+            for i in range(len(inp)):
+                inp[i] = inp[i][-1:]
+
         if self.scale_attention is not None:
             att = torch.sigmoid(self.scale_attention(inp))
         else:
