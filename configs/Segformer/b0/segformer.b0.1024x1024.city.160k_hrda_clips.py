@@ -5,6 +5,8 @@ _base_ = [
     '../../_base_/schedules/schedule_160k_adamw.py'
 ]
 
+samples_per_gpu = 1
+
 # model settings
 norm_cfg = dict(type='SyncBN', requires_grad=True)
 find_unused_parameters = True
@@ -41,6 +43,8 @@ model = dict(
     # Use overlapping slide inference for detail crops for pseudo-labels.
     hr_slide_inference=True,
     # Use overlapping slide inference for fused crops during test time.
+    batch_size=samples_per_gpu,
+    num_clips=4,
     test_cfg=dict(
         mode='slide',
         batched_slide=True,
@@ -48,7 +52,7 @@ model = dict(
         crop_size=[1024, 1024]))
 
 # data
-data = dict(samples_per_gpu=1)
+data = dict(samples_per_gpu=samples_per_gpu)
 evaluation = dict(interval=4000, metric='mIoU')
 
 # optimizer
