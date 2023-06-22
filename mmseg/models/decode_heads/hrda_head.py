@@ -262,6 +262,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
     def losses(self, seg_logit, seg_label, seg_weight=None):
         """Compute losses."""
+        print(seg_label.shape)
+        
         if seg_label.dim() == 5:
             seg_label = seg_label[:,-1]
         elif seg_label.shape[0] == self.num_clips:
