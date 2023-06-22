@@ -29,7 +29,8 @@ model = dict(
         attention_classwise=True,
         # Set the detail loss weight $\lambda_d=0.1$.
         hr_loss_weight=0.1,
-        num_clips=4),
+        num_clips=4,
+    ),
     # Use the full resolution for the detail crop and half the resolution for
     # the context crop.
     scales=[1, 0.5],
@@ -43,8 +44,7 @@ model = dict(
     # Use overlapping slide inference for detail crops for pseudo-labels.
     hr_slide_inference=True,
     # Use overlapping slide inference for fused crops during test time.
-    batch_size=samples_per_gpu,
-    num_clips=4,
+
     test_cfg=dict(
         mode='slide',
         batched_slide=True,

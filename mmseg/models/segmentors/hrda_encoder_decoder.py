@@ -295,8 +295,6 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
                  crop_coord_divisible=1,
                  blur_hr_crop=False,
                  feature_scale=1,
-                 batch_size=1,
-                 num_clips=4,
     ):
         self.feature_scale_all_strs = ['all']
         if isinstance(feature_scale, str):

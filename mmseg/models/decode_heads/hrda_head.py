@@ -66,6 +66,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             kwargs['channels'] = 1
             self.os = 8
         elif single_scale_head == 'CFFMHead_clips_resize1_8': # only for video clips
+            self.num_clips = kwargs['num_clips']
             head_cfg = dict(
                 type='CFFMHead_clips_resize1_8',
                 in_channels=[64, 128, 320, 512],
@@ -80,10 +81,12 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
                 num_clips=self.num_clips
             )
+            self.
             attn_cfg.pop('num_clips')
 
         else:
             raise NotImplementedError(single_scale_head)
+
         super(HRDAHead, self).__init__(**kwargs)
         del self.conv_seg
         del self.dropout
@@ -177,7 +180,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             crop_y1, crop_y2, crop_x1, crop_x2 = self.hr_crop_box
 
         # print_log(f'lr_inp {[f.shape for f in lr_inp]}', 'mmseg')
-        lr_seg = self.head(lr_inp, batch_size=self.batch_size, num_clips=self.num_clips)
+        lr_seg = self.head(lr_inp, batch_size=batch_size, num_clips=self.num_clips)
         # print_log(f'lr_seg {lr_seg.shape}', 'mmseg')
 
         hr_seg = self.decode_hr(hr_inp, batch_size)
