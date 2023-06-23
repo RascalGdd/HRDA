@@ -104,6 +104,8 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         ############## MLP decoder on C1-C4 ###########
         n, _, h, w = c4.shape
 
+        batch_size = int(n / num_clips)
+
         _c4 = self.linear_c4(c4).permute(0,2,1).reshape(n, -1, c4.shape[2], c4.shape[3])
         _c4 = resize(_c4, size=c1.size()[2:],mode='bilinear',align_corners=False)
 
