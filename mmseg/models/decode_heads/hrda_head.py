@@ -29,6 +29,49 @@ def scale_box(box, scale):
     return y1, y2, x1, x2
 
 
+CFFM_head_config_b0 = dict(
+    type='CFFMHead_clips_resize1_8',
+    in_channels=[32, 64, 160, 256],
+    in_index=[0, 1, 2, 3],
+    feature_strides=[4, 8, 16, 32],
+    channels=128,
+    dropout_ratio=0.1,
+    num_classes=19,
+    norm_cfg=dict(type='SyncBN', requires_grad=True),
+    align_corners=False,
+    decoder_params=dict(embed_dim=256, depths=2),
+    loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)
+)
+
+CFFM_head_config_b1 = dict(
+    type='CFFMHead_clips_resize1_8',
+    in_channels=[32, 64, 160, 256],
+    in_index=[0, 1, 2, 3],
+    feature_strides=[4, 8, 16, 32],
+    channels=128,
+    dropout_ratio=0.1,
+    num_classes=19,
+    norm_cfg=dict(type='SyncBN', requires_grad=True),
+    align_corners=False,
+    decoder_params=dict(embed_dim=256, depths=2),
+    loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)
+)
+
+CFFM_head_config_b3 = dict(
+    type='CFFMHead_clips_resize1_8',
+    in_channels=[64, 128, 320, 512],
+    in_index=[0, 1, 2, 3],
+    feature_strides=[4, 8, 16, 32],
+    channels=256,
+    dropout_ratio=0.1,
+    num_classes=19,
+    norm_cfg=dict(type='SyncBN', requires_grad=True),
+    align_corners=False,
+    decoder_params=dict(embed_dim=256, depths=2),
+    loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)
+)
+
+
 @HEADS.register_module()
 class HRDAHead(BaseDecodeHead_clips_flow):
 
@@ -65,24 +108,19 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             kwargs.pop('dilations')
             kwargs['channels'] = 1
             self.os = 8
-        elif single_scale_head == 'CFFMHead_clips_resize1_8': # only for video clips
+        elif 'CFFMHead' in single_scale_head: # only for video clips
             self.num_clips = kwargs['num_clips']
 
-            # TODO: this is only for debug version. change it according to mit_bx configs.
-            head_cfg = dict(
-                type='CFFMHead_clips_resize1_8',
-                in_channels=[32, 64, 160, 256],
-                in_index=[0, 1, 2, 3],
-                feature_strides=[4, 8, 16, 32],
-                channels=128,
-                dropout_ratio=0.1,
-                num_classes=19,
-                norm_cfg=dict(type='SyncBN', requires_grad=True),
-                align_corners=False,
-                decoder_params=dict(embed_dim=256, depths=2),
-                loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
-                num_clips=self.num_clips
-            )
+            if 'b0' in single_scale_head:
+                head_cfg = CFFM_head_config_b0
+            elif 'b1' in single_scale_head:
+                head_cfg = CFFM_head_config_b1
+            elif 'b3' in single_scale_head:
+                head_cfg = CFFM_head_config_b3
+            else:
+                assert 0
+
+            head_cfg["num_clips"] = self.num_clips
             attn_cfg.pop('num_clips')
 
         else:
