@@ -105,6 +105,7 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         n, _, h, w = c4.shape
 
         batch_size = int(n / num_clips)
+        print(n, batch_size)
 
         _c4 = self.linear_c4(c4).permute(0,2,1).reshape(n, -1, c4.shape[2], c4.shape[3])
         _c4 = resize(_c4, size=c1.size()[2:],mode='bilinear',align_corners=False)
@@ -121,7 +122,7 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
 
         _, _, h, w=_c.shape
         x = self.dropout(_c) # Bk=4, C, H, W
-        default_logit = self.linear_pred(x[-1:]) # 1, C, H2, W2
+        default_logit = self.linear_pred(x.reshape(batch_size, num_clips, -1, x.shape[2], x.shape[3])[:,-1]) # 1, C, H2, W2
 
         # if not self.training and num_clips!=self.num_clips:
         #     return x[:,-1]
