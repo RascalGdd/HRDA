@@ -130,7 +130,6 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         del self.conv_seg
         del self.dropout
 
-        head_cfg['type'] = single_scale_head
         self.head = builder.build_head(head_cfg)
 
         attn_cfg['type'] = 'DAFormerHead'
