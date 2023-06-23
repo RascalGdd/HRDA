@@ -116,6 +116,7 @@ def total_intersect_and_union(results,
     num_imgs = len(results)
 
     print("num_imgs", num_imgs)
+    print("gt_seg_maps shape", gt_seg_maps[0].shape)
 
     assert len(gt_seg_maps) == num_imgs
     total_area_intersect = torch.zeros((num_classes, ), dtype=torch.float64)
