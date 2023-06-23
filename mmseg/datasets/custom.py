@@ -874,6 +874,9 @@ class CustomDataset_cityscape_clips(Dataset):
             class_names = tuple(range(num_classes))
         else:
             class_names = self.CLASSES
+
+        print("ret_metrics", ret_metrics)
+        
         ret_metrics_round = [
             np.round(ret_metric * 100, 2) for ret_metric in ret_metrics
         ]
