@@ -116,6 +116,7 @@ def total_intersect_and_union(results,
     num_imgs = len(results)
 
     print("num_imgs", num_imgs)
+    print("results shape", results[0].shape)
     print("gt_seg_maps shape", gt_seg_maps[0].shape)
 
     assert len(gt_seg_maps) == num_imgs
