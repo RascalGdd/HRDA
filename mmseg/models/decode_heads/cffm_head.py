@@ -141,6 +141,7 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         x2 = self.linear_pred2(x2)
         focal_logit = resize(x2, size=(h,w),mode='bilinear',align_corners=False) # B, C, H, W
 
+        print(default_logit.shape, focal_logit.shape)
         fused_logit = self.simple_seg_fuse(torch.cat([default_logit, focal_logit], dim=1)) # B, C, H, W
 
         return fused_logit
