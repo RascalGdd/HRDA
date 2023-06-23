@@ -104,9 +104,6 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         ############## MLP decoder on C1-C4 ###########
         n, _, h, w = c4.shape
 
-        batch_size = int(n / num_clips)
-        print(n, batch_size)
-
         _c4 = self.linear_c4(c4).permute(0,2,1).reshape(n, -1, c4.shape[2], c4.shape[3])
         _c4 = resize(_c4, size=c1.size()[2:],mode='bilinear',align_corners=False)
 
@@ -142,7 +139,6 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         x2 = self.linear_pred2(x2)
         focal_logit = resize(x2, size=(h,w),mode='bilinear',align_corners=False) # B, C, H, W
 
-        print(default_logit.shape, focal_logit.shape)
         fused_logit = self.simple_seg_fuse(torch.cat([default_logit, focal_logit], dim=1)) # B, C, H, W
 
         return fused_logit
