@@ -29,7 +29,7 @@ class MLP(nn.Module):
         return x
 
 class FeatureFusion(nn.Module):
-    def __init__(self, in_channels=[64, 128, 320, 512], embed_dim=768):
+    def __init__(self, in_channels=[64, 128, 320, 512], embedding_dim=768):
         super().__init__()
         c1_in_channels, c2_in_channels, c3_in_channels, c4_in_channels = in_channels
         self.linear_c4 = MLP(input_dim=c4_in_channels, embed_dim=embedding_dim)
