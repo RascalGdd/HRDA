@@ -120,6 +120,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             else:
                 assert 0, "specify the backbone in CFFMHead, e.g., CFFMHead_b0"
 
+            if 'Fuse' in single_scale_head:
+                head_cfg['type'] = 'CFFMHeadFuse'
+
             head_cfg["num_clips"] = self.num_clips
             attn_cfg.pop('num_clips')
 
