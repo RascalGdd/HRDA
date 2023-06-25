@@ -12,8 +12,8 @@ norm_cfg = dict(type='BN', requires_grad=True)
 find_unused_parameters = True
 model = dict(
     type='EncoderDecoder',
-    pretrained='pretrained/mit_b3.pth',
-    backbone=dict(type='mit_b3', style='pytorch'),
+    pretrained='pretrained/mit_b1.pth',
+    backbone=dict(type='mit_b1', style='pytorch'),
     decode_head=dict(
         type='DAFormerHead',
         in_channels=[64, 128, 320, 512],
