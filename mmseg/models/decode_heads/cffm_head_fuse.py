@@ -69,7 +69,7 @@ class CFFMHeadFuse(BaseDecodeHead_clips_flow):
     SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers
     """
     def __init__(self, feature_strides, **kwargs):
-        super(CFFMHead_clips_resize1_8, self).__init__(input_transform='multiple_select', **kwargs)
+        super(CFFMHeadFuse, self).__init__(input_transform='multiple_select', **kwargs)
         assert len(feature_strides) == len(self.in_channels)
         assert min(feature_strides) == feature_strides[0]
         self.feature_strides = feature_strides
