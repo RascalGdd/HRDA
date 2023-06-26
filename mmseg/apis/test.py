@@ -152,9 +152,9 @@ def multi_gpu_test(model,
         with torch.no_grad():
             result = model(return_loss=False, rescale=True, **data)
 
-            print(data.keys)
-            print(result[0].shape)
-            print(result[0] == result[1])
+            # print(data.keys)
+            # print(result[0].shape)
+            # print(result[0] == result[1])
 
         if isinstance(result, list):
             if efficient_test:
@@ -173,9 +173,9 @@ def multi_gpu_test(model,
                 batch_size = data['img'][0][0].size(0)
                 
             for _ in range(batch_size * world_size):
-                print("batch_size:", batch_size)
-                print("world_size:", world_size)
-                print("i =", i)
+                # print("batch_size:", batch_size)
+                # print("world_size:", world_size)
+                # print("i =", i)
                 prog_bar.update()
 
     # collect results from all ranks
