@@ -221,17 +221,24 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         assert len(inputs) == 2
 
         batch_size = int(inputs[0][0].shape[0] / self.num_clips)
+        
         if 'CFFMHead' not in self.single_scale_head:
-            for input_list in inputs:
-                for i, feat in enumerate(input_list):
-                    input_list[i] = input_list[i].reshape(
-                        batch_size, self.num_clips, -1, input_list[i].shape[2], input_list[i].shape[3]
-                    )[:,-1]
-
-        hr_inp = inputs[1]
+            new_inputs = [[], []]
+            for i_level in range(2):
+                for i in range(len(inputs[i_level])):
+                    new_inputs[i_level].append(
+                        inputs[i_level][i].reshape(
+                            batch_size, self.num_clips, -1, inputs[i_level][i].shape[2], inputs[i_level][i].shape[3]
+                        )[:,-1]
+                    )
+            hr_inp = new_inputs[1]
+            lr_inp = new_inputs[0]
+            lr_sc_att_inp = new_inputs[0]  # separate var necessary for stack hr_fusion
+        else:
+            hr_inp = inputs[1]
+            lr_inp = inputs[0]
+            lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
         hr_scale = self.scales[1]
-        lr_inp = inputs[0]
-        lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
         lr_scale = self.scales[0]
         
         assert lr_scale <= hr_scale
