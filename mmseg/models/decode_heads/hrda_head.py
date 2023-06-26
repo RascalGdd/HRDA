@@ -125,7 +125,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
             head_cfg["num_clips"] = self.num_clips
             attn_cfg.pop('num_clips')
-
+        elif single_scale_head == 'DAFormerHead':
+            head_cfg['type'] = single_scale_head
         else:
             raise NotImplementedError(single_scale_head)
 
@@ -133,6 +134,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         del self.conv_seg
         del self.dropout
 
+        self.single_scale_head = single_scale_head
         self.head = builder.build_head(head_cfg)
 
         attn_cfg['type'] = 'DAFormerHead'
@@ -214,12 +216,21 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
     def forward(self, inputs):
         assert len(inputs) == 2
+
+        batch_size = int(inputs[0].shape[0] / self.num_clips)
+        if 'CFFMHead' not in self.single_scale_head:
+            for input_list in inputs:
+                for i, feat in enumerate(input_list):
+                    input_list[i] = torch.reshape(
+                        batch_size, self.num_clips, -1, input_list[i].shape[2], input_list[i].shape[3]
+                    )[:,-1]
+
         hr_inp = inputs[1]
         hr_scale = self.scales[1]
         lr_inp = inputs[0]
         lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
         lr_scale = self.scales[0]
-        batch_size = int(lr_inp[0].shape[0] / self.num_clips)
+        
         assert lr_scale <= hr_scale
 
         has_crop = self.hr_crop_box is not None

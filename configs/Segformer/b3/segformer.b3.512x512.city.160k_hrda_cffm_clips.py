@@ -22,7 +22,7 @@ model = dict(
                 norm_cfg=norm_cfg)),
         type='HRDAHead',
         # Use the DAFormer decoder for each scale.
-        single_scale_head='DAFormerHead',
+        single_scale_head='CFFMHead_b3',
         # Learn a scale attention for each class channel of the prediction.
         attention_classwise=True,
         # Set the detail loss weight $\lambda_d=0.1$.
@@ -49,7 +49,7 @@ model = dict(
 
 # data
 data = dict(samples_per_gpu=1)
-evaluation = dict(interval=10, metric='mIoU')
+evaluation = dict(interval=4000, metric='mIoU')
 
 # optimizer
 optimizer = dict(_delete_=True, type='AdamW', lr=0.00006, betas=(0.9, 0.999), weight_decay=0.01,
