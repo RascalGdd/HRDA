@@ -166,7 +166,12 @@ def multi_gpu_test(model,
             results.append(result)
 
         if rank == 0:
-            batch_size = len(result)
+            # batch_size = len(result)
+            if not isinstance(data['img'][0], list):
+                batch_size = data['img'][0].size(0)
+            else:
+                batch_size = data['img'][0][0].size(0)
+                
             for _ in range(batch_size * world_size):
                 print("batch_size:", batch_size)
                 print("world_size:", world_size)
