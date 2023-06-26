@@ -224,7 +224,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         if 'CFFMHead' not in self.single_scale_head:
             for input_list in inputs:
                 for i, feat in enumerate(input_list):
-                    input_list[i] = torch.reshape(
+                    input_list[i] = input_list[i].reshape(
                         batch_size, self.num_clips, -1, input_list[i].shape[2], input_list[i].shape[3]
                     )[:,-1]
 
