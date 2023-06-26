@@ -226,6 +226,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             new_inputs = [[], []]
             for i_level in range(2):
                 for i in range(len(inputs[i_level])):
+                    print(inputs[i_level])
                     new_inputs[i_level].append(
                         inputs[i_level][i].reshape(
                             batch_size, self.num_clips, -1, inputs[i_level][i].shape[2], inputs[i_level][i].shape[3]
