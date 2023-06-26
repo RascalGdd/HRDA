@@ -153,7 +153,8 @@ def multi_gpu_test(model,
             result = model(return_loss=False, rescale=True, **data)
 
             print(data.keys)
-            print(result.shape)
+            print(result[0].shape)
+            print(result[0] == result[1])
 
         if isinstance(result, list):
             if efficient_test:
