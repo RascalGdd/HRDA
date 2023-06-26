@@ -226,12 +226,17 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             new_inputs = [[], []]
             for i_level in range(2):
                 for i in range(len(inputs[i_level])):
-                    print(inputs[i_level])
-                    new_inputs[i_level].append(
-                        inputs[i_level][i].reshape(
-                            batch_size, self.num_clips, -1, inputs[i_level][i].shape[2], inputs[i_level][i].shape[3]
-                        )[:,-1]
-                    )
+                    try:
+                        new_inputs[i_level].append(
+                            inputs[i_level][i].reshape(
+                                batch_size, self.num_clips, -1, inputs[i_level][i].shape[2], inputs[i_level][i].shape[3]
+                            )[:,-1]
+                        )
+                    except:
+                        print(type(new_inputs[i_level]))
+                        print(len(new_inputs[i_level]))
+                        print(new_inputs[i_level])
+                        print(new_inputs[i_level][i])
             hr_inp = new_inputs[1]
             lr_inp = new_inputs[0]
             lr_sc_att_inp = new_inputs[0]  # separate var necessary for stack hr_fusion
