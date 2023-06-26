@@ -220,7 +220,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
     def forward(self, inputs):
         assert len(inputs) == 2
 
-        batch_size = int(inputs[0].shape[0] / self.num_clips)
+        batch_size = int(inputs[0][0].shape[0] / self.num_clips)
         if 'CFFMHead' not in self.single_scale_head:
             for input_list in inputs:
                 for i, feat in enumerate(input_list):
