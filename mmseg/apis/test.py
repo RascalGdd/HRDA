@@ -152,6 +152,9 @@ def multi_gpu_test(model,
         with torch.no_grad():
             result = model(return_loss=False, rescale=True, **data)
 
+            print(data.keys)
+            print(result.shape)
+
         if isinstance(result, list):
             if efficient_test:
                 result = [np2tmp(_, tmpdir='.efficient_test') for _ in result]
