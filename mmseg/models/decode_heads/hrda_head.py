@@ -102,6 +102,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         kwargs['init_cfg'] = None
         kwargs['input_transform'] = 'multiple_select'
         self.os = 4
+        if 'num_clips' in attn_cfg:
+            attn_cfg.pop('num_clips')
 
         if single_scale_head == 'DLV2Head':
             kwargs['init_cfg'] = None
@@ -124,9 +126,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 head_cfg['type'] = 'CFFMHeadFuse'
 
             head_cfg["num_clips"] = self.num_clips
-            attn_cfg.pop('num_clips')
         elif single_scale_head == 'DAFormerHead':
             head_cfg['type'] = single_scale_head
+            if 'num_clips' in head_cfg:
+                head_cfg.pop('num_clips')
         else:
             raise NotImplementedError(single_scale_head)
 
