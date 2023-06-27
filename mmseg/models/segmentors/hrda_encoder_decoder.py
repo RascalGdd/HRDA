@@ -481,6 +481,8 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         if img.dim()==5:
             batch_size, num_clips, _, h, w = img.size()
             img = img.reshape(batch_size*num_clips, -1, h,w)
+        if len(gt_semantic_seg.shape)==5:
+            gt_semantic_seg = gt_semantic_seg[:,-1]
 
         losses = dict()
 
