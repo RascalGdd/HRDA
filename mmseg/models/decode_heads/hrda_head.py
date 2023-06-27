@@ -15,6 +15,7 @@ from ..builder import HEADS
 from ..segmentors.hrda_encoder_decoder import crop
 from .decode_head import BaseDecodeHead, BaseDecodeHead_clips_flow
 
+from torchvision.utils import save_image
 
 def scale_box(box, scale):
     y1, y2, x1, x2 = box
@@ -154,8 +155,11 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         self.enable_hr_crop = enable_hr_crop
         self.hr_crop_box = None
         self.hr_slide_inference = hr_slide_inference
+
+
         self.debug_output_attention = debug_output_attention
         self.debug = False
+        self.debug_cnt = 0
 
     def set_hr_crop_box(self, boxes):
         self.hr_crop_box = boxes
@@ -320,6 +324,13 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             assert self.hr_crop_box is not None
         seg_logits = self.forward(inputs)
         losses = self.losses(seg_logits, gt_semantic_seg, seg_weight)
+
+        if self.debug_cnt % 100 == 0:
+            seg_pred = torch.argmax(seg_logits, dim=1)
+            seg_pred = 1.0*seg_pred / seg_pred.max()
+            save_image(seg_pred, 'debug/seg_pred_{}.png'.format(self.debug_cnt))
+            save_image(1.0*gt_semantic_seg / gt_semantic_seg.max(), 'debug/seg_gt_{}.png'.format(self.debug_cnt))
+
         self.reset_crop()
         return losses
 
