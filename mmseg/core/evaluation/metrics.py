@@ -6,6 +6,7 @@ import mmcv
 import numpy as np
 import torch
 
+from torchvision.utils import save_image
 
 def f_score(precision, recall, beta=1):
     """calcuate the f-score value.
@@ -63,6 +64,8 @@ def intersect_and_union(pred_label,
             mmcv.imread(label, flag='unchanged', backend='pillow'))
     else:
         label = torch.from_numpy(label)
+
+
 
     if label_map is not None:
         for old_id, new_id in label_map.items():
@@ -129,6 +132,11 @@ def total_intersect_and_union(results,
             intersect_and_union(
                 results[i], gt_seg_maps[i], num_classes, ignore_index,
                 label_map, reduce_zero_label)
+
+        normalizer = float(gt_seg_maps[i].max())
+        save_image(results[i].to(float) / normalizer, 'debug/seg_pred_{}.png'.format(i))
+        save_image(gt_seg_maps[i].to(float) / normalizer, 'debug/seg_gt_{}.png'.format(i))
+
         total_area_intersect += area_intersect
         total_area_union += area_union
         total_area_pred_label += area_pred_label

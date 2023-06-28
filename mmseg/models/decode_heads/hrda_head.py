@@ -328,9 +328,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         if self.debug_cnt % 100 == 0:
             seg_pred = torch.argmax(seg_logits[0], dim=1)
             seg_pred = 1.0*seg_pred / seg_pred.max()
-            save_image(seg_pred, 'debug/seg_pred_{}.png'.format(self.debug_cnt))
-            print("gt_semantic_seg shape", gt_semantic_seg.shape)
-            save_image(1.0*gt_semantic_seg / gt_semantic_seg.max(), 'debug/seg_gt_{}.png'.format(self.debug_cnt))
+            # save_image(seg_pred, 'debug/seg_pred_{}.png'.format(self.debug_cnt))
+            # print("gt_semantic_seg shape", gt_semantic_seg.shape)
+            # save_image(1.0*gt_semantic_seg / gt_semantic_seg.max(), 'debug/seg_gt_{}.png'.format(self.debug_cnt))
         self.debug_cnt += 1
 
         self.reset_crop()
