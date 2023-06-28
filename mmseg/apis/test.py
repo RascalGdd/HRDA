@@ -151,7 +151,8 @@ def multi_gpu_test(model,
     for i, data in enumerate(data_loader):
         with torch.no_grad():
             result = model(return_loss=False, rescale=True, **data)
-
+            # debug
+            result = [result[-1]]
             # print(data.keys)
             # print(result[0].shape)
             # print(result[0] == result[1])
