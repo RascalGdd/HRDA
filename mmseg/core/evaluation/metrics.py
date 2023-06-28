@@ -133,11 +133,11 @@ def total_intersect_and_union(results,
                 results[i], gt_seg_maps[i], num_classes, ignore_index,
                 label_map, reduce_zero_label)
 
-        if i < 50:
-            normalizer = float(gt_seg_maps[i].max())
-            save_image(torch.from_numpy(results[i]).to(float) / normalizer, 'debug/seg_pred_{}.png'.format(i))
-            save_image(torch.from_numpy(gt_seg_maps[i]).to(float) / normalizer, 'debug/seg_gt_{}.png'.format(i))
-            print("i:", results[i] == gt_seg_maps[i])
+        # if i < 50:
+        #     normalizer = float(gt_seg_maps[i].max())
+        #     save_image(torch.from_numpy(results[i]).to(float) / normalizer, 'debug/seg_pred_{}.png'.format(i))
+        #     save_image(torch.from_numpy(gt_seg_maps[i]).to(float) / normalizer, 'debug/seg_gt_{}.png'.format(i))
+        #     print("i={},".format(i), sum((results[i] == gt_seg_maps[i]).astype(int)))
 
         total_area_intersect += area_intersect
         total_area_union += area_union
