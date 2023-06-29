@@ -92,10 +92,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         attn_cfg = deepcopy(kwargs)
 
         
-
+        kwargs['init_cfg'] = None
+        kwargs['input_transform'] = 'multiple_select'
         self.os = 4
-        if 'num_clips' in attn_cfg:
-            attn_cfg.pop('num_clips')
 
         if single_scale_head == 'DLV2Head':
             kwargs['init_cfg'] = None
@@ -134,8 +133,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                     act_cfg=dict(type='ReLU'),
                     norm_cfg=attn_cfg['decoder_params']['fusion_cfg']
                     ['norm_cfg'])
-            kwargs['init_cfg'] = None
-            kwargs['input_transform'] = 'multiple_select'
+            if 'num_clips' in attn_cfg:
+                attn_cfg.pop('num_clips')
 
             head_cfg['type'] = single_scale_head
             if 'num_clips' in head_cfg:
