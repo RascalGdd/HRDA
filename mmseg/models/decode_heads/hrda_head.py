@@ -252,10 +252,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             hr_inp = [None]*len(inputs[1])
             if inputs[0][0].shape[0] == self.num_clips:
                 for i in range(len(inputs[0])):
-                    lr_inp[i] = lr_inp[i][-1:]
+                    lr_inp[i] = inputs[0][i][-1:]
             if inputs[1][0].shape[0] == self.num_clips:
                 for i in range(len(inputs[1])):
-                    hr_inp[i] = hr_inp[i][-1:]
+                    hr_inp[i] = inputs[1][i][-1:]
 
             lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
 
