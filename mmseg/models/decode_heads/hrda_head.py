@@ -91,17 +91,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         head_cfg = deepcopy(kwargs)
         attn_cfg = deepcopy(kwargs)
 
-        attn_cfg['channels'] = attention_embed_dim
-        attn_cfg['decoder_params']['embed_dims'] = attention_embed_dim
-        if attn_cfg['decoder_params']['fusion_cfg']['type'] == 'aspp':
-            attn_cfg['decoder_params']['fusion_cfg'] = dict(
-                type='conv',
-                kernel_size=1,
-                act_cfg=dict(type='ReLU'),
-                norm_cfg=attn_cfg['decoder_params']['fusion_cfg']
-                ['norm_cfg'])
-        kwargs['init_cfg'] = None
-        kwargs['input_transform'] = 'multiple_select'
+        
+
         self.os = 4
         if 'num_clips' in attn_cfg:
             attn_cfg.pop('num_clips')
@@ -111,23 +102,41 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             kwargs.pop('dilations')
             kwargs['channels'] = 1
             self.os = 8
+            
         elif 'CFFMHead' in single_scale_head: # only for video clips
             self.num_clips = kwargs['num_clips']
 
             if 'b0' in single_scale_head:
-                head_cfg = CFFM_head_config_b0
+                attn_cfg = CFFM_head_config_b0
             elif 'b1' in single_scale_head:
-                head_cfg = CFFM_head_config_b1
+                attn_cfg = CFFM_head_config_b1
             elif 'b3' in single_scale_head:
-                head_cfg = CFFM_head_config_b3
+                attn_cfg = CFFM_head_config_b3
             else:
                 assert 0, "specify the backbone in CFFMHead, e.g., CFFMHead_b0"
 
             if 'Fuse' in single_scale_head:
-                head_cfg['type'] = 'CFFMHeadFuse'
+                attn_cfg['type'] = 'CFFMHeadFuse'
 
-            head_cfg["num_clips"] = self.num_clips
+            attn_cfg["num_clips"] = self.num_clips
+
+            head_cfg['type'] = 'DAFormerHead'
+            if 'num_clips' in head_cfg:
+                head_cfg.pop('num_clips')
+
         elif single_scale_head == 'DAFormerHead':
+            attn_cfg['channels'] = attention_embed_dim
+            attn_cfg['decoder_params']['embed_dims'] = attention_embed_dim
+            if attn_cfg['decoder_params']['fusion_cfg']['type'] == 'aspp':
+                attn_cfg['decoder_params']['fusion_cfg'] = dict(
+                    type='conv',
+                    kernel_size=1,
+                    act_cfg=dict(type='ReLU'),
+                    norm_cfg=attn_cfg['decoder_params']['fusion_cfg']
+                    ['norm_cfg'])
+            kwargs['init_cfg'] = None
+            kwargs['input_transform'] = 'multiple_select'
+
             head_cfg['type'] = single_scale_head
             if 'num_clips' in head_cfg:
                 head_cfg.pop('num_clips')
@@ -209,12 +218,6 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             return self.head(inp)
 
     def get_scale_attention(self, inp):
-
-        # TODO: underlying assumption num_per_gpu = 1, and the last clip is the current clip
-        if inp[0].shape[0] == self.num_clips:
-            for i in range(len(inp)):
-                inp[i] = inp[i][-1:]
-
         if self.scale_attention is not None:
             att = torch.sigmoid(self.scale_attention(inp))
         else:
