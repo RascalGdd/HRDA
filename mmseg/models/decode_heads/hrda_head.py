@@ -250,10 +250,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             # TODO: underlying assumption num_per_gpu = 1, and the last clip is the current clip
             lr_inp = inputs[0]
             hr_inp = inputs[1]
-            if lr_inp.shape[0] == self.num_clips:
+            if lr_inp[0].shape[0] == self.num_clips:
                 for i in range(len(lr_inp)):
                     lr_inp[i] = lr_inp[i][-1:]
-            if hr_inp.shape[0] == self.num_clips:
+            if hr_inp[0].shape[0] == self.num_clips:
                 for i in range(len(hr_inp)):
                     hr_inp[i] = hr_inp[i][-1:]
 
