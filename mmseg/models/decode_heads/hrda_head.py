@@ -102,7 +102,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             kwargs.pop('dilations')
             kwargs['channels'] = 1
             self.os = 8
-            
+
         elif 'CFFMHead' in single_scale_head: # only for video clips
             self.num_clips = kwargs['num_clips']
 
@@ -150,7 +150,6 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         self.single_scale_head = single_scale_head
         self.head = builder.build_head(head_cfg)
 
-        attn_cfg['type'] = 'DAFormerHead'
         if not attention_classwise:
             attn_cfg['num_classes'] = 1
         if fixed_attention is None:
