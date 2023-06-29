@@ -248,13 +248,13 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             lr_sc_att_inp = new_inputs[0]  # separate var necessary for stack hr_fusion
         else:
             # TODO: underlying assumption num_per_gpu = 1, and the last clip is the current clip
-            lr_inp = inputs[0]
-            hr_inp = inputs[1]
-            if lr_inp[0].shape[0] == self.num_clips:
-                for i in range(len(lr_inp)):
+            lr_inp = [None]*len(inputs[0])
+            hr_inp = [None]*len(inputs[1])
+            if inputs[0][0].shape[0] == self.num_clips:
+                for i in range(len(inputs[0])):
                     lr_inp[i] = lr_inp[i][-1:]
-            if hr_inp[0].shape[0] == self.num_clips:
-                for i in range(len(hr_inp)):
+            if inputs[1][0].shape[0] == self.num_clips:
+                for i in range(len(inputs[1])):
                     hr_inp[i] = hr_inp[i][-1:]
 
             lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
