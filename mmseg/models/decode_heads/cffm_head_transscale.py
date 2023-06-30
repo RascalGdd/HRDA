@@ -550,7 +550,7 @@ class TransCFFMHead(BaseDecodeHead_clips_flow):
                focal_l_clips=[1,2,3],
                focal_kernel_clips=[7,5,3])
 
-      self.linear_pred2 = nn.Conv2d(hidden_dim, self.num_classes, kernel_size=1)
+        self.linear_pred2 = nn.Conv2d(hidden_dim, self.num_classes, kernel_size=1)
 
     def forward_prediction_heads(self, output, mask_features):
         decoder_output = self.decoder_norm(output)
