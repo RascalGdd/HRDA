@@ -117,11 +117,11 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             self.num_clips = kwargs['num_clips']
 
             if 'b0' in single_scale_head:
-                attn_cfg = CFFM_head_config_b0
+                attn_cfg.update(CFFM_head_config_b0)
             elif 'b1' in single_scale_head:
-                attn_cfg = CFFM_head_config_b1
+                attn_cfg.update(CFFM_head_config_b1)
             elif 'b3' in single_scale_head:
-                attn_cfg = CFFM_head_config_b3
+                attn_cfg.update(CFFM_head_config_b3)
             else:
                 assert 0, "specify the backbone in CFFMHead, e.g., CFFMHead_b0"
 
