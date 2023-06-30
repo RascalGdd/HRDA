@@ -489,9 +489,11 @@ class TransCFFMHead(BaseDecodeHead_clips_flow):
             kernel_size=1,
             padding=0,
             norm_cfg=dict(type='SyncBN', requires_grad=True))
+
         # output FFNs
         mask_embed = 256
         self.mask_embed = MLP(hidden_dim, hidden_dim, mask_embed, 3)
+        self.mask2feat = Conv2d(self.num_queries, hidden_dim, kernel_size=1)
 
         for _ in range(self.num_layers):
             self.transformer_self_attention_layers.append(
@@ -630,9 +632,11 @@ class TransCFFMHead(BaseDecodeHead_clips_flow):
                 output
             )
 
+        outputs_mask = self.mask2feat(self.forward_prediction_heads(output, mask_features))
+
         # CFFM
 
-        _c_further = output.reshape(batch_size, num_clips, -1, h, w)
+        _c_further = outputs_mask.reshape(batch_size, num_clips, -1, h, w)
 
         _c_further2 = self.decoder_focal(_c_further)
         _c = torch.cat([_c_further[:,-1], _c_further2[:,-1]],1) #  B, 2*Embdim, H2, W2
