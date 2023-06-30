@@ -427,7 +427,7 @@ def build_layer(in_channels, out_channels, type, **kwargs):
 @HEADS.register_module()
 class TransCFFMHead(BaseDecodeHead_clips_flow):
 
-    def __init__(self, **kwargs):
+    def __init__(self, feature_strides, **kwargs):
         super(TransCFFMHead, self).__init__(
             input_transform='multiple_select', **kwargs)
 
