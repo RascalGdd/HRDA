@@ -40,7 +40,6 @@ CFFM_head_config_b0 = dict(
     num_classes=19,
     norm_cfg=dict(type='SyncBN', requires_grad=True),
     align_corners=False,
-    decoder_params=dict(embed_dim=256, depths=2),
     loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)
 )
 
@@ -54,7 +53,6 @@ CFFM_head_config_b1 = dict(
     num_classes=19,
     norm_cfg=dict(type='SyncBN', requires_grad=True),
     align_corners=False,
-    decoder_params=dict(embed_dim=256, depths=2),
     loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)
 )
 
@@ -68,7 +66,6 @@ CFFM_head_config_b3 = dict(
     num_classes=19,
     norm_cfg=dict(type='SyncBN', requires_grad=True),
     align_corners=False,
-    decoder_params=dict(embed_dim=256, depths=2),
     loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)
 )
 
@@ -141,7 +138,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         print("attn_cfg 2:", attn_cfg)
 
         attn_cfg['channels'] = attention_embed_dim
-        attn_cfg['decoder_params']['embed_dims'] = attention_embed_dim
+        attn_cfg['decoder_params']['embed_dim'] = attention_embed_dim
+        attn_cfg['decoder_params']['depths'] = 2
         if attn_cfg['decoder_params']['fusion_cfg']['type'] == 'aspp':
             attn_cfg['decoder_params']['fusion_cfg'] = dict(
                 type='conv',
