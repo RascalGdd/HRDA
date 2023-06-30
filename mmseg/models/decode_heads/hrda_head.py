@@ -95,16 +95,6 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         kwargs['init_cfg'] = None
         kwargs['input_transform'] = 'multiple_select'
 
-        attn_cfg['channels'] = attention_embed_dim
-        attn_cfg['decoder_params']['embed_dims'] = attention_embed_dim
-        if attn_cfg['decoder_params']['fusion_cfg']['type'] == 'aspp':
-            attn_cfg['decoder_params']['fusion_cfg'] = dict(
-                type='conv',
-                kernel_size=1,
-                act_cfg=dict(type='ReLU'),
-                norm_cfg=attn_cfg['decoder_params']['fusion_cfg']
-                ['norm_cfg'])
-
         self.os = 4
 
         if single_scale_head == 'DLV2Head':
@@ -145,6 +135,16 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 head_cfg.pop('num_clips')
         else:
             raise NotImplementedError(single_scale_head)
+
+        attn_cfg['channels'] = attention_embed_dim
+        attn_cfg['decoder_params']['embed_dims'] = attention_embed_dim
+        if attn_cfg['decoder_params']['fusion_cfg']['type'] == 'aspp':
+            attn_cfg['decoder_params']['fusion_cfg'] = dict(
+                type='conv',
+                kernel_size=1,
+                act_cfg=dict(type='ReLU'),
+                norm_cfg=attn_cfg['decoder_params']['fusion_cfg']
+                ['norm_cfg'])
 
         super(HRDAHead, self).__init__(**kwargs)
         del self.conv_seg

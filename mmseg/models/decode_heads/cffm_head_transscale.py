@@ -433,7 +433,7 @@ class TransCFFMHead(BaseDecodeHead_clips_flow):
 
         assert not self.align_corners
         decoder_params = kwargs['decoder_params']
-        embed_dims = decoder_params['embed_dim']
+        embed_dims = decoder_params['embed_dims']
         if isinstance(embed_dims, int):
             embed_dims = [embed_dims] * len(self.in_index)
         embed_cfg = decoder_params['embed_cfg']
