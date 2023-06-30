@@ -136,6 +136,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         else:
             raise NotImplementedError(single_scale_head)
 
+        print(attn_cfg)
+
         attn_cfg['channels'] = attention_embed_dim
         attn_cfg['decoder_params']['embed_dims'] = attention_embed_dim
         if attn_cfg['decoder_params']['fusion_cfg']['type'] == 'aspp':
