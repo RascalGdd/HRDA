@@ -126,11 +126,11 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         # if not self.training and num_clips!=self.num_clips:
         #     return x[:,-1]
 
-        h2=int(h/2)
-        w2=int(w/2)
-        _c = resize(_c, size=(h2,w2),mode='bilinear',align_corners=False)
+        # h2=int(h/2)
+        # w2=int(w/2)
+        # _c = resize(_c, size=(h2,w2),mode='bilinear',align_corners=False)
 
-        _c_further=_c.reshape(batch_size, num_clips, -1, h2, w2)
+        _c_further=_c.reshape(batch_size, num_clips, -1, h, w)
 
         _c2=self.decoder_focal(_c_further)
         assert _c_further.shape==_c2.shape
@@ -138,9 +138,8 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         _c_further2=torch.cat([_c_further[:,-1], _c2[:,-1]],1) #  B, 2*Embdim, H2, W2
 
         x2 = self.dropout(_c_further2)
-        x2 = self.linear_pred2(x2)
-        focal_logit = resize(x2, size=(h,w),mode='bilinear',align_corners=False) # B, C, H, W
-
+        focal_logit = self.linear_pred2(x2)
+        # focal_logit = resize(x2, size=(h,w),mode='bilinear',align_corners=False) # B, C, H, W
         # fused_logit = self.simple_seg_fuse(torch.cat([default_logit, focal_logit], dim=1)) # B, C, H, W
 
         return focal_logit
