@@ -44,8 +44,8 @@ model = dict(
     test_cfg=dict(
         mode='slide',
         batched_slide=True,
-        stride=[512, 512],
-        crop_size=[1024, 1024]))
+        stride=[512//2, 512//2],
+        crop_size=[1024//2, 1024//2]))
 
 # data
 data = dict(samples_per_gpu=1)
