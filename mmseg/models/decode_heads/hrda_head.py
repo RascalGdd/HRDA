@@ -226,21 +226,28 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
         batch_size = int(inputs[0][0].shape[0] / self.num_clips)
         
+        # convert video feature to single image feature for HRDA-only mode
         if 'CFFMHead' not in self.single_scale_head:
             new_inputs = [[], []]
             for i_level in range(2):
-                for i in range(len(inputs[i_level])):
-                    try:
+                if type(inputs[i_level]) == list:
+                    for i in range(len(inputs[i_level])):
                         new_inputs[i_level].append(
                             inputs[i_level][i].reshape(
                                 batch_size, self.num_clips, -1, inputs[i_level][i].shape[2], inputs[i_level][i].shape[3]
                             )[:,-1]
                         )
-                    except:
-                        print(type(new_inputs[i_level]))
-                        print(len(new_inputs[i_level]))
-                        print(new_inputs[i_level])
-                        print(new_inputs[i_level][i])
+                elif type(inputs[i_level]) == dict:
+                    new_inputs[i_level] = {
+                        'features': [], 'boxes': inputs[i_level]['boxes']
+                    }
+                    for i in range(len(inputs[i_level]['features'])):
+                        new_inputs[i_level]['features'].append(
+                            inputs[i_level]['features'][i].reshape(
+                                batch_size, self.num_clips, -1, inputs[i_level]['features'][i].shape[2], inputs[i_level]['features'][i].shape[3]
+                            )[:,-1]
+                        )
+
             hr_inp = new_inputs[1]
             lr_inp = new_inputs[0]
             lr_sc_att_inp = new_inputs[0]  # separate var necessary for stack hr_fusion
