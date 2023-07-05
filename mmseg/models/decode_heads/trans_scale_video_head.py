@@ -591,12 +591,13 @@ class TransHeadVideo(BaseDecodeHead):
                 output
             )
 
+            if i == self.num_layers - 1 and feat_video is not None:
+                bs, channels, H, W = feat_video.shape
+                output = self.video_crs_attn(output, feat_video.reshape(-1, bs, H*W))
+
             outputs_mask = self.forward_prediction_heads(output, mask_features)
             predictions_mask.append(outputs_mask)
 
         assert len(predictions_mask) == self.num_layers + 1
-
-        if feat_video is not None:
-            outputs_mask = self.video_crs_attn(outputs_mask, feat_video)
 
         return outputs_mask
