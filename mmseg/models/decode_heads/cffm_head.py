@@ -93,7 +93,7 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
 
         print(self.decoder_focal.blocks[0].focal_kernel_clips)
 
-    def forward(self, inputs):
+    def forward(self, inputs, return_feat = False):
         # if self.training:
         #     assert self.num_clips==num_clips
         num_clips = self.num_clips
@@ -142,4 +142,7 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         # focal_logit = resize(x2, size=(h,w),mode='bilinear',align_corners=False) # B, C, H, W
         # fused_logit = self.simple_seg_fuse(torch.cat([default_logit, focal_logit], dim=1)) # B, C, H, W
 
-        return focal_logit
+        if not return_feat:
+            return focal_logit
+        else:
+            return focal_logit, _c2

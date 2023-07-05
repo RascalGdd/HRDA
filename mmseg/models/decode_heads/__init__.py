@@ -15,6 +15,7 @@ from .uper_head import UPerHead
 
 from .cffm_head import CFFMHead_clips_resize1_8
 from .cffm_head_fuse import CFFMHeadFuse
+from .trans_scale_video_head import TransHeadVideo
 
 __all__ = [
     'FCNHead',
@@ -29,5 +30,6 @@ __all__ = [
     'ISAHead',
     'HRDAHead',
     'CFFMHead_clips_resize1_8',
-    'CFFMHeadFuse'
+    'CFFMHeadFuse',
+    'TransHeadVideo'
 ]

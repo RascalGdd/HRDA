@@ -139,9 +139,13 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         del self.dropout
 
         self.single_scale_head = single_scale_head
+        self.head_type = head_cfg['type']
         self.head = builder.build_head(head_cfg)
 
         attn_cfg['type'] = 'DAFormerHead'
+        if 'TransHeadVideoAttn' in single_scale_head:
+            attn_cfg['type'] = 'TransHeadVideo'
+
         if not attention_classwise:
             attn_cfg['num_classes'] = 1
         if fixed_attention is None:
@@ -208,7 +212,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         else:
             return self.head(inp)
 
-    def get_scale_attention(self, inp):
+    def get_scale_attention(self, inp, feat_video = None):
 
         # TODO: underlying assumption num_per_gpu = 1, and the last clip is the current clip
         if inp[0].shape[0] == self.num_clips:
@@ -216,7 +220,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 inp[i] = inp[i][-1:]
 
         if self.scale_attention is not None:
-            att = torch.sigmoid(self.scale_attention(inp))
+            if feat_video is None:
+                att = torch.sigmoid(self.scale_attention(inp))
+            else:
+                att = torch.sigmoid(self.scale_attention(inp, feat_video = feat_video))
         else:
             att = self.fixed_attention
         return att
@@ -264,13 +271,15 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         if has_crop:
             crop_y1, crop_y2, crop_x1, crop_x2 = self.hr_crop_box
 
-        # print_log(f'lr_inp {[f.shape for f in lr_inp]}', 'mmseg')
-        lr_seg = self.head(lr_inp)
-        # print_log(f'lr_seg {lr_seg.shape}', 'mmseg')
+        if "CFFM" in self.head_type:
+            lr_seg, _c2 = self.head(lr_inp, return_feat = True)
+        else:
+            lr_seg = self.head(lr_inp)
+            _c2 = None
 
         hr_seg = self.decode_hr(hr_inp, batch_size)
 
-        att = self.get_scale_attention(lr_sc_att_inp)
+        att = self.get_scale_attention(lr_sc_att_inp, feat_video = _c2)
         if has_crop:
             mask = lr_seg.new_zeros([lr_seg.shape[0], 1, *lr_seg.shape[2:]])
             sc_os = self.os / lr_scale
