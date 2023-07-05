@@ -262,6 +262,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             hr_inp = inputs[1]
             lr_inp = inputs[0]
             lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
+            if "detach" in self.head_type:
+                for i in range(len(lr_sc_att_inp)):
+                    lr_sc_att_inp[i] = lr_sc_att_inp[i].detach()
+
         hr_scale = self.scales[1]
         lr_scale = self.scales[0]
         
