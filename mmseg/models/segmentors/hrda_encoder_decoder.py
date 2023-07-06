@@ -484,13 +484,11 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             batch_size, num_clips, _, h, w = img.size()
             img = img.reshape(batch_size*num_clips, -1, h,w)
             # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
-            save_image(img[-1,:3,:,:], 'debug/debug_img.png')
-            save_image(img[-1,3:4,:,:], 'debug/debug_vanishing_mask.png')
-            save_image(img[-1,4:5,:,:], 'debug/debug_pos_emb.png')
+            # save_image(img[-1,:3,:,:], 'debug/debug_img.png')
+            # save_image(img[-1,3:4,:,:], 'debug/debug_vanishing_mask.png')
+            # save_image(img[-1,4:5,:,:], 'debug/debug_pos_emb.png')
 
             img = img[:,:3,:,:]
-
-
 
         if len(gt_semantic_seg.shape)==5:
             gt_semantic_seg = gt_semantic_seg[:,-1]
