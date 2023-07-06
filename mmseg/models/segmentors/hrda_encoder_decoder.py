@@ -404,6 +404,8 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         if img.dim()==5:
             batch_size, num_clips, _, h, w = img.size()
             img = img.reshape(batch_size*num_clips, -1, h,w)
+            # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+            img = img[:,:3,:,:]
 
         mres_feats = []
         self.decode_head.debug_output = {}
@@ -481,6 +483,8 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         if img.dim()==5:
             batch_size, num_clips, _, h, w = img.size()
             img = img.reshape(batch_size*num_clips, -1, h,w)
+            # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+            img = img[:,:3,:,:]
         if len(gt_semantic_seg.shape)==5:
             gt_semantic_seg = gt_semantic_seg[:,-1]
 
