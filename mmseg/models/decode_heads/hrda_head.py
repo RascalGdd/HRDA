@@ -111,7 +111,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             kwargs.pop('dilations')
             kwargs['channels'] = 1
             self.os = 8
-        elif 'CFFMHead' in single_scale_head: # only for video clips
+        elif 'CFFM' in single_scale_head: # only for video clips
             self.num_clips = kwargs['num_clips']
 
             if 'b0' in single_scale_head:
@@ -234,7 +234,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         batch_size = int(inputs[0][0].shape[0] / self.num_clips)
         
         # convert video feature to single image feature for HRDA-only mode
-        if 'CFFMHead' not in self.single_scale_head:
+        if 'CFFM' not in self.single_scale_head:
             new_inputs = [[], []]
             for i_level in range(2):
                 if type(inputs[i_level]) == list:
@@ -275,7 +275,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         if has_crop:
             crop_y1, crop_y2, crop_x1, crop_x2 = self.hr_crop_box
 
-        if "CFFM" in self.head_type:
+        if "CFFM" in self.head_type and VideoAttn in self.head_type:
             lr_seg, _c2 = self.head(lr_inp, return_feat = True)
             if "detach" in self.head_type:
                 _c2 = _c2.detach()

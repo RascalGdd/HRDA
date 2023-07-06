@@ -119,7 +119,7 @@ class CFFMHeadFuse(BaseDecodeHead_clips_flow):
 
         print(self.decoder_focal.blocks[0].focal_kernel_clips)
 
-    def forward(self, inputs):
+    def forward(self, inputs, return_feat = False):
         # if self.training:
         #     assert self.num_clips==num_clips
         num_clips = self.num_clips
@@ -156,5 +156,8 @@ class CFFMHeadFuse(BaseDecodeHead_clips_flow):
         # fused_logit = self.simple_seg_fuse(torch.cat([default_logit, focal_logit], dim=1)) # B, C, H, W
         fused_logit = att * focal_logit + (1-att) * default_logit
 
-        return fused_logit
+        if not return_feat:
+            return focal_logit
+        else:
+            return focal_logit, _c2
 
