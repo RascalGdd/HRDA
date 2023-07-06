@@ -678,7 +678,9 @@ class CustomDataset_cityscape_clips(Dataset):
             filename=filename_clips[-1],ori_filename=ori_filename_clips[-1],img=img_clips,
             img_shape=img_shape_clips[-1],ori_shape=ori_shape_clips[-1],
             pad_shape=pad_shape_clips[-1],scale_factor=scale_factor_clips[-1],
-            img_norm_cfg=img_norm_cfg_clips[-1],gt_semantic_seg=gt_semantic_seg_clips)
+            img_norm_cfg=img_norm_cfg_clips[-1],gt_semantic_seg=gt_semantic_seg_clips,
+            vanishing_mask=results["vanishing_mask"],
+            pos_emb=results["pos_emb"])
 
         return self.pipeline_process(results_new)
 
@@ -746,7 +748,9 @@ class CustomDataset_cityscape_clips(Dataset):
             filename=filename_clips[-1],ori_filename=ori_filename_clips[-1],img=img_clips,
             img_shape=img_shape_clips[-1],ori_shape=ori_shape_clips[-1],
             pad_shape=pad_shape_clips[-1],scale_factor=scale_factor_clips[-1],
-            img_norm_cfg=img_norm_cfg_clips[-1])
+            img_norm_cfg=img_norm_cfg_clips[-1],
+            vanishing_mask=results["vanishing_mask"],
+            pos_emb=results["pos_emb"])
 
         return self.pipeline_process(results_new)
         
