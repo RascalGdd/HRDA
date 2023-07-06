@@ -217,6 +217,28 @@ class Resize(object):
                     results[key], results['scale'], interpolation='nearest')
             results[key] = gt_seg
 
+    def _resize_map(self, results):
+        """Resize semantic segmentation map with ``results['scale']``."""
+        key = "vanishing_mask"
+        if self.keep_ratio:
+            map = mmcv.imrescale(
+                results[key], results['scale'], interpolation='nearest')
+        else:
+            map = mmcv.imresize(
+                results[key], results['scale'], interpolation='nearest')
+        results[key] = map
+
+    def _resize_pos(self, results):
+        """Resize semantic segmentation map with ``results['scale']``."""
+        key = "pos_emb"
+        if self.keep_ratio:
+            pos_emb = mmcv.imrescale(
+                results[key], results['scale'], interpolation='nearest')
+        else:
+            pos_emb = mmcv.imresize(
+                results[key], results['scale'], interpolation='nearest')
+        results[key] = pos_emb
+
     def _random_scale_clips(self, results):
         """Randomly sample an img_scale according to ``ratio_range`` and
         ``multiscale_mode``.
@@ -317,11 +339,15 @@ class Resize(object):
                 self._random_scale_clips(results)
             self._resize_img_clips(results)
             self._resize_seg_clips(results)
+            self._resize_map(results) # debug
+            self._resize_pos(results)
         else:
             if 'scale' not in results:
                 self._random_scale(results)
             self._resize_img(results)
             self._resize_seg(results)
+            self._resize_map(results)
+            self._resize_pos(results)
         return results
 
     def __repr__(self):
@@ -382,6 +408,17 @@ class RandomFlip(object):
                 # use copy() to make numpy stride positive
                 results[key] = mmcv.imflip(
                     results[key], direction=results['flip_direction']).copy()
+
+            # flip map
+            key = "vanishing_mask"
+            results[key] = mmcv.imflip(
+                results[key], direction=results['flip_direction']).copy()
+
+            # flip pos_emb
+            key = "pos_emb"
+            results[key] = mmcv.imflip(
+                results[key], direction=results['flip_direction']).copy()
+
         return results
 
     def __repr__(self):
@@ -438,6 +475,22 @@ class Pad(object):
                 shape=results['pad_shape'][:2],
                 pad_val=self.seg_pad_val)
 
+    def _pad_map(self, results):
+        """Pad maps according to ``results['pad_shape']``."""
+        key = "vanishing_mask"
+        results[key] = mmcv.impad(
+            results[key],
+            shape=results['pad_shape'][:2],
+            pad_val=0)
+
+    def _pad_pos(self, results):
+        """Pad pos embs according to ``results['pad_shape']``."""
+        key = "pos_emb"
+        results[key] = mmcv.impad(
+            results[key],
+            shape=results['pad_shape'][:2],
+            pad_val=-1)
+
     def __call__(self, results):
         """Call function to pad images, masks, semantic segmentation maps.
 
@@ -450,6 +503,8 @@ class Pad(object):
 
         self._pad_img(results)
         self._pad_seg(results)
+        self._pad_map(results)
+        self._pad_pos(results)
         return results
 
     def __repr__(self):
@@ -658,6 +713,14 @@ class RandomCrop(object):
         # crop semantic seg
         for key in results.get('seg_fields', []):
             results[key] = self.crop(results[key], crop_bbox)
+
+        # crop the map
+        key = "vanishing_mask"
+        results[key] = self.crop(results[key], crop_bbox)
+
+        # crop pos emb
+        key = "pos_emb"
+        results[key] = self.crop(results[key], crop_bbox)
 
         return results
 

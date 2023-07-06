@@ -98,7 +98,13 @@ class ImageToTensor(object):
             img = results[key]
             if len(img.shape) < 3:
                 img = np.expand_dims(img, -1)
-            results[key] = to_tensor(img.transpose(2, 0, 1))
+            # results[key] = to_tensor(img.transpose(2, 0, 1))
+            img = img.transpose(2, 0, 1)
+            if key == 'img':
+                mask = np.expand_dims(results["vanishing_mask"], axis=0)
+                pos_emb = np.expand_dims(results["pos_emb"], axis=0)
+                img = np.concatenate([img, mask, pos_emb], axis=0)
+            results[key] = to_tensor(img).to(torch.float32)
         return results
 
     def __repr__(self):
@@ -139,7 +145,15 @@ class ImageToTensor_clips(object):
                 img = im_one
                 if len(img.shape) < 3:
                     img = np.expand_dims(img, -1)
-                img=to_tensor(img.transpose(2, 0, 1))
+                # img=to_tensor(img.transpose(2, 0, 1))
+
+                img = img.transpose(2, 0, 1)
+                if key == 'img':
+                    mask = np.expand_dims(results["vanishing_mask"], axis=0)
+                    pos_emb = np.expand_dims(results["pos_emb"], axis=0)
+                    img = np.concatenate([img, mask, pos_emb], axis=0)
+                img = to_tensor(img).to(torch.float32)
+
                 img_all.append(img)
             results[key] = img_all
         return results
@@ -249,6 +263,11 @@ class DefaultFormatBundle(object):
             if len(img.shape) < 3:
                 img = np.expand_dims(img, -1)
             img = np.ascontiguousarray(img.transpose(2, 0, 1))
+            # debug
+            mask = np.expand_dims(results["vanishing_mask"], axis=0)
+            pos_emb = np.expand_dims(results["pos_emb"], axis=0)
+            img = np.concatenate([img, mask, pos_emb], axis=0)
+
             results['img'] = DC(to_tensor(img), stack=True)
         if 'gt_semantic_seg' in results:
             # convert to long
@@ -297,6 +316,11 @@ class DefaultFormatBundle_clips(object):
                 if len(im.shape) < 3:
                     im = np.expand_dims(im, -1)
                 img = np.ascontiguousarray(im.transpose(2, 0, 1))
+                # debug
+                mask = np.expand_dims(results["vanishing_mask"], axis=0)
+                pos_emb = np.expand_dims(results["pos_emb"], axis=0)
+                img = np.concatenate([img, mask, pos_emb], axis=0)
+
                 img_all.append(to_tensor(img))
 
             print_log(len(img_all))
