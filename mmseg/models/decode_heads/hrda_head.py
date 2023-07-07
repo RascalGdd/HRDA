@@ -248,7 +248,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                     new_inputs[i_level] = {
                         'features': [], 'boxes': inputs[i_level]['boxes']
                     }
-                    hr_batch_size = int(inputs[i_level][0].shape[0] / self.num_clips)
+                    hr_batch_size = int(inputs[i_level]['features'][0].shape[0] / self.num_clips)
                     for i in range(len(inputs[i_level]['features'])):
                         new_inputs[i_level]['features'].append(
                             inputs[i_level]['features'][i].reshape(
