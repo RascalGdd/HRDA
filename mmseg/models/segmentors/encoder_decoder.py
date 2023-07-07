@@ -518,7 +518,7 @@ class EncoderDecoder_clips(BaseSegmentor):
         If h_crop > h_img or w_crop > w_img, the small patch will be used to
         decode without padding.
         """
-
+        
         h_stride, w_stride = self.test_cfg.stride
         h_crop, w_crop = self.test_cfg.crop_size
         batch_size, _, h_img, w_img = img.size()
@@ -588,6 +588,12 @@ class EncoderDecoder_clips(BaseSegmentor):
         Returns:
             Tensor: The output segmentation map.
         """
+
+        if img.dim()==5:
+            batch_size, num_clips, _, h, w = img.size()
+            img = img.reshape(batch_size*num_clips, -1, h,w)
+            # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+            img = img[:,:3,:,:]
 
         assert self.test_cfg.mode in ['slide', 'whole']
         ori_shape = img_meta[0]['ori_shape']
