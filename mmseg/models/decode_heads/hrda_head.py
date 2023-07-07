@@ -143,7 +143,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         self.head = builder.build_head(head_cfg)
 
         attn_cfg['type'] = 'DAFormerHead'
-        if 'TransHeadVideoAttn' in single_scale_head:
+        if 'TransHead' in single_scale_head:
             attn_cfg['type'] = 'TransHeadVideo'
 
         if not attention_classwise:
