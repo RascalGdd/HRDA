@@ -84,6 +84,7 @@ class CustomDataset(Dataset):
                  img_suffix='.jpg',
                  ann_dir=None,
                  seg_map_suffix='.png',
+                 invalid_map_suffix=None,
                  split=None,
                  data_root=None,
                  test_mode=False,
@@ -96,6 +97,7 @@ class CustomDataset(Dataset):
         self.img_suffix = img_suffix
         self.ann_dir = ann_dir
         self.seg_map_suffix = seg_map_suffix
+        self.invalid_map_suffix = invalid_map_suffix
         self.split = split
         self.data_root = data_root
         self.test_mode = test_mode
@@ -149,6 +151,10 @@ class CustomDataset(Dataset):
                     if ann_dir is not None:
                         seg_map = img_name + seg_map_suffix
                         img_info['ann'] = dict(seg_map=seg_map)
+
+                        invalid_map = img_name + invalid_map_suffix
+                        img_info['ann']['invalid_map'] = invalid_map
+
                     img_infos.append(img_info)
         else:
             for img in mmcv.scandir(img_dir, img_suffix, recursive=True):
@@ -156,6 +162,10 @@ class CustomDataset(Dataset):
                 if ann_dir is not None:
                     seg_map = img.replace(img_suffix, seg_map_suffix)
                     img_info['ann'] = dict(seg_map=seg_map)
+
+                    invalid_map = img_name + invalid_map_suffix
+                    img_info['ann']['invalid_map'] = invalid_map
+
                 img_infos.append(img_info)
 
         print_log(
@@ -248,6 +258,19 @@ class CustomDataset(Dataset):
             gt_seg_maps.append(gt_seg_map)
         return gt_seg_maps
 
+    def get_invalid_maps(self, efficient_test=False):
+        """Get ground truth segmentation maps for evaluation."""
+        invalid_maps = []
+        for img_info in self.img_infos:
+            invalid_map = osp.join(self.ann_dir, img_info['ann']['invalid_map'])
+            if not efficient_test and os.path.exists(invalid_map):
+                invalid_map = mmcv.imread(
+                    invalid_map, flag='unchanged', backend='pillow')
+            else:
+                return None
+            invalid_maps.append(invalid_map)
+        return invalid_maps
+
     def get_classes_and_palette(self, classes=None, palette=None):
         """Get class names of current dataset.
 
@@ -337,6 +360,7 @@ class CustomDataset(Dataset):
             raise KeyError('metric {} is not supported'.format(metric))
         eval_results = {}
         gt_seg_maps = self.get_gt_seg_maps(efficient_test)
+        invalid_maps = self.get_invalid_maps(efficient_test)
         if self.CLASSES is None:
             num_classes = len(
                 reduce(np.union1d, [np.unique(_) for _ in gt_seg_maps]))
@@ -349,7 +373,8 @@ class CustomDataset(Dataset):
             self.ignore_index,
             metric,
             label_map=self.label_map,
-            reduce_zero_label=self.reduce_zero_label)
+            reduce_zero_label=self.reduce_zero_label,
+            invalid_maps=invalid_maps)
 
         if self.CLASSES is None:
             class_names = tuple(range(num_classes))

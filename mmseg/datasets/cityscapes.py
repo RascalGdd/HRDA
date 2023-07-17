@@ -36,6 +36,7 @@ class CityscapesDataset(CustomDataset):
                  crop_pseudo_margins=None,
                  img_suffix='_leftImg8bit.png',
                  seg_map_suffix='_gtFine_labelTrainIds.png',
+                 invalid_map_suffix='_gtFine_invGray.png',
                  **kwargs):
         if crop_pseudo_margins is not None:
             assert kwargs['pipeline'][-1]['type'] == 'Collect'
