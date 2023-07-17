@@ -95,7 +95,8 @@ def total_intersect_and_union(results,
                               num_classes,
                               ignore_index,
                               label_map=dict(),
-                              reduce_zero_label=False):
+                              reduce_zero_label=False,
+                              invalid_maps=None):
     """Calculate Total Intersection and Union.
 
     Args:
@@ -128,9 +129,13 @@ def total_intersect_and_union(results,
     total_area_pred_label = torch.zeros((num_classes, ), dtype=torch.float64)
     total_area_label = torch.zeros((num_classes, ), dtype=torch.float64)
     for i in range(num_imgs):
+        if invalid_maps is not None:
+            this_gt_seg_map = np.logic_and(gt_seg_maps[i], invalid_maps[i])
+        else:
+            this_gt_seg_map = gt_seg_maps[i]
         area_intersect, area_union, area_pred_label, area_label = \
             intersect_and_union(
-                results[i], gt_seg_maps[i], num_classes, ignore_index,
+                results[i], this_gt_seg_map, num_classes, ignore_index,
                 label_map, reduce_zero_label)
 
         # if i < 50:
@@ -279,7 +284,8 @@ def eval_metrics(results,
                  nan_to_num=None,
                  label_map=dict(),
                  reduce_zero_label=False,
-                 beta=1):
+                 beta=1,
+                 invalid_maps=None):
     """Calculate evaluation metrics
     Args:
         results (list[ndarray] | list[str]): List of prediction segmentation
@@ -308,6 +314,13 @@ def eval_metrics(results,
         total_area_label = total_intersect_and_union(
             results, gt_seg_maps, num_classes, ignore_index, label_map,
             reduce_zero_label)
+
+    if invalid_maps is not None:
+        total_area_intersect2, total_area_union2, total_area_pred_label2, total_area_label2 = total_intersect_and_union(
+            results, gt_seg_maps, num_classes, ignore_index, label_map,
+            reduce_zero_label, invalid_maps
+        )
+
     all_acc = total_area_intersect.sum() / total_area_label.sum()
     ret_metrics = OrderedDict({'aAcc': all_acc})
     for metric in metrics:
@@ -316,6 +329,13 @@ def eval_metrics(results,
             acc = total_area_intersect / total_area_label
             ret_metrics['IoU'] = iou
             ret_metrics['Acc'] = acc
+
+            if invalid_maps is not None:
+                iou_invalid = total_area_intersect2 / total_area_union2
+                acc_invalid = total_area_intersect2 / total_area_label2
+                ret_metrics['IoU_invalid'] = iou_invalid
+                ret_metrics['Acc_invalid'] = acc_invalid
+
         elif metric == 'mDice':
             dice = 2 * total_area_intersect / (
                 total_area_pred_label + total_area_label)

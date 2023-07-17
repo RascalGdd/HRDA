@@ -418,6 +418,7 @@ class CustomDataset_cityscape_clips(Dataset):
                  img_suffix='.jpg',
                  ann_dir=None,
                  seg_map_suffix='.png',
+                 invalid_map_suffix=None,
                  split=None,
                  data_root=None,
                  test_mode=False,
@@ -426,7 +427,8 @@ class CustomDataset_cityscape_clips(Dataset):
                  classes=None,
                  palette=None,
                  dilation=[-9,-6,-3],
-                 istraining=True):
+                 istraining=True
+    ):
         # self.pipeline = Compose(pipeline)
         if istraining:
             self.pipeline_load = Compose(pipeline[:2])
@@ -439,6 +441,7 @@ class CustomDataset_cityscape_clips(Dataset):
         self.img_suffix = img_suffix
         self.ann_dir = ann_dir
         self.seg_map_suffix = seg_map_suffix
+        self.invalid_map_suffix = invalid_map_suffix
         self.split = split
         self.data_root = data_root
         self.test_mode = test_mode
@@ -460,7 +463,7 @@ class CustomDataset_cityscape_clips(Dataset):
         # load annotations
         self.img_infos = self.load_annotations2(self.img_dir, self.img_suffix,
                                                self.ann_dir,
-                                               self.seg_map_suffix, self.split)
+                                               self.seg_map_suffix, self.invalid_map_suffix, self.split)
         print(len(self.img_infos))
         self.flip_video=True
         print("flip video: ",self.flip_video)
@@ -470,8 +473,7 @@ class CustomDataset_cityscape_clips(Dataset):
         """Total number of samples of data."""
         return len(self.img_infos)
 
-    def load_annotations(self, img_dir, img_suffix, ann_dir, seg_map_suffix,
-                         split):
+    def load_annotations2(self, img_dir, img_suffix, ann_dir, seg_map_suffix, invalid_map_suffix, split):
         """Load annotation from directory.
 
         Args:
@@ -496,53 +498,23 @@ class CustomDataset_cityscape_clips(Dataset):
                     if ann_dir is not None:
                         seg_map = img_name + seg_map_suffix
                         img_info['ann'] = dict(seg_map=seg_map)
-                    img_infos.append(img_info)
-        else:
-            for img in mmcv.scandir(img_dir, img_suffix, recursive=True):
-                img_info = dict(filename=img)
-                if ann_dir is not None:
-                    seg_map = img.replace(img_suffix, seg_map_suffix)
-                    img_info['ann'] = dict(seg_map=seg_map)
-                img_infos.append(img_info)
 
-        print_log(f'Loaded {len(img_infos)} images', logger=get_root_logger())
-        return img_infos
+                        invalid_map = img_name + invalid_map_suffix
+                        img_info['ann']['invalid_map'] = invalid_map
 
-    def load_annotations2(self, img_dir, img_suffix, ann_dir, seg_map_suffix,
-                         split):
-        """Load annotation from directory.
-
-        Args:
-            img_dir (str): Path to image directory
-            img_suffix (str): Suffix of images.
-            ann_dir (str|None): Path to annotation directory.
-            seg_map_suffix (str|None): Suffix of segmentation maps.
-            split (str|None): Split txt file. If split is specified, only file
-                with suffix in the splits will be loaded. Otherwise, all images
-                in img_dir/ann_dir will be loaded. Default: None
-
-        Returns:
-            list[dict]: All image info of dataset.
-        """
-
-        img_infos = []
-        if split is not None:
-            with open(split) as f:
-                for line in f:
-                    img_name = line.strip()
-                    img_info = dict(filename=img_name + img_suffix)
-                    if ann_dir is not None:
-                        seg_map = img_name + seg_map_suffix
-                        img_info['ann'] = dict(seg_map=seg_map)
                     img_infos.append(img_info)
         else:
             for ann_name in mmcv.scandir(ann_dir, seg_map_suffix, recursive=True):
-                img=ann_name.replace(seg_map_suffix,img_suffix)
+                img=ann_name.replace(seg_map_suffix, img_suffix)
 
                 img_info = dict(filename=img)
                 if ann_dir is not None:
                     seg_map = ann_name
                     img_info['ann'] = dict(seg_map=seg_map)
+
+                    invalid_map = img_name + invalid_map_suffix
+                    img_info['ann']['invalid_map'] = invalid_map
+
                 img_infos.append(img_info)
 
         print_log(f'Loaded {len(img_infos)} images', logger=get_root_logger())
@@ -613,12 +585,13 @@ class CustomDataset_cityscape_clips(Dataset):
                 img_info_one={}
                 filename=img_info['filename']
                 seg_map=img_info['ann']['seg_map']
+                invalid_map=img_info['ann']['invalid_map']
                 value_i_splits=filename.split('_')
                 im_name_new = "_".join(
                     value_i_splits[:-2] + [(str(int(value_i_splits[-2]) + ii)).rjust(6, "0")] + value_i_splits[-1:])
 
                 img_info_one['filename']=im_name_new
-                img_info_one['ann']=dict(seg_map=seg_map)
+                img_info_one['ann']=dict(seg_map=seg_map, invalid_map=invalid_map)
                 ann_info_one=img_info_one['ann']
                 img_anns.append([img_info_one, ann_info_one])
                 if not os.path.isfile(self.img_dir+'/'+im_name_new):
@@ -630,12 +603,13 @@ class CustomDataset_cityscape_clips(Dataset):
                 img_info_one={}
                 filename=img_info['filename']
                 seg_map=img_info['ann']['seg_map']
+                invalid_map=img_info['ann']['invalid_map']
                 value_i_splits=filename.split('_')
                 im_name_new = "_".join(
                     value_i_splits[:-2] + [(str(int(value_i_splits[-2]) + ii)).rjust(6, "0")] + value_i_splits[-1:])
 
                 img_info_one['filename']=im_name_new
-                img_info_one['ann']=dict(seg_map=seg_map)
+                img_info_one['ann']=dict(seg_map=seg_map, invalid_map=invalid_map)
                 ann_info_one=img_info_one['ann']
                 img_anns.append([img_info_one, ann_info_one])
                 if not os.path.isfile(self.img_dir+'/'+im_name_new):
@@ -701,6 +675,7 @@ class CustomDataset_cityscape_clips(Dataset):
             img_info_one={}
             filename=img_info['filename']
             seg_map=img_info['ann']['seg_map']
+            invalid_map=img_info['ann']['invalid_map']
             value_i_splits=filename.split('_')
             im_name_new = "_".join(
                 value_i_splits[:-2] + [(str(int(value_i_splits[-2]) + ii)).rjust(6, "0")] + value_i_splits[-1:])
@@ -709,7 +684,7 @@ class CustomDataset_cityscape_clips(Dataset):
             #     value_i_splits[:-2] + [(str(int(value_i_splits[-2]) - ii)).rjust(6, "0")] + value_i_splits[-1:])
 
             img_info_one['filename']=im_name_new
-            img_info_one['ann']=dict(seg_map=seg_map)
+            img_info_one['ann']=dict(seg_map=seg_map, invalid_map=invalid_map)
             ann_info_one=img_info_one['ann']
             img_anns.append([img_info_one, ann_info_one])
             if not os.path.isfile(self.img_dir+'/'+im_name_new):
@@ -770,6 +745,19 @@ class CustomDataset_cityscape_clips(Dataset):
                     seg_map, flag='unchanged', backend='pillow')
             gt_seg_maps.append(gt_seg_map)
         return gt_seg_maps
+
+    def get_invalid_maps(self, efficient_test=False):
+        """Get ground truth segmentation maps for evaluation."""
+        invalid_maps = []
+        for img_info in self.img_infos:
+            invalid_map = osp.join(self.ann_dir, img_info['ann']['invalid_map'])
+            if not efficient_test and os.path.exists(invalid_map):
+                invalid_map = mmcv.imread(
+                    invalid_map, flag='unchanged', backend='pillow')
+            else:
+                return None
+            invalid_maps.append(invalid_map)
+        return invalid_maps
 
     def get_classes_and_palette(self, classes=None, palette=None):
         """Get class names of current dataset.
@@ -860,6 +848,7 @@ class CustomDataset_cityscape_clips(Dataset):
             raise KeyError('metric {} is not supported'.format(metric))
         eval_results = {}
         gt_seg_maps = self.get_gt_seg_maps(efficient_test)
+        invalid_maps = self.get_invalid_maps(efficient_test)
         if self.CLASSES is None:
             num_classes = len(
                 reduce(np.union1d, [np.unique(_) for _ in gt_seg_maps]))
@@ -872,7 +861,9 @@ class CustomDataset_cityscape_clips(Dataset):
             self.ignore_index,
             metric,
             label_map=self.label_map,
-            reduce_zero_label=self.reduce_zero_label)
+            reduce_zero_label=self.reduce_zero_label,
+            invalid_maps=invalid_maps
+        )
 
         if self.CLASSES is None:
             class_names = tuple(range(num_classes))
