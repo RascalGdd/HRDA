@@ -30,7 +30,8 @@ def intersect_and_union(pred_label,
                         num_classes,
                         ignore_index,
                         label_map=dict(),
-                        reduce_zero_label=False):
+                        reduce_zero_label=False,
+                        invalid_map=None):
     """Calculate intersection and Union.
 
     Args:
@@ -76,6 +77,8 @@ def intersect_and_union(pred_label,
         label[label == 254] = 255
 
     mask = (label != ignore_index)
+    if invalid_map is not None:
+        mask = torch.logical_and(mask, invalid_map)
     pred_label = pred_label[mask]
     label = label[mask]
 
@@ -139,7 +142,7 @@ def total_intersect_and_union(results,
         area_intersect, area_union, area_pred_label, area_label = \
             intersect_and_union(
                 results[i], this_gt_seg_map, num_classes, ignore_index,
-                label_map, reduce_zero_label)
+                label_map, reduce_zero_label, invalid_maps[i])
 
         # if i < 50:
         #     normalizer = float(gt_seg_maps[i].max())
