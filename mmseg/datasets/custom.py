@@ -163,7 +163,7 @@ class CustomDataset(Dataset):
                     seg_map = img.replace(img_suffix, seg_map_suffix)
                     img_info['ann'] = dict(seg_map=seg_map)
 
-                    invalid_map = img_name + invalid_map_suffix
+                    invalid_map = img.replace(img_suffix, invalid_map_suffix)
                     img_info['ann']['invalid_map'] = invalid_map
 
                 img_infos.append(img_info)
@@ -537,7 +537,7 @@ class CustomDataset_cityscape_clips(Dataset):
                     seg_map = ann_name
                     img_info['ann'] = dict(seg_map=seg_map)
 
-                    invalid_map = img_name + invalid_map_suffix
+                    invalid_map = ann_name.replace(seg_map_suffix, invalid_map_suffix)
                     img_info['ann']['invalid_map'] = invalid_map
 
                 img_infos.append(img_info)
