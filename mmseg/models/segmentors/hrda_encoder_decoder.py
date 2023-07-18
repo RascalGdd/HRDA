@@ -91,6 +91,9 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.debug_cnt = 0
 
     def extract_unscaled_feat(self, img):
+        # debug
+        img = img[:,:3,:,:]
+
         x = self.backbone(img)
         if self.with_neck:
             x = self.neck(x)
