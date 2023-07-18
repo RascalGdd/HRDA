@@ -41,7 +41,7 @@ model = dict(
     # downscale factor = 2) to ensure alignment during fusion.
     crop_coord_divisible=8,
     # Use overlapping slide inference for detail crops for pseudo-labels.
-    hr_slide_inference=True,
+    hr_slide_inference=False,
     # Use overlapping slide inference for fused crops during test time.
     test_cfg=dict(
         mode='slide',
@@ -51,7 +51,7 @@ model = dict(
 
 # data
 data = dict(samples_per_gpu=1)
-evaluation = dict(interval=10, metric='mIoU')
+evaluation = dict(interval=1, metric='mIoU')
 
 # optimizer
 optimizer = dict(_delete_=True, type='AdamW', lr=0.00006, betas=(0.9, 0.999), weight_decay=0.01,
