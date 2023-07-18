@@ -91,9 +91,6 @@ class HRDAEncoderDecoder(EncoderDecoder):
         self.debug_cnt = 0
 
     def extract_unscaled_feat(self, img):
-        # debug
-        img = img[:,:3,:,:]
-
         x = self.backbone(img)
         if self.with_neck:
             x = self.neck(x)
@@ -171,6 +168,10 @@ class HRDAEncoderDecoder(EncoderDecoder):
     def encode_decode(self, img, img_metas):
         """Encode images with backbone and decode into a semantic segmentation
         map of the same size as input."""
+        # debug
+        img = img[:,:3,:,:]
+
+
         mres_feats = []
         self.decode_head.debug_output = {}
         for i, s in enumerate(self.scales):
@@ -194,6 +195,9 @@ class HRDAEncoderDecoder(EncoderDecoder):
         return out
 
     def _forward_train_features(self, img):
+        # debug
+        img = img[:,:3,:,:]
+
         mres_feats = []
         self.decode_head.debug_output = {}
         assert len(self.scales) <= 2, 'Only up to 2 scales are supported.'
@@ -242,6 +246,9 @@ class HRDAEncoderDecoder(EncoderDecoder):
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
+        # debug
+        img = img[:,:3,:,:]
+
         losses = dict()
 
         mres_feats, prob_vis = self._forward_train_features(img)
@@ -269,6 +276,9 @@ class HRDAEncoderDecoder(EncoderDecoder):
         return losses
 
     def forward_with_aux(self, img, img_metas):
+        # debug
+        img = img[:,:3,:,:]
+
         assert not self.with_auxiliary_head
         mres_feats, _ = self._forward_train_features(img)
         out = self.decode_head.forward(mres_feats)
