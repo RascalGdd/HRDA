@@ -42,7 +42,7 @@ class CityscapesDataset(CustomDataset):
             assert kwargs['pipeline'][-1]['type'] == 'Collect'
             kwargs['pipeline'][-1]['keys'].append('valid_pseudo_mask')
         super(CityscapesDataset, self).__init__(
-            img_suffix=img_suffix, seg_map_suffix=seg_map_suffix, **kwargs)
+            img_suffix=img_suffix, seg_map_suffix=seg_map_suffix, invalid_map_suffix=invalid_map_suffix, **kwargs)
 
         self.pseudo_margins = crop_pseudo_margins
         self.valid_mask_size = [1024, 2048]
