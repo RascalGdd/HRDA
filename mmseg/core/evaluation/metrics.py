@@ -130,8 +130,8 @@ def total_intersect_and_union(results,
     total_area_label = torch.zeros((num_classes, ), dtype=torch.float64)
     for i in range(num_imgs):
         if invalid_maps is not None:
-            this_gt_seg_map = np.logic_and(gt_seg_maps[i], invalid_maps[i])
-            this_result = np.logic_and(results[i], invalid_maps[i])
+            this_gt_seg_map = np.logical_and(gt_seg_maps[i], invalid_maps[i])
+            this_result = np.logical_and(results[i], invalid_maps[i])
         else:
             this_gt_seg_map = gt_seg_maps[i]
             this_result = results[i]
