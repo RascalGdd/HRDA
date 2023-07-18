@@ -118,14 +118,15 @@ class CustomDataset(Dataset):
 
         # load annotations
         self.img_infos = self.load_annotations(self.img_dir, self.img_suffix,
-                                               self.ann_dir,
-                                               self.seg_map_suffix, self.split)
+           self.ann_dir, self.seg_map_suffix, 
+           self.invalid_map_suffix, self.split
+        )
 
     def __len__(self):
         """Total number of samples of data."""
         return len(self.img_infos)
 
-    def load_annotations(self, img_dir, img_suffix, ann_dir, seg_map_suffix,
+    def load_annotations(self, img_dir, img_suffix, ann_dir, seg_map_suffix, invalid_map_suffix,
                          split):
         """Load annotation from directory.
 
