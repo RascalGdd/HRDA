@@ -282,13 +282,14 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
         if "CFFM" in self.head_type and "VideoAttn" in self.head_type:
             lr_seg, _c2 = self.head(lr_inp, return_feat = True)
+            _c2 = _c2.detach()
         else:
             lr_seg = self.head(lr_inp)
             _c2 = None
 
         hr_seg = self.decode_hr(hr_inp, batch_size)
 
-        att = self.get_scale_attention(lr_sc_att_inp, feat_video = _c2.detach(), lr_out = lr_seg.detach(), hr_out = hr_seg.detach())
+        att = self.get_scale_attention(lr_sc_att_inp, feat_video = _c2, lr_out = lr_seg.detach(), hr_out = hr_seg.detach())
         if has_crop:
             mask = lr_seg.new_zeros([lr_seg.shape[0], 1, *lr_seg.shape[2:]])
             sc_os = self.os / lr_scale
