@@ -135,14 +135,16 @@ def total_intersect_and_union(results,
         if invalid_maps is not None:
             this_gt_seg_map = np.logical_and(gt_seg_maps[i], invalid_maps[i])
             this_result = np.logical_and(results[i], invalid_maps[i])
+            this_invalid_map = invalid_maps[i]
         else:
             this_gt_seg_map = gt_seg_maps[i]
             this_result = results[i]
+            this_invalid_map = None
 
         area_intersect, area_union, area_pred_label, area_label = \
             intersect_and_union(
                 results[i], this_gt_seg_map, num_classes, ignore_index,
-                label_map, reduce_zero_label, invalid_maps[i])
+                label_map, reduce_zero_label, this_invalid_map)
 
         # if i < 50:
         #     normalizer = float(gt_seg_maps[i].max())
