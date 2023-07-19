@@ -66,8 +66,6 @@ def intersect_and_union(pred_label,
     else:
         label = torch.from_numpy(label)
 
-
-
     if label_map is not None:
         for old_id, new_id in label_map.items():
             label[label == old_id] = new_id
@@ -144,14 +142,15 @@ def total_intersect_and_union(results,
 
         area_intersect, area_union, area_pred_label, area_label = \
             intersect_and_union(
-                results[i], this_gt_seg_map, num_classes, ignore_index,
+                this_result, this_gt_seg_map, num_classes, ignore_index,
                 label_map, reduce_zero_label, this_invalid_map)
 
-        # if i < 50:
-        #     normalizer = float(gt_seg_maps[i].max())
-        #     save_image(torch.from_numpy(results[i]).to(float) / normalizer, 'debug/seg_pred_{}.png'.format(i))
-        #     save_image(torch.from_numpy(gt_seg_maps[i]).to(float) / normalizer, 'debug/seg_gt_{}.png'.format(i))
-        #     print("i={},".format(i), sum((results[i] == gt_seg_maps[i]).astype(int)))
+        if i < 50:
+            normalizer = float(gt_seg_maps[i].max())
+            save_image(torch.from_numpy(this_result).to(float) / normalizer, 'debug/seg_pred_{}.png'.format(i))
+            save_image(torch.from_numpy(this_gt_seg_map).to(float) / normalizer, 'debug/seg_gt_{}.png'.format(i))
+            save_image(torch.from_numpy(this_invalid_map).to(float), 'debug/invalid_map_{}.png'.format(i))
+            print("i={},".format(i), sum((this_result == this_gt_seg_map).astype(int)))
 
         total_area_intersect += area_intersect
         total_area_union += area_union
