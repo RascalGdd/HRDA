@@ -145,7 +145,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         attn_cfg['type'] = 'DAFormerHead'
         if 'TransHead' in single_scale_head:
             attn_cfg['type'] = 'TransHeadVideo'
-        if 'Serial' in single_scale_head:
+        if 'serial' in single_scale_head:
             attn_cfg['type'] = 'DAFormerSerialHead'
 
         if not attention_classwise:
