@@ -16,6 +16,7 @@ from .uper_head import UPerHead
 from .cffm_head import CFFMHead_clips_resize1_8
 from .cffm_head_fuse import CFFMHeadFuse
 from .trans_scale_video_head import TransHeadVideo
+from .daformer_head_video import DAFormerSerialHead
 
 __all__ = [
     'FCNHead',
@@ -31,5 +32,6 @@ __all__ = [
     'HRDAHead',
     'CFFMHead_clips_resize1_8',
     'CFFMHeadFuse',
-    'TransHeadVideo'
+    'TransHeadVideo',
+    'DAFormerSerialHead'
 ]
