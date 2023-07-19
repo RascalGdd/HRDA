@@ -145,6 +145,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         attn_cfg['type'] = 'DAFormerHead'
         if 'TransHead' in single_scale_head:
             attn_cfg['type'] = 'TransHeadVideo'
+        if 'Serial' in single_scale_head:
+            attn_cfg['type'] = 'DAFormerSerialHead'
 
         if not attention_classwise:
             attn_cfg['num_classes'] = 1
@@ -212,7 +214,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         else:
             return self.head(inp)
 
-    def get_scale_attention(self, inp, feat_video = None):
+    def get_scale_attention(self, inp, feat_video = None, lr_out = None, hr_out = None):
 
         # TODO: underlying assumption num_per_gpu = 1, and the last clip is the current clip
         if inp[0].shape[0] == self.num_clips:
@@ -224,6 +226,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 att = torch.sigmoid(self.scale_attention(inp))
             else:
                 att = torch.sigmoid(self.scale_attention(inp, feat_video = feat_video))
+                if lr_out is not None and hr_out is not None and 'serial' in self.head_type:
+                    att = torch.sigmoid(self.scale_attention(inp, feat_video, lr_out, hr_out))
         else:
             att = self.fixed_attention
         return att
@@ -278,15 +282,13 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
         if "CFFM" in self.head_type and "VideoAttn" in self.head_type:
             lr_seg, _c2 = self.head(lr_inp, return_feat = True)
-            if "detach" in self.head_type:
-                _c2 = _c2.detach()
         else:
             lr_seg = self.head(lr_inp)
             _c2 = None
 
         hr_seg = self.decode_hr(hr_inp, batch_size)
 
-        att = self.get_scale_attention(lr_sc_att_inp, feat_video = _c2)
+        att = self.get_scale_attention(lr_sc_att_inp, feat_video = _c2.detach(), lr_out = lr_seg.detach(), hr_out = hr_seg.detach())
         if has_crop:
             mask = lr_seg.new_zeros([lr_seg.shape[0], 1, *lr_seg.shape[2:]])
             sc_os = self.os / lr_scale

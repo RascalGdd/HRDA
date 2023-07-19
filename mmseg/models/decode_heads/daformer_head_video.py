@@ -122,10 +122,10 @@ def build_layer(in_channels, out_channels, type, **kwargs):
 
 
 @HEADS.register_module()
-class DAFormerVideoHead(BaseDecodeHead):
+class DAFormerSerialHead(BaseDecodeHead):
 
     def __init__(self, **kwargs):
-        super(DAFormerVideoHead, self).__init__(
+        super(DAFormerSerialHead, self).__init__(
             input_transform='multiple_select', **kwargs)
 
         assert not self.align_corners
