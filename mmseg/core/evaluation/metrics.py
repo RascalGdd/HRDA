@@ -78,6 +78,7 @@ def intersect_and_union(pred_label,
 
     mask = (label != ignore_index)
     if invalid_map is not None:
+        invalid_map = torch.from_numpy(invalid_map)
         mask = torch.logical_and(mask, invalid_map)
     pred_label = pred_label[mask]
     label = label[mask]
