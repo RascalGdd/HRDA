@@ -275,7 +275,7 @@ class CityscapesDataset_clips(CustomDataset_cityscape_clips):
         super(CityscapesDataset_clips, self).__init__(
             img_suffix='_leftImg8bit.png',
             seg_map_suffix='_gtFine_labelTrainIds.png',
-            invalid_map_suffix='_gtFine_invGray.png'
+            invalid_map_suffix='_gtFine_invGray.png',
             **kwargs)
 
     @staticmethod
