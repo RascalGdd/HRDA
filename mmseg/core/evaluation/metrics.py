@@ -131,13 +131,11 @@ def total_intersect_and_union(results,
     total_area_pred_label = torch.zeros((num_classes, ), dtype=torch.float64)
     total_area_label = torch.zeros((num_classes, ), dtype=torch.float64)
     for i in range(num_imgs):
+        this_gt_seg_map = gt_seg_maps[i]
+        this_result = results[i]
         if invalid_maps is not None:
-            this_gt_seg_map = np.logical_and(gt_seg_maps[i], invalid_maps[i])
-            this_result = np.logical_and(results[i], invalid_maps[i])
             this_invalid_map = invalid_maps[i]
         else:
-            this_gt_seg_map = gt_seg_maps[i]
-            this_result = results[i]
             this_invalid_map = None
 
         area_intersect, area_union, area_pred_label, area_label = \
