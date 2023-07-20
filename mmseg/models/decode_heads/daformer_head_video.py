@@ -154,7 +154,7 @@ class DAFormerSerialHead(BaseDecodeHead):
         self.embed_layers = nn.ModuleDict(self.embed_layers)
 
         self.fuse_layer = build_layer(
-            sum(embed_dims + embed_dims[0] + 19*2), self.channels, **fusion_cfg)
+            sum(embed_dims) + embed_dims[0] + 19*2, self.channels, **fusion_cfg)
 
     def forward(self, inputs, feat_video, lr_out, hr_out):
         x = inputs
