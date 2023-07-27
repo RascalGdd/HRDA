@@ -1,6 +1,6 @@
 _base_ = [
     '../../_base_/models/daformer_conv1_mitb3.py',
-    '../../_base_/datasets/acdc_512x512_repeat_clips.py',
+    '../../_base_/datasets/acdc_512x512_repeat_dummy_clips.py',
     '../../_base_/default_runtime.py',
     '../../_base_/schedules/schedule_160k_adamw.py'
 ]
@@ -9,7 +9,7 @@ _base_ = [
 norm_cfg = dict(type='SyncBN', requires_grad=True)
 find_unused_parameters = True
 model = dict(
-    type='HRDAEncoderDecoder_clips',
+    type='HRDAEncoderDecoder',
     decode_head=dict(
         decoder_params=dict(
             fusion_cfg=dict(
