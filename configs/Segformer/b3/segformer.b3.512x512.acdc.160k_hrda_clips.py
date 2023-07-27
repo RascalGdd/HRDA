@@ -9,7 +9,7 @@ _base_ = [
 norm_cfg = dict(type='SyncBN', requires_grad=True)
 find_unused_parameters = True
 model = dict(
-    type='HRDAEncoderDecoder_clips',
+    type='HRDAEncoderDecoder',
     decode_head=dict(
         decoder_params=dict(
             fusion_cfg=dict(

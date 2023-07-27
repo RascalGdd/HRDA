@@ -595,6 +595,11 @@ class CustomDataset_cityscape_clips(Dataset):
         img_info = self.img_infos[idx]
         ann_info = self.get_ann_info(idx)
 
+        filename=img_info['filename']
+        seg_map=img_info['ann']['seg_map']
+        invalid_map=img_info['ann']['invalid_map']
+        value_i_splits=filename.split('_')
+
         if self.flip_video:
             # print("here")
             if random.random()<0.5:
@@ -609,10 +614,7 @@ class CustomDataset_cityscape_clips(Dataset):
             img_anns=[]
             for ii in dilation_used:
                 img_info_one={}
-                filename=img_info['filename']
-                seg_map=img_info['ann']['seg_map']
-                invalid_map=img_info['ann']['invalid_map']
-                value_i_splits=filename.split('_')
+                
                 im_name_new = "_".join(
                     value_i_splits[:-2] + [(str(int(value_i_splits[-2]) + ii)).rjust(6, "0")] + value_i_splits[-1:])
 
@@ -627,10 +629,7 @@ class CustomDataset_cityscape_clips(Dataset):
             img_anns=[]
             for ii in dilation_used:
                 img_info_one={}
-                filename=img_info['filename']
-                seg_map=img_info['ann']['seg_map']
-                invalid_map=img_info['ann']['invalid_map']
-                value_i_splits=filename.split('_')
+
                 im_name_new = "_".join(
                     value_i_splits[:-2] + [(str(int(value_i_splits[-2]) + ii)).rjust(6, "0")] + value_i_splits[-1:])
 
