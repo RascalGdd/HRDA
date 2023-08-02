@@ -10,7 +10,8 @@ norm_cfg = dict(type='SyncBN', requires_grad=True)
 find_unused_parameters = True
 model = dict(
     type='HRDAEncoderDecoder',
-    decode_head=dict(decoder_params=dict(
+    decode_head=dict(
+        decoder_params=dict(
             fusion_cfg=dict(
                 _delete_=True,
                 type='aspp',
