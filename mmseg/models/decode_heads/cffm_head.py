@@ -11,7 +11,8 @@ from mmseg.models.utils import *
 import attr
 
 from IPython import embed
-from .cffm_module.cffm_transformer import BasicLayer3d3
+# from .cffm_module.cffm_transformer import BasicLayer3d3
+from .cffm_module.cffm_transformer_vanishing_point import BasicLayer3d3
 
 import cv2
 
