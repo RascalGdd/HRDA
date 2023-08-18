@@ -126,6 +126,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             if 'Fuse' in single_scale_head:
                 head_cfg['type'] = 'CFFMHeadFuse'
 
+            if 'vp' in single_scale_head:
+                head_cfg['type'] = head_cfg['type'] + '_vp'
+
             head_cfg["num_clips"] = self.num_clips
         elif single_scale_head == 'DAFormerHead':
             head_cfg['type'] = single_scale_head
@@ -198,7 +201,11 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                                 device=dev)
             count_mat = torch.zeros((bs, 1, h_img, w_img), device=dev)
 
-            crop_seg_logits = self.head(features)
+            try:
+                crop_seg_logits = self.head(features, no_cffm = True)
+            except:
+                crop_seg_logits = self.head(features)
+                
             for i in range(len(boxes)):
                 y1, y2, x1, x2 = boxes[i]
                 crop_seg_logit = crop_seg_logits[i * bs:(i + 1) * bs]

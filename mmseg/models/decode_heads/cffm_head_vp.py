@@ -12,7 +12,7 @@ import attr
 
 from IPython import embed
 # from .cffm_module.cffm_transformer import BasicLayer3d3
-from .cffm_module.cffm_transformer import BasicLayer3d3
+from .cffm_module.cffm_transformer_vanishing_point import BasicLayer3d3
 
 import cv2
 
@@ -31,12 +31,12 @@ class MLP(nn.Module):
 
 
 @HEADS.register_module()
-class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
+class CFFMHead_clips_resize1_8_vp(BaseDecodeHead_clips_flow):
     """
     SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers
     """
     def __init__(self, feature_strides, **kwargs):
-        super(CFFMHead_clips_resize1_8, self).__init__(input_transform='multiple_select', **kwargs)
+        super(CFFMHead_clips_resize1_8_vp, self).__init__(input_transform='multiple_select', **kwargs)
         assert len(feature_strides) == len(self.in_channels)
         assert min(feature_strides) == feature_strides[0]
         self.feature_strides = feature_strides
@@ -94,7 +94,7 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
 
         print(self.decoder_focal.blocks[0].focal_kernel_clips)
 
-    def forward(self, inputs, return_feat = False):
+    def forward(self, inputs, return_feat = False, no_cffm = False):
         # if self.training:
         #     assert self.num_clips==num_clips
         num_clips = self.num_clips
@@ -123,6 +123,9 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
         _, _, h, w=_c.shape
         x = self.dropout(_c) # Bk=4, C, H, W
         default_logit = self.linear_pred(x.reshape(batch_size, num_clips, -1, x.shape[2], x.shape[3])[:,-1]) # 1, C, H2, W2
+
+        if no_cffm:
+            return default_logit
 
         # if not self.training and num_clips!=self.num_clips:
         #     return x[:,-1]
