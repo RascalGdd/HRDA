@@ -555,7 +555,7 @@ class WindowAttention3d3(nn.Module):
         self.attn_drop = nn.Dropout(attn_drop)
 
         # added for vanishing point
-        self.vanishing_point_attn = nn.MultiheadAttention(dim, num_heads, dropout=attn_drop, batch_first=True)
+        self.vanishing_point_attn = nn.MultiheadAttention(dim, num_heads, dropout=attn_drop)
         self.attn_drop_vp = nn.Dropout(attn_drop)
         self.norm_vp = nn.LayerNorm(dim)
         self.proj_vp = nn.Linear(dim, dim)
@@ -898,15 +898,15 @@ class WindowAttention3d3(nn.Module):
         # diff_id = ((window_id_grid - central_window_id)**2).sum(dim=1) # (nH*nW,)
         # _, topk_window_ids = torch.topk(diff_id, self.vp_n_winows, dim=0, largest=False)
 
-        x_vp = x[-self.vp_roi_n_windows:, :, :, :].view(-1, self.vp_roi_n_windows*window_area, self.dim) # (64,8,49,32) -> (1, 64*49, 256)
-        x_vp_nearest = x[window_ids_vp, :, :, :].view(-1, self.vp_roi_n_windows_ori*window_area, self.dim) # (16,8,49,32) -> (1, 16*49, 256)
+        x_vp = x[-self.vp_roi_n_windows:, :, :, :].view(self.vp_roi_n_windows*window_area, -1, self.dim) # (64,8,49,32) -> (64*49, 1, 256)
+        x_vp_nearest = x[window_ids_vp, :, :, :].view(self.vp_roi_n_windows_ori*window_area, -1, self.dim) # (16,8,49,32) -> (16*49, 1, 256)
 
         # attention between x_vp and x_vp_nearest
         x_vp_combined = self.vanishing_point_attn(query=x_vp_nearest, key=x_vp, value=x_vp)[0] # (1, 9*49, 256) -> (1, 9*49, 256)
         x_vp_nearest = x_vp_nearest + self.attn_drop_vp(x_vp_combined)
         x_vp_nearest = self.norm_vp(x_vp_nearest)
         x_vp_nearest = F.relu(self.proj_vp(x_vp_nearest))
-        x[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, self.num_heads, window_area, C//self.num_heads)
+        x[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).permute(0,2,1,3)
 
         # x = (attn @ v_all).transpose(1, 2).reshape(attn.shape[0], window_area, C) # (190+9,49,256)
         x = x[:-self.vp_n_winows].transpose(1, 2).reshape(attn.shape[0]-self.vp_n_winows, window_area, C)
