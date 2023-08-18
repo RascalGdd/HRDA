@@ -367,7 +367,7 @@ def generate_template_depth_mask(image_size, level_configs = np.arange(0,2,0.002
     num_levels = len(level_configs) + 1
     central_point = [H, W]
     depth_mask_template = torch.zeros((H2, W2)).to(float)
-    print(depth_mask_template.shape)
+    # print(depth_mask_template.shape)
     for level_scale in level_configs:
         x1_bias = int(H * level_scale / 2)
         x2_bias = int(W * level_scale / 2)
