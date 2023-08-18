@@ -909,7 +909,7 @@ class WindowAttention3d3(nn.Module):
         x[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).permute(0,2,1,3)
 
         # x = (attn @ v_all).transpose(1, 2).reshape(attn.shape[0], window_area, C) # (190+9,49,256)
-        x = x[:-self.vp_n_winows].transpose(1, 2).reshape(attn.shape[0]-self.vp_n_winows, window_area, C)
+        x = x[:-self.vp_roi_n_windows].transpose(1, 2).reshape(attn.shape[0]-self.vp_roi_n_windows, window_area, C)
         x = self.proj(x)
         x = self.proj_drop(x)
         # print(x.shape)
