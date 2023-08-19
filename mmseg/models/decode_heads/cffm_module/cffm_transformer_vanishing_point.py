@@ -1075,6 +1075,8 @@ class CffmTransformerBlock3d3(nn.Module):
 
 
     def forward(self, x):
+        torch.autograd.set_detect_anomaly(True)
+        
         H0, W0 = self.input_resolution
         # B, L, C = x.shape
         B0, D0, H0, W0, C = x.shape # (1,4,64,128,256)
