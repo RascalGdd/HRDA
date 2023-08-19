@@ -906,16 +906,21 @@ class WindowAttention3d3(nn.Module):
         x_vp_nearest = x_vp_nearest + self.attn_drop_vp(x_vp_combined)
         x_vp_nearest = self.norm_vp(x_vp_nearest)
         x_vp_nearest = F.relu(self.proj_vp(x_vp_nearest))
+
+        # orig_n_window = x.shape[0] - self.vp_roi_n_windows
+        # window_ids_non_vp = torch.arange(orig_n_window) 
+        x_return = x[:-self.vp_roi_n_windows].clone()
+        x_return[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).contiguous().permute(0,2,1,3)
         # x[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).contiguous().permute(0,2,1,3)
 
         # x = (attn @ v_all).transpose(1, 2).reshape(attn.shape[0], window_area, C) # (190+9,49,256)
-        x = x[:-self.vp_roi_n_windows].transpose(1, 2).contiguous().reshape(attn.shape[0]-self.vp_roi_n_windows, window_area, C)
-        x = self.proj(x)
-        x = self.proj_drop(x)
+        x_return = x_return.transpose(1, 2).contiguous().reshape(attn.shape[0]-self.vp_roi_n_windows, window_area, C)
+        x_return = self.proj(x_return)
+        x_return = self.proj_drop(x_return)
         # print(x.shape)
         # x = x.view(B/num_clips, nH, nW, C )
         # exit()
-        return x
+        return x_return
 
     def extra_repr(self) -> str:
         return f'dim={self.dim}, window_size={self.window_size}, num_heads={self.num_heads}'
