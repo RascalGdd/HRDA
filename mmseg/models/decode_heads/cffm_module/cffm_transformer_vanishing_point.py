@@ -906,7 +906,7 @@ class WindowAttention3d3(nn.Module):
         x_vp_nearest = x_vp_nearest + self.attn_drop_vp(x_vp_combined)
         x_vp_nearest = self.norm_vp(x_vp_nearest)
         x_vp_nearest = F.relu(self.proj_vp(x_vp_nearest))
-        x[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).contiguous().permute(0,2,1,3)
+        # x[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).contiguous().permute(0,2,1,3)
 
         # x = (attn @ v_all).transpose(1, 2).reshape(attn.shape[0], window_area, C) # (190+9,49,256)
         x = x[:-self.vp_roi_n_windows].transpose(1, 2).contiguous().reshape(attn.shape[0]-self.vp_roi_n_windows, window_area, C)
@@ -1076,7 +1076,7 @@ class CffmTransformerBlock3d3(nn.Module):
 
     def forward(self, x):
         torch.autograd.set_detect_anomaly(True)
-        
+
         H0, W0 = self.input_resolution
         # B, L, C = x.shape
         B0, D0, H0, W0, C = x.shape # (1,4,64,128,256)
