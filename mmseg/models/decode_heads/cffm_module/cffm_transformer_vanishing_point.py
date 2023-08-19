@@ -74,7 +74,7 @@ def window_partition_noreshape_overlap(x, window_size, stride):
     windows = F.unfold(x2, (window_size, window_size),
         dilation=1, padding=0, stride=stride
     ).permute(0,2,1) # (B, n_windows, C*window_size*window_size)
-    windows = windows.view(B, n_windows_h, n_windows_w, window_size, window_size, C)
+    windows = windows.view(B, n_windows_h, n_windows_w, window_size, window_size, C).contiguous()
     return windows
 
 def window_reverse(windows, window_size, H, W):
@@ -89,7 +89,7 @@ def window_reverse(windows, window_size, H, W):
         x: (B, H, W, C)
     """
     B = int(windows.shape[0] / (H * W / window_size / window_size))
-    x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
+    x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1).contiguous()
     x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
     return x
 
@@ -197,7 +197,7 @@ def window_partition_vanishing_point(x, vp_roi, window_size, stride = None):
     roi_windows = window_partition_vanishing_point_no_reshape(
         x, vp_roi, window_size, stride
     ) # B, n_windows_h, n_windows_w, window_size, window_size, C
-    return roi_windows.view(-1, window_size, window_size, C)
+    return roi_windows.view(-1, window_size, window_size, C).contiguous()
 
 def window_partition_all(x, vp_roi, window_size, stride = None, sel_n_windows = None):
     B, H, W, C = x.shape
@@ -206,7 +206,7 @@ def window_partition_all(x, vp_roi, window_size, stride = None, sel_n_windows = 
     if sel_n_windows is not None:
         assert type(sel_n_windows) == int
         n_windows_h = int(math.sqrt(roi_windows.shape[0]))
-        roi_windows = roi_windows.view(n_windows_h, n_windows_h,  window_size, window_size, -1)
+        roi_windows = roi_windows.view(n_windows_h, n_windows_h,  window_size, window_size, -1).contiguous()
         assert sel_n_windows <= n_windows_h
         margin = int((n_windows_h - sel_n_windows)/2)
         if margin > 0:
@@ -601,7 +601,7 @@ class WindowAttention3d3(nn.Module):
                 t, vp_roi, self.window_size[0], stride = self.vp_stride, sel_n_windows = None
             ).view(
                 -1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads
-            ).transpose(1, 2), 
+            ).transpose(1, 2).contiguous(), 
             (q, k, v)
         ) # ((190+9, 8, 49, 32), (190+9, 8, 49, 32), (190+9, 8, 49, 32))
 
@@ -624,7 +624,7 @@ class WindowAttention3d3(nn.Module):
                     t, vp_roi, self.window_size[0], stride = self.vp_stride, sel_n_windows = self.vp_n_windows
                 ).view(
                     -1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads
-                ),
+                ).contiguous(),
                 (k_tl, k_tr, k_bl, k_br)
             )            
             (v_tl_windows, v_tr_windows, v_bl_windows, v_br_windows) = map(
@@ -632,7 +632,7 @@ class WindowAttention3d3(nn.Module):
                     t, vp_roi, self.window_size[0], stride = self.vp_stride, sel_n_windows = self.vp_n_windows
                 ).view(
                     -1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads
-                ),
+                ).contiguous(),
                 (v_tl, v_tr, v_bl, v_br)
             )
             k_rolled = torch.cat((k_tl_windows, k_tr_windows, k_bl_windows, k_br_windows), 1).transpose(1, 2)
@@ -702,13 +702,13 @@ class WindowAttention3d3(nn.Module):
                 (k_pooled_k_vp, v_pooled_k_vp) = map(
                     lambda t: t.view(n_windows_pre, n_windows_pre, heads, unfold_size, head_dim)[
                         margin:margin+self.vp_n_windows,  margin:margin+self.vp_n_windows
-                    ].reshape(-1, heads, unfold_size, head_dim),
+                    ].contiguous().reshape(-1, heads, unfold_size, head_dim),
                     (k_pooled_k_vp, v_pooled_k_vp)
                 )
 
                 x_window_masks_vp = x_window_masks_vp.view(1, n_windows_pre, n_windows_pre, unfold_size)[
                     :, margin:margin+self.vp_n_windows,  margin:margin+self.vp_n_windows
-                ].reshape(1, -1, unfold_size)
+                ].contiguous().reshape(1, -1, unfold_size)
 
                 mask_all[0][k + 1] = torch.cat([mask_all[0][k+1], x_window_masks_vp], dim=1)
 
@@ -898,8 +898,8 @@ class WindowAttention3d3(nn.Module):
         # diff_id = ((window_id_grid - central_window_id)**2).sum(dim=1) # (nH*nW,)
         # _, topk_window_ids = torch.topk(diff_id, self.vp_n_winows, dim=0, largest=False)
 
-        x_vp = x[-self.vp_roi_n_windows:, :, :, :].view(self.vp_roi_n_windows*window_area, -1, self.dim) # (64,8,49,32) -> (64*49, 1, 256)
-        x_vp_nearest = x[window_ids_vp, :, :, :].view(self.vp_roi_n_windows_ori*window_area, -1, self.dim) # (16,8,49,32) -> (16*49, 1, 256)
+        x_vp = x[-self.vp_roi_n_windows:, :, :, :].contiguous().view(self.vp_roi_n_windows*window_area, -1, self.dim) # (64,8,49,32) -> (64*49, 1, 256)
+        x_vp_nearest = x[window_ids_vp, :, :, :].contiguous().view(self.vp_roi_n_windows_ori*window_area, -1, self.dim) # (16,8,49,32) -> (16*49, 1, 256)
 
         # attention between x_vp and x_vp_nearest
         x_vp_combined = self.vanishing_point_attn(query=x_vp_nearest, key=x_vp, value=x_vp)[0] # (1, 9*49, 256) -> (1, 9*49, 256)
