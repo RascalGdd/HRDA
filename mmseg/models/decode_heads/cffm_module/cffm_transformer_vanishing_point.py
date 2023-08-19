@@ -898,8 +898,8 @@ class WindowAttention3d3(nn.Module):
         # diff_id = ((window_id_grid - central_window_id)**2).sum(dim=1) # (nH*nW,)
         # _, topk_window_ids = torch.topk(diff_id, self.vp_n_winows, dim=0, largest=False)
 
-        x_vp = x[-self.vp_roi_n_windows:, :, :, :].contiguous().view(self.vp_roi_n_windows*window_area, -1, self.dim) # (64,8,49,32) -> (64*49, 1, 256)
-        x_vp_nearest = x[window_ids_vp, :, :, :].contiguous().view(self.vp_roi_n_windows_ori*window_area, -1, self.dim) # (16,8,49,32) -> (16*49, 1, 256)
+        x_vp = x[-self.vp_roi_n_windows:, :, :, :].view(self.vp_roi_n_windows*window_area, -1, self.dim).contiguous() # (64,8,49,32) -> (64*49, 1, 256)
+        x_vp_nearest = x[window_ids_vp, :, :, :].view(self.vp_roi_n_windows_ori*window_area, -1, self.dim).contiguous() # (16,8,49,32) -> (16*49, 1, 256)
 
         # attention between x_vp and x_vp_nearest
         x_vp_combined = self.vanishing_point_attn(query=x_vp_nearest, key=x_vp, value=x_vp)[0] # (1, 9*49, 256) -> (1, 9*49, 256)
