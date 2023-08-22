@@ -12,7 +12,7 @@ import attr
 
 from IPython import embed
 # from .cffm_module.cffm_transformer import BasicLayer3d3
-from .cffm_module.cffm_transformer_vanishing_point import BasicLayer3d3
+from .cffm_module.cffm_transformer_vanishing_point_move import BasicLayer3d3
 
 import cv2
 
@@ -31,12 +31,12 @@ class MLP(nn.Module):
 
 
 @HEADS.register_module()
-class CFFMHead_clips_resize1_8_vp(BaseDecodeHead_clips_flow):
+class CFFMHead_clips_resize1_8_vpmove(BaseDecodeHead_clips_flow):
     """
     SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers
     """
     def __init__(self, feature_strides, **kwargs):
-        super(CFFMHead_clips_resize1_8_vp, self).__init__(input_transform='multiple_select', **kwargs)
+        super(CFFMHead_clips_resize1_8_vpmove, self).__init__(input_transform='multiple_select', **kwargs)
         assert len(feature_strides) == len(self.in_channels)
         assert min(feature_strides) == feature_strides[0]
         self.feature_strides = feature_strides
