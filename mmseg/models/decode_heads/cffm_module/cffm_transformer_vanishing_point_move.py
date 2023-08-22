@@ -656,6 +656,8 @@ class WindowAttention3d3(nn.Module):
                     relative_matrix_tan = torch.zeros_like(matrix)
                     relative_matrix_move = torch.zeros_like(coords_q)
                     relative_matrix_move_opposite = torch.zeros_like(coords_q)
+
+                    '''
                     for i in range(matrix.shape[0]):
                         for j in range(matrix.shape[1]):
                             delta_y = vp_coordinate[0] - coords_q[0, i, j]
@@ -677,6 +679,7 @@ class WindowAttention3d3(nn.Module):
                             elif relative_matrix_tan[i, j] <= -0.414 and relative_matrix_tan[i, j] >= -2.414:
                                 relative_matrix_move[:, i, j] = torch.tensor([1, -1])
                             relative_matrix_move_opposite[:, i, j] = -relative_matrix_move[:, i, j]
+                    '''
 
                     relative_matrix_move[0, 0][relative_matrix_move[0, 0, :] <= 0] = 0
                     relative_matrix_move[0, -1][relative_matrix_move[0, -1, :] >= 0] = 0
@@ -698,12 +701,15 @@ class WindowAttention3d3(nn.Module):
                         mask_coord_list[i] = mask_coord_matrix[coords_q_moved.flatten(1)[0, i], coords_q_moved.flatten(1)[1, i]]
                         mask_coord_list_opposite[i] = mask_coord_matrix[coords_q_moved_opposite.flatten(1)[0, i], coords_q_moved_opposite.flatten(1)[1, i]]
 
+                    '''
                     for i in range(matrix.shape[0]):
                         for j in range(matrix.shape[1]):
                             k_matrix_moved[:, :, :, :, i, j] = k_pooled_k[:, :, :, :, coords_q_moved[0, i, j], coords_q_moved[1, i, j]]
                             k_matrix_moved_opposite[:, :, :, :, i, j] = k_pooled_k[:, :, :, :, coords_q_moved_opposite[0, i, j], coords_q_moved_opposite[1, i, j]]
                             v_matrix_moved[:, :, :, :, i, j] = v_pooled_k[:, :, :, :, coords_q_moved[0, i, j], coords_q_moved[1, i, j]]
                             v_matrix_moved_opposite[:, :, :, :, i, j] = v_pooled_k[:, :, :, :, coords_q_moved_opposite[0, i, j], coords_q_moved_opposite[1, i, j]]
+                    '''
+
                     coords_q_moving_all += [relative_matrix_move]
                     coords_q_moving_opposite_all += [relative_matrix_move_opposite]
                     mask_coord_list_all += [mask_coord_list]
@@ -847,34 +853,40 @@ class WindowAttention3d3(nn.Module):
                     attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] + relative_position_bias_to_windows.unsqueeze(0)
 
                 # >>>>>>>>>>>>>>>>>>  vanishing point relative position <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                # coords_q_moved = coords_q_moving_all[k].view(2, -1)
-                # coords_q_moved_opposite = coords_q_moving_opposite_all[k].view(2, -1)
-                # coords_q_moved_sum = list(coords_q_moved[0]*3 + coords_q_moved[1])
-                # coords_q_moved_opposite_sum = (coords_q_moved_opposite[0]*3 + coords_q_moved_opposite[1])
+                '''
+                coords_q_moved = coords_q_moving_all[k].view(2, -1)
+                coords_q_moved_opposite = coords_q_moving_opposite_all[k].view(2, -1)
+                coords_q_moved_sum = list(coords_q_moved[0]*3 + coords_q_moved[1])
+                coords_q_moved_opposite_sum = (coords_q_moved_opposite[0]*3 + coords_q_moved_opposite[1])
                 
-                # relative_position_bias_to_windows_moved_list = [self.relative_position_bias_table_to_windows_clips_vp[k][self.n_poses_mapping[int(i)]].unsqueeze(0) for i in coords_q_moved_sum]
-                # relative_position_bias_to_windows_moved_opposite_list = [
-                #     self.relative_position_bias_table_to_windows_clips_vp[k][self.n_poses_mapping[int(i)]].unsqueeze(0) for i in coords_q_moved_opposite_sum]
-                # relative_position_bias_to_windows_moved = torch.cat(relative_position_bias_to_windows_moved_list, dim=0)
-                # relative_position_bias_to_windows_moved_opposite = torch.cat(relative_position_bias_to_windows_moved_opposite_list, dim=0)
+                relative_position_bias_to_windows_moved_list = [self.relative_position_bias_table_to_windows_clips_vp[k][self.n_poses_mapping[int(i)]].unsqueeze(0) for i in coords_q_moved_sum]
+                relative_position_bias_to_windows_moved_opposite_list = [
+                    self.relative_position_bias_table_to_windows_clips_vp[k][self.n_poses_mapping[int(i)]].unsqueeze(0) for i in coords_q_moved_opposite_sum]
+                relative_position_bias_to_windows_moved = torch.cat(relative_position_bias_to_windows_moved_list, dim=0)
+                relative_position_bias_to_windows_moved_opposite = torch.cat(relative_position_bias_to_windows_moved_opposite_list, dim=0)
 
 
 
-                # attn[:, :, :window_area, (offset + (kernel_size_true)**2):(offset + 2*(kernel_size_true)**2)] = \
-                #     attn[:, :, :window_area, (offset + (kernel_size_true)**2):(offset + 2*(kernel_size_true)**2)] + relative_position_bias_to_windows_moved
-                # attn[:, :, :window_area, (offset + 2*(kernel_size_true)**2):(offset + 3*(kernel_size_true)**2)] = \
-                #     attn[:, :, :window_area, (offset + 2*(kernel_size_true)**2):(offset + 3*(kernel_size_true)**2)] + relative_position_bias_to_windows_moved_opposite
+
+                attn[:, :, :window_area, (offset + (kernel_size_true)**2):(offset + 2*(kernel_size_true)**2)] = \
+                    attn[:, :, :window_area, (offset + (kernel_size_true)**2):(offset + 2*(kernel_size_true)**2)] + relative_position_bias_to_windows_moved
+                attn[:, :, :window_area, (offset + 2*(kernel_size_true)**2):(offset + 3*(kernel_size_true)**2)] = \
+                    attn[:, :, :window_area, (offset + 2*(kernel_size_true)**2):(offset + 3*(kernel_size_true)**2)] + relative_position_bias_to_windows_moved_opposite
+                '''
 
                 if mask_all[k+1] is not None:
                     attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] = \
                         attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] + \
                             mask_all[k+1][:, :, None, None, :].repeat(attn.shape[0] // mask_all[k+1].shape[1], 1, 1, 1, 1).view(-1, 1, 1, mask_all[k+1].shape[-1])
-                    # vp_mask = mask_all[k + 1][:, mask_coord_list_all[k].type(torch.long), :][0, :, None, None, :]
-                    # vp_opposite_mask = mask_all[k + 1][:, mask_coord_list_opposite_all[k].type(torch.long), :][0, :, None, None, :]
-                    # attn[:, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] = \
-                    #     attn[:, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] + vp_mask
-                    # attn[:, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] = \
-                    #     attn[:, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] + vp_opposite_mask
+
+                    '''
+                    vp_mask = mask_all[k + 1][:, mask_coord_list_all[k].type(torch.long), :][0, :, None, None, :]
+                    vp_opposite_mask = mask_all[k + 1][:, mask_coord_list_opposite_all[k].type(torch.long), :][0, :, None, None, :]
+                    attn[:, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] = \
+                        attn[:, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] + vp_mask
+                    attn[:, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] = \
+                        attn[:, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] + vp_opposite_mask
+                    '''
 
                 offset += (kernel_size_true)**2*3
                 # >>>>>>>>>>>>>>>>>>  vanishing point relative position finish<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
