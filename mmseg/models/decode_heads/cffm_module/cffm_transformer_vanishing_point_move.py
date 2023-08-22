@@ -847,81 +847,37 @@ class WindowAttention3d3(nn.Module):
                     attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] + relative_position_bias_to_windows.unsqueeze(0)
 
                 # >>>>>>>>>>>>>>>>>>  vanishing point relative position <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                coords_q_moved = coords_q_moving_all[k].view(2, -1)
-                coords_q_moved_opposite = coords_q_moving_opposite_all[k].view(2, -1)
-                coords_q_moved_sum = list(coords_q_moved[0]*3 + coords_q_moved[1])
-                coords_q_moved_opposite_sum = (coords_q_moved_opposite[0]*3 + coords_q_moved_opposite[1])
-                # relative_position_bias_to_windows_moved_index = torch.zeros_like(relative_position_index_k).unsqueeze(
-                #     0).repeat(50, 1, 1)
-                # relative_position_bias_to_windows_moved_opposite_index = torch.zeros_like(relative_position_index_k).unsqueeze(
-                #     0).repeat(50, 1, 1)
-                # for m in range(coords_q_moved.shape[-1]):
-                #     relative_position_bias_to_windows_moved_index[m, :, :] = get_relative_position_index_vp(self.window_size, to_2tuple(kernel_size_true), block_move=coords_q_moved[:, m])
-                #     relative_position_bias_to_windows_moved_opposite_index[m, :, :] = get_relative_position_index_vp(self.window_size, to_2tuple(kernel_size_true), block_move=coords_q_moved_opposite[:, m])
+                # coords_q_moved = coords_q_moving_all[k].view(2, -1)
+                # coords_q_moved_opposite = coords_q_moving_opposite_all[k].view(2, -1)
+                # coords_q_moved_sum = list(coords_q_moved[0]*3 + coords_q_moved[1])
+                # coords_q_moved_opposite_sum = (coords_q_moved_opposite[0]*3 + coords_q_moved_opposite[1])
+                
+                # relative_position_bias_to_windows_moved_list = [self.relative_position_bias_table_to_windows_clips_vp[k][self.n_poses_mapping[int(i)]].unsqueeze(0) for i in coords_q_moved_sum]
+                # relative_position_bias_to_windows_moved_opposite_list = [
+                #     self.relative_position_bias_table_to_windows_clips_vp[k][self.n_poses_mapping[int(i)]].unsqueeze(0) for i in coords_q_moved_opposite_sum]
+                # relative_position_bias_to_windows_moved = torch.cat(relative_position_bias_to_windows_moved_list, dim=0)
+                # relative_position_bias_to_windows_moved_opposite = torch.cat(relative_position_bias_to_windows_moved_opposite_list, dim=0)
 
 
 
-                # relative_position_bias_to_windows_moved = self.relative_position_bias_table_to_windows_clips_vp[k][:, relative_position_bias_to_windows_moved_index.permute(1, 2, 0).flatten(1)].view(
-                # 8, self.window_size[0] * self.window_size[1], (kernel_size_true)**2, -1).permute(0, 3, 1, 2).permute(1, 0, 2, 3)
-                # relative_position_bias_to_windows_moved_opposite = self.relative_position_bias_table_to_windows_clips_vp[k][:, relative_position_bias_to_windows_moved_opposite_index.permute(1, 2, 0).flatten(1)].view(
-                # 8, self.window_size[0] * self.window_size[1], (kernel_size_true)**2, -1).permute(0, 3, 1, 2).permute(1, 0, 2, 3)
-
-                # relative_position_bias_to_windows_moved = self.relative_position_bias_table_to_windows_clips_vp[k]
-                relative_position_bias_to_windows_moved_list = [self.relative_position_bias_table_to_windows_clips_vp[k][self.n_poses_mapping[int(i)]].unsqueeze(0) for i in coords_q_moved_sum]
-                relative_position_bias_to_windows_moved_opposite_list = [
-                    self.relative_position_bias_table_to_windows_clips_vp[k][self.n_poses_mapping[int(i)]].unsqueeze(0) for i in coords_q_moved_opposite_sum]
-                relative_position_bias_to_windows_moved = torch.cat(relative_position_bias_to_windows_moved_list, dim=0)
-                relative_position_bias_to_windows_moved_opposite = torch.cat(relative_position_bias_to_windows_moved_opposite_list, dim=0)
-
-
-
-                attn[:, :, :window_area, (offset + (kernel_size_true)**2):(offset + 2*(kernel_size_true)**2)] = \
-                    attn[:, :, :window_area, (offset + (kernel_size_true)**2):(offset + 2*(kernel_size_true)**2)] + relative_position_bias_to_windows_moved
-                attn[:, :, :window_area, (offset + 2*(kernel_size_true)**2):(offset + 3*(kernel_size_true)**2)] = \
-                    attn[:, :, :window_area, (offset + 2*(kernel_size_true)**2):(offset + 3*(kernel_size_true)**2)] + relative_position_bias_to_windows_moved_opposite
+                # attn[:, :, :window_area, (offset + (kernel_size_true)**2):(offset + 2*(kernel_size_true)**2)] = \
+                #     attn[:, :, :window_area, (offset + (kernel_size_true)**2):(offset + 2*(kernel_size_true)**2)] + relative_position_bias_to_windows_moved
+                # attn[:, :, :window_area, (offset + 2*(kernel_size_true)**2):(offset + 3*(kernel_size_true)**2)] = \
+                #     attn[:, :, :window_area, (offset + 2*(kernel_size_true)**2):(offset + 3*(kernel_size_true)**2)] + relative_position_bias_to_windows_moved_opposite
 
                 if mask_all[k+1] is not None:
                     attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] = \
                         attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] + \
                             mask_all[k+1][:, :, None, None, :].repeat(attn.shape[0] // mask_all[k+1].shape[1], 1, 1, 1, 1).view(-1, 1, 1, mask_all[k+1].shape[-1])
-                    vp_mask = mask_all[k + 1][:, mask_coord_list_all[k].type(torch.long), :][0, :, None, None, :]
-                    vp_opposite_mask = mask_all[k + 1][:, mask_coord_list_opposite_all[k].type(torch.long), :][0, :, None, None, :]
-                    attn[:, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] = \
-                        attn[:, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] + vp_mask
-                    attn[:, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] = \
-                        attn[:, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] + vp_opposite_mask
+                    # vp_mask = mask_all[k + 1][:, mask_coord_list_all[k].type(torch.long), :][0, :, None, None, :]
+                    # vp_opposite_mask = mask_all[k + 1][:, mask_coord_list_opposite_all[k].type(torch.long), :][0, :, None, None, :]
+                    # attn[:, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] = \
+                    #     attn[:, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] + vp_mask
+                    # attn[:, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] = \
+                    #     attn[:, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] + vp_opposite_mask
 
                 offset += (kernel_size_true)**2*3
                 # >>>>>>>>>>>>>>>>>>  vanishing point relative position finish<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-                # print(offset)
-                # relative_position_index_k = getattr(self, 'relative_position_index_{}'.format(k))
-                # # relative_position_bias_to_windows = self.relative_position_bias_table_to_windows[k][:, relative_position_index_k.view(-1)].view(
-                # #     -1, self.window_size[0] * self.window_size[1], (self.focal_window+2**k-1)**2,
-                # # ) # nH, NWh*NWw,focal_region*focal_region
-                # # attn[:, :, :window_area, offset:(offset + (self.focal_window+2**k-1)**2)] = \
-                # #     attn[:, :, :window_area, offset:(offset + (self.focal_window+2**k-1)**2)] + relative_position_bias_to_windows.unsqueeze(0)
-                # relative_position_bias_to_windows = self.relative_position_bias_table_to_windows[k][:, relative_position_index_k[-window_area:, :].view(-1)].view(
-                #     -1, self.window_size[0] * self.window_size[1], num_clips*(self.focal_window+2**k-1)**2,
-                # ).contiguous() # nH, NWh*NWw, num_clips*focal_region*focal_region
-                # relative_position_bias_to_windows = relative_position_bias_to_windows.view(self.num_heads,
-                #     window_area,num_clips,-1).permute(0,1,3,2).contiguous().view(self.num_heads,window_area,-1)
-                # attn[:, :, :window_area, offset:(offset + num_clips*(self.focal_window+2**k-1)**2)] = \
-                #     attn[:, :, :window_area, offset:(offset + num_clips*(self.focal_window+2**k-1)**2)] + relative_position_bias_to_windows.unsqueeze(0)
-                # # add attentional mask
-                # if mask_all[k+1] is not None:
-                #     # print("inside the mask, be careful 1")
-                #     # attn[:, :, :window_area, offset:(offset + (self.focal_window+2**k-1)**2)] = \
-                #     #     attn[:, :, :window_area, offset:(offset + (self.focal_window+2**k-1)**2)] + \
-                #     #         mask_all[k+1][:, :, None, None, :].repeat(attn.shape[0] // mask_all[k+1].shape[1], 1, 1, 1, 1).view(-1, 1, 1, mask_all[k+1].shape[-1])
-                #     # print("here: ", mask_all[k+1].shape, mask_all[k+1][:, :, None, None, :].shape)
-
-                #     attn[:, :, :window_area, offset:(offset + num_clips*(self.focal_window+2**k-1)**2)] = \
-                #         attn[:, :, :window_area, offset:(offset + num_clips*(self.focal_window+2**k-1)**2)] + \
-                #             mask_all[k+1][:, :, None, None, :,None].repeat(attn.shape[0] // mask_all[k+1].shape[1], 1, 1, 1, 1, num_clips).view(-1, 1, 1, mask_all[k+1].shape[-1]*num_clips)
-                #     # print()
-                    
-                # offset += (self.focal_window+2**k-1)**2
         
         # print("mask_all[0]: ", mask_all[0])
         # exit()
