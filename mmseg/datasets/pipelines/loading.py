@@ -4,10 +4,14 @@ import os.path as osp
 
 import mmcv
 import numpy as np
+from .vanishing_point import hough_transform, find_intersections, sample_lines, find_vanishing_point
 
 from ..builder import PIPELINES
 
-def generate_template_depth_mask(image_size, level_configs = np.arange(0,2,0.002)):
+def generate_template_vanishing_mask(img, level_configs = np.arange(0,2,0.002)):
+
+
+    
     H2, W2 = image_size[0]*2, image_size[1]*2
     H, W = image_size[0], image_size[1]
     num_levels = len(level_configs) + 1

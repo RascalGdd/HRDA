@@ -660,28 +660,38 @@ class WindowAttention3d3(nn.Module):
                     delta_x_matrix = vp_coordinate[1] - coords_q[1]
                     relative_matrix_tan = delta_y_matrix/(delta_x_matrix + 0.0001)
 
+                    move_dir_90deg = ((relative_matrix_tan <= -2.414) + (relative_matrix_tan >= 2.414)).to(bool)
+                    relative_matrix_move[:, move_dir_90deg] += torch.tensor([1, 0]).unsqueeze(-1)
+                    move_dir_0deg = ((relative_matrix_tan <= 0.414) * (relative_matrix_tan >= -0.414)).to(bool)
+                    relative_matrix_move[:, move_dir_0deg] += torch.tensor([0, 1]).unsqueeze(-1)
+                    move_dir_45deg = ((relative_matrix_tan <= 2.414) * (relative_matrix_tan >= 0.414)).to(bool)
+                    relative_matrix_move[:, move_dir_45deg] += torch.tensor([1, 1]).unsqueeze(-1)
+                    move_dir_135deg = ((relative_matrix_tan <= -0.414) * (relative_matrix_tan >= -2.414)).to(bool)
+                    relative_matrix_move[:, move_dir_135deg] += torch.tensor([1, -1]).unsqueeze(-1)
 
-                    for i in range(matrix.shape[0]):
-                        for j in range(matrix.shape[1]):
-                            delta_y = vp_coordinate[0] - coords_q[0, i, j]
-                            delta_x = vp_coordinate[1] - coords_q[1, i, j]
-                            relative_matrix[0, i, j] = delta_x
-                            relative_matrix[1, i, j] = delta_y
-                            if delta_x == 0 and delta_y == 0:
-                                relative_matrix_tan[i, j] = -3.1415926
-                            else:
-                                relative_matrix_tan[i, j] = delta_y / (delta_x + 0.0001)
-                            if relative_matrix_tan[i, j] == -3.1415926:
-                                relative_matrix_move[:, i, j] = torch.tensor([0, 0])
-                            elif relative_matrix_tan[i, j] <= -2.414 or relative_matrix_tan[i, j] >= 2.414:
-                                relative_matrix_move[:, i, j] = torch.tensor([1, 0])
-                            elif relative_matrix_tan[i, j] <= 0.414 and relative_matrix_tan[i, j] >= -0.414:
-                                relative_matrix_move[:, i, j] = torch.tensor([0, 1])
-                            elif relative_matrix_tan[i, j] <= 2.414 and relative_matrix_tan[i, j] >= 0.414:
-                                relative_matrix_move[:, i, j] = torch.tensor([1, 1])
-                            elif relative_matrix_tan[i, j] <= -0.414 and relative_matrix_tan[i, j] >= -2.414:
-                                relative_matrix_move[:, i, j] = torch.tensor([1, -1])
-                            relative_matrix_move_opposite[:, i, j] = -relative_matrix_move[:, i, j]
+                    relative_matrix_move_opposite = - relative_matrix_move
+
+                    # for i in range(matrix.shape[0]):
+                    #     for j in range(matrix.shape[1]):
+                    #         delta_y = vp_coordinate[0] - coords_q[0, i, j]
+                    #         delta_x = vp_coordinate[1] - coords_q[1, i, j]
+                    #         relative_matrix[0, i, j] = delta_x
+                    #         relative_matrix[1, i, j] = delta_y
+                    #         if delta_x == 0 and delta_y == 0:
+                    #             relative_matrix_tan[i, j] = -3.1415926
+                    #         else:
+                    #             relative_matrix_tan[i, j] = delta_y / (delta_x + 0.0001)
+                    #         if relative_matrix_tan[i, j] == -3.1415926:
+                    #             relative_matrix_move[:, i, j] = torch.tensor([0, 0])
+                    #         elif relative_matrix_tan[i, j] <= -2.414 or relative_matrix_tan[i, j] >= 2.414:
+                    #             relative_matrix_move[:, i, j] = torch.tensor([1, 0])
+                    #         elif relative_matrix_tan[i, j] <= 0.414 and relative_matrix_tan[i, j] >= -0.414:
+                    #             relative_matrix_move[:, i, j] = torch.tensor([0, 1])
+                    #         elif relative_matrix_tan[i, j] <= 2.414 and relative_matrix_tan[i, j] >= 0.414:
+                    #             relative_matrix_move[:, i, j] = torch.tensor([1, 1])
+                    #         elif relative_matrix_tan[i, j] <= -0.414 and relative_matrix_tan[i, j] >= -2.414:
+                    #             relative_matrix_move[:, i, j] = torch.tensor([1, -1])
+                    #         relative_matrix_move_opposite[:, i, j] = -relative_matrix_move[:, i, j]
 
                     relative_matrix_move[0, 0][relative_matrix_move[0, 0, :] <= 0] = 0
                     relative_matrix_move[0, -1][relative_matrix_move[0, -1, :] >= 0] = 0
