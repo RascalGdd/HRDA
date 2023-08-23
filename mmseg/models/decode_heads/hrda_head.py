@@ -123,14 +123,14 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             else:
                 assert 0, "specify the backbone in CFFMHead, e.g., CFFMHead_b0"
 
-            if 'Fuse' in single_scale_head:
-                head_cfg['type'] = 'CFFMHeadFuse'
-
             if 'vpattn' in single_scale_head:
                 head_cfg['type'] = head_cfg['type'] + '_vpattn'
 
             if 'vpmove' in single_scale_head:
                 head_cfg['type'] = head_cfg['type'] + '_vpmove'
+
+            if 'vpfuse' in single_scale_head:
+                head_cfg['type'] = head_cfg['type'] + '_vpfuse'
 
             head_cfg["num_clips"] = self.num_clips
         elif single_scale_head == 'DAFormerHead':
