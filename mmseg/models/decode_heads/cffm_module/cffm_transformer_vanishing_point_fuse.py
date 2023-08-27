@@ -582,7 +582,7 @@ class WindowAttention3d3(nn.Module):
         self.focal_l_clips=focal_l_clips
         self.focal_kernel_clips=focal_kernel_clips
 
-    def forward(self, x_all, mask_all=None, batch_size=None, num_clips=None, vp_mask = vp_mask):
+    def forward(self, x_all, mask_all=None, batch_size=None, num_clips=None, vp_mask = None):
         """
         Args:
             x_all (list[Tensors]): input features at different granularity

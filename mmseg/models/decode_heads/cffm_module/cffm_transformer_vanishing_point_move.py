@@ -662,7 +662,6 @@ class WindowAttention3d3(nn.Module):
                     coords_w_q = torch.arange(matrix.shape[1])
                     coords_q = torch.stack(torch.meshgrid([coords_h_q, coords_w_q]))
 
-                    # assume vanishing point at the middle of the image TODO
                     if vp_mask is None:
                         vp_coordinate = [matrix.shape[0] // 2, matrix.shape[1] // 2]
                     else:
@@ -670,8 +669,6 @@ class WindowAttention3d3(nn.Module):
                                 vp_mask, n_windows_h = 3, n_windows_w = 3, window_size = 7,
                                 align_to_center = True, stride = None, extra_n_windows = 0
                         )
-
-
 
                     relative_matrix = torch.zeros_like(coords_q)
                     relative_matrix_tan = torch.zeros_like(matrix)
