@@ -7,7 +7,7 @@ import numpy as np
 from .vanishing_point import hough_transform, find_intersections, sample_lines, find_vanishing_point
 from ..builder import PIPELINES
 
-def find_vanishing_point(cv2_image, n_grid = 4, n_samples = 100):
+def find_vanishing_point_from_img(cv2_image, n_grid = 4, n_samples = 100):
     hough_lines = hough_transform(cv2_image)
     random_sample = sample_lines(hough_lines, n_samples)
     intersections = find_intersections(random_sample)
@@ -132,7 +132,7 @@ class LoadImageFromFile(object):
             to_rgb=False)
 
         # add vanishing_mask here
-        vanishing_point = find_vanishing_point(img, n_grid = 4, n_samples = 100)
+        vanishing_point = find_vanishing_point_from_img(img, n_grid = 4, n_samples = 100)
         image_size = (img.shape[0], img.shape[1])
         vanishing_mask = vanishing_point_to_depth_mask(vanishing_point, image_size)
         results["vanishing_mask"] = vanishing_mask.astype(np.float32)
