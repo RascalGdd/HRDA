@@ -16,7 +16,7 @@ from .uper_head import UPerHead
 from .cffm_head import CFFMHead_clips_resize1_8
 from .cffm_head_vpattn import CFFMHead_clips_resize1_8_vpattn
 from .cffm_head_vpmove import CFFMHead_clips_resize1_8_vpmove
-from .cffm_head_fuse import CFFMHeadFuse
+from .cffm_head_vpfuse import CFFMHead_clips_resize1_8_vpfuse
 from .trans_scale_video_head import TransHeadVideo
 from .daformer_head_video import DAFormerSerialHead
 
@@ -35,7 +35,7 @@ __all__ = [
     'CFFMHead_clips_resize1_8',
     'CFFMHead_clips_resize1_8_vpattn',
     'CFFMHead_clips_resize1_8_vpmove',
-    'CFFMHeadFuse',
+    'CFFMHead_clips_resize1_8_vpfuse',
     'TransHeadVideo',
     'DAFormerSerialHead'
 ]

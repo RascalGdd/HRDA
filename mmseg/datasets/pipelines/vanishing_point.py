@@ -9,17 +9,35 @@ import numpy as np
 # Perform edge detection
 def hough_transform(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # Convert image to grayscale
-    kernel = np.ones((15, 15), np.uint8)
+    kernel = np.ones((5, 5), np.uint8)
 
     opening = cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel)  # Open (erode, then dilate)
     edges = cv2.Canny(opening, 50, 150, apertureSize=3)  # Canny edge detection
-    lines = cv2.HoughLines(edges, 1, np.pi / 180, 200)  # Hough line detection
+
+    hight = edges.shape[0]
+    edges[:int(hight/3), :] *= 0
+    lines = cv2.HoughLines(edges, 1, np.pi / 180, 200)  # Hough line detection, orig thres is 200
 
     hough_lines = []
+    H, W = edges.shape
+    central_point = np.array((W/2, H/2))
+    max_dist = 160 * 2000
     # Lines are represented by rho, theta; converted to endpoint notation
     if lines is not None:
         for line in lines:
-            hough_lines.extend(list(starmap(endpoints, line)))
+            this_hough_line = list(starmap(endpoints, line))[0]
+            delta_y = this_hough_line[1][1] - this_hough_line[0][1]
+            delta_x = this_hough_line[1][0] - this_hough_line[0][0]
+            delta_y_2_central = this_hough_line[0][1] - central_point[1]
+            delta_x_2_central = this_hough_line[0][0] - central_point[0]
+            if delta_x != 0:
+                tan_angle = delta_y / delta_x
+                dist_to_central = np.abs(
+                    delta_x*delta_y_2_central - delta_y*delta_x_2_central
+                )
+
+                if (tan_angle > -5 or tan_angle < 25) and np.abs(tan_angle) > 0.2 and dist_to_central < max_dist:
+                    hough_lines.extend([this_hough_line])
 
     return hough_lines
 
@@ -84,18 +102,18 @@ def find_vanishing_point(img, grid_size, intersections):
     image_width = img.shape[1]
 
     # Grid dimensions
-    grid_rows = (image_height // grid_size) + 1
-    grid_columns = (image_width // grid_size) + 1
+    grid_rows = (image_height // grid_size)
+    grid_columns = (image_width // grid_size)
 
     # Current cell with most intersection points
     max_intersections = 0
-    best_cell = (0.0, 0.0)
+    best_cell = (image_width/2, image_height/2)
 
-    for i, j in itertools.product(range(grid_columns),range(grid_rows)):
+    for i, j in itertools.product(range(1, grid_columns-1),range(1, grid_rows-1)):
         cell_left = i * grid_size
         cell_right = (i + 1) * grid_size
-        cell_bottom = j * grid_size
-        cell_top = (j + 1) * grid_size
+        cell_bottom = j * grid_size + grid_size // 2
+        cell_top = (j + 1) * grid_size + grid_size // 2
         cv2.rectangle(img, (cell_left, cell_bottom), (cell_right, cell_top), (0, 0, 255), 10)
 
         current_intersections = 0  # Number of intersections in the current cell

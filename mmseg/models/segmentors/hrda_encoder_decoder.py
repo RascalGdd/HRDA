@@ -169,7 +169,13 @@ class HRDAEncoderDecoder(EncoderDecoder):
         """Encode images with backbone and decode into a semantic segmentation
         map of the same size as input."""
         # debug
-        img = img[:,:3,:,:]
+        if img.dim()==5:
+            batch_size, num_clips, _, h, w = img.size()
+            img = img.reshape(batch_size*num_clips, -1, h,w)
+            # the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+            img = img[:,:3,:,:]
+        else:
+            img = img[:,:3,:,:]
 
 
         mres_feats = []
@@ -196,7 +202,13 @@ class HRDAEncoderDecoder(EncoderDecoder):
 
     def _forward_train_features(self, img):
         # debug
-        img = img[:,:3,:,:]
+        if img.dim()==5:
+            batch_size, num_clips, _, h, w = img.size()
+            img = img.reshape(batch_size*num_clips, -1, h,w)
+            # the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+            img = img[:,:3,:,:]
+        else:
+            img = img[:,:3,:,:]
 
         mres_feats = []
         self.decode_head.debug_output = {}
@@ -247,7 +259,13 @@ class HRDAEncoderDecoder(EncoderDecoder):
             dict[str, Tensor]: a dictionary of loss components
         """
         # debug
-        img = img[:,:3,:,:]
+        if img.dim()==5:
+            batch_size, num_clips, _, h, w = img.size()
+            img = img.reshape(batch_size*num_clips, -1, h,w)
+            # the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+            img = img[:,:3,:,:]
+        else:
+            img = img[:,:3,:,:]
 
         losses = dict()
 
@@ -277,7 +295,13 @@ class HRDAEncoderDecoder(EncoderDecoder):
 
     def forward_with_aux(self, img, img_metas):
         # debug
-        img = img[:,:3,:,:]
+        if img.dim()==5:
+            batch_size, num_clips, _, h, w = img.size()
+            img = img.reshape(batch_size*num_clips, -1, h,w)
+            # the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+            img = img[:,:3,:,:]
+        else:
+            img = img[:,:3,:,:]
 
         assert not self.with_auxiliary_head
         mres_feats, _ = self._forward_train_features(img)
@@ -417,8 +441,10 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         if img.dim()==5:
             batch_size, num_clips, _, h, w = img.size()
             img = img.reshape(batch_size*num_clips, -1, h,w)
-            # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
-            img = img[:,:3,:,:]
+            # the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+        img = img[:,:3,:,:]
+        vp_mask = image[:,3:4,:,:]
+        img_metas["vp_mask"] = vp_mask
 
         mres_feats = []
         self.decode_head.debug_output = {}
@@ -496,12 +522,10 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         if img.dim()==5:
             batch_size, num_clips, _, h, w = img.size()
             img = img.reshape(batch_size*num_clips, -1, h,w)
-            # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
-            # save_image(img[-1,:3,:,:], 'debug/debug_img.png')
-            # save_image(img[-1,3:4,:,:], 'debug/debug_vanishing_mask.png')
-            # save_image(img[-1,4:5,:,:], 'debug/debug_pos_emb.png')
-
-            img = img[:,:3,:,:]
+            # the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+        img = img[:,:3,:,:]
+        vp_mask = image[:,3:4,:,:]
+        img_metas["vp_mask"] = vp_mask
 
         if len(gt_semantic_seg.shape)==5:
             gt_semantic_seg = gt_semantic_seg[:,-1]

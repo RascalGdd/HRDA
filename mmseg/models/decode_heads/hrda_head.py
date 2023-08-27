@@ -123,14 +123,14 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             else:
                 assert 0, "specify the backbone in CFFMHead, e.g., CFFMHead_b0"
 
-            if 'Fuse' in single_scale_head:
-                head_cfg['type'] = 'CFFMHeadFuse'
-
             if 'vpattn' in single_scale_head:
                 head_cfg['type'] = head_cfg['type'] + '_vpattn'
 
             if 'vpmove' in single_scale_head:
                 head_cfg['type'] = head_cfg['type'] + '_vpmove'
+
+            if 'vpfuse' in single_scale_head:
+                head_cfg['type'] = head_cfg['type'] + '_vpfuse'
 
             head_cfg["num_clips"] = self.num_clips
         elif single_scale_head == 'DAFormerHead':
@@ -242,7 +242,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             att = self.fixed_attention
         return att
 
-    def forward(self, inputs):
+    def forward(self, inputs, vp_mask):
         assert len(inputs) == 2
 
         batch_size = int(inputs[0][0].shape[0] / self.num_clips)
@@ -291,10 +291,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             crop_y1, crop_y2, crop_x1, crop_x2 = self.hr_crop_box
 
         if "CFFM" in self.head_type and "VideoAttn" in self.head_type:
-            lr_seg, _c2 = self.head(lr_inp, return_feat = True)
+            lr_seg, _c2 = self.head(lr_inp, vp_mask = vp_mask, return_feat = True)
             _c2 = _c2.detach()
         else:
-            lr_seg = self.head(lr_inp)
+            lr_seg = self.head(lr_inp, vp_mask = vp_mask)
             _c2 = None
 
         hr_seg = self.decode_hr(hr_inp, batch_size)
@@ -358,7 +358,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         """Forward function for training."""
         if self.enable_hr_crop:
             assert self.hr_crop_box is not None
-        seg_logits = self.forward(inputs)
+        vp_mask = img_metas['vp_mask']
+        seg_logits = self.forward(inputs, vp_mask)
         losses = self.losses(seg_logits, gt_semantic_seg, seg_weight)
 
         if self.debug_cnt % 100 == 0:
@@ -374,7 +375,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
     def forward_test(self, inputs, img_metas, test_cfg):
         """Forward function for testing, only ``fused_seg`` is used."""
-        return self.forward(inputs)[0]
+        vp_mask = img_metas['vp_mask']
+        return self.forward(inputs, vp_mask)[0]
 
     def losses(self, seg_logit, seg_label, seg_weight=None):
         """Compute losses."""

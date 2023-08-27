@@ -94,7 +94,7 @@ class CFFMHead_clips_resize1_8_vpmove(BaseDecodeHead_clips_flow):
 
         print(self.decoder_focal.blocks[0].focal_kernel_clips)
 
-    def forward(self, inputs, return_feat = False, no_cffm = False):
+    def forward(self, inputs, vp_mask = None, return_feat = False, no_cffm = False):
         # if self.training:
         #     assert self.num_clips==num_clips
         num_clips = self.num_clips
@@ -136,7 +136,7 @@ class CFFMHead_clips_resize1_8_vpmove(BaseDecodeHead_clips_flow):
 
         _c_further=_c.reshape(batch_size, num_clips, -1, h, w)
 
-        _c2=self.decoder_focal(_c_further)
+        _c2=self.decoder_focal(_c_further, vp_mask = vp_mask)
         assert _c_further.shape==_c2.shape
 
         _c_further2=torch.cat([_c_further[:,-1], _c2[:,-1]],1) #  B, 2*Embdim, H2, W2

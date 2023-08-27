@@ -5,19 +5,24 @@ import os.path as osp
 import mmcv
 import numpy as np
 from .vanishing_point import hough_transform, find_intersections, sample_lines, find_vanishing_point
-
 from ..builder import PIPELINES
 
-def generate_template_vanishing_mask(img, level_configs = np.arange(0,2,0.002)):
+def find_vanishing_point(cv2_image, n_grid = 4, n_samples = 100):
+    hough_lines = hough_transform(cv2_image)
+    random_sample = sample_lines(hough_lines, n_samples)
+    intersections = find_intersections(random_sample)
 
+    grid_size = min(cv2_image.shape[0], cv2_image.shape[1]) // n_grid
+    vanishing_point = find_vanishing_point(cv2_image, grid_size, intersections)
+    return (vanishing_point[1], vanishing_point[0]) # (H, W)
 
-    
+def generate_template_depth_mask(image_size, level_configs = np.arange(0,2,0.002)):
     H2, W2 = image_size[0]*2, image_size[1]*2
     H, W = image_size[0], image_size[1]
     num_levels = len(level_configs) + 1
     central_point = [H, W]
-    depth_mask_template = np.zeros((H2, W2), dtype=float)
-    print(depth_mask_template.shape)
+    depth_mask_template = torch.zeros((H2, W2)).to(float)
+    # print(depth_mask_template.shape)
     for level_scale in level_configs:
         x1_bias = int(H * level_scale / 2)
         x2_bias = int(W * level_scale / 2)
@@ -28,18 +33,14 @@ def generate_template_vanishing_mask(img, level_configs = np.arange(0,2,0.002)):
         depth_mask_template[x1_min:x1_max, x2_min:x2_max] += 1
     return depth_mask_template / num_levels
 
-def vanishing_point_to_depth_mask(vanishing_mode, vanishing_point, image_size, level_configs = np.arange(0,2,0.002)):
+# Debug: fixed vanishing point
+def vanishing_point_to_depth_mask(vanishing_point, image_size, level_configs = np.arange(0,2,0.002)):
 # vanishing_points: tuple, in pixel
 # image_size: tuple (H, W)
-    if not hasattr(vanishing_point_to_depth_mask, "template"):
-        vanishing_point_to_depth_mask.template = generate_template_depth_mask(image_size, level_configs) #(2H, 2W)
+    # if not hasattr(vanishing_point_to_depth_mask, "template"):
+    template = generate_template_depth_mask(image_size, level_configs) #(2H, 2W)
 
     H, W = image_size[0], image_size[1]
-    if not vanishing_point:
-        if vanishing_mode == "night":
-            vanishing_point = [int(H/2), int(W/2)]
-        elif vanishing_mode == "day":
-            vanishing_point = [int((2*H) / 3), int(W / 2)]
     x1, x2 = int(vanishing_point[0]), int(vanishing_point[1])
     bias1, bias2 = int(x1-H/2), int(x2-W/2)
     c1, c2 = H+bias1, W+bias2
@@ -47,7 +48,8 @@ def vanishing_point_to_depth_mask(vanishing_mode, vanishing_point, image_size, l
     x1_max = int(c1+H/2)
     x2_min = int(c2-W/2)
     x2_max = int(c2+W/2)
-    return vanishing_point_to_depth_mask.template[x1_min:x1_max, x2_min:x2_max]
+    return template[x1_min:x1_max, x2_min:x2_max]
+
 
 def get_global_pos_emb(image_size):
     if not hasattr(get_global_pos_emb, "image_size"):
@@ -130,13 +132,9 @@ class LoadImageFromFile(object):
             to_rgb=False)
 
         # add vanishing_mask here
-        if "night" in results['filename']:
-            vanishing_mode = "night"
-        else:
-            vanishing_mode = "day"
-
+        vanishing_point = find_vanishing_point(img, n_grid = 4, n_samples = 100)
         image_size = (img.shape[0], img.shape[1])
-        vanishing_mask = vanishing_point_to_depth_mask(vanishing_mode, None, image_size)
+        vanishing_mask = vanishing_point_to_depth_mask(vanishing_point, image_size)
         results["vanishing_mask"] = vanishing_mask.astype(np.float32)
         pos_emb = get_global_pos_emb(image_size)
         results["pos_emb"] = pos_emb.astype(np.float32)

@@ -470,6 +470,7 @@ class WindowAttention3d3(nn.Module):
         if pool_method != "none" and focal_level > 1:
             self.relative_position_bias_table_to_windows = nn.ParameterList()
             self.relative_position_bias_table_to_windows_clips = nn.ParameterList()
+            self.relative_position_bias_table_to_windows_clips_vp = nn.ParameterList()
             self.unfolds = nn.ModuleList()
             self.unfolds_clips = nn.ModuleList()
             self.unfolds_clips_vp = nn.ModuleList()
@@ -540,16 +541,31 @@ class WindowAttention3d3(nn.Module):
                 relative_position_bias_table_to_windows = nn.Parameter(
                     torch.zeros(
                         self.num_heads,
-                        (self.window_size[0] + kernel_size_true - 1) * (self.window_size[0] + kernel_size_true - 1), 
+                        (self.window_size[0] + kernel_size_true - 1) * (self.window_size[0] + kernel_size_true - 1),
                         )
                 )
+                n_poses = 9
+                self.n_poses_mapping = {-4: 0,
+                                        -3: 1,
+                                        -2: 2,
+                                        -1: 3,
+                                        0: 4,
+                                        1: 5,
+                                        2: 6,
+                                        3: 7,
+                                        4: 8}
+                relative_position_bias_table_to_windows_vp = nn.Parameter(
+                    torch.zeros(n_poses,
+                                self.num_heads,
+                                self.window_size[0] ** 2, kernel_size_true ** 2,
+                                )
+                )
                 trunc_normal_(relative_position_bias_table_to_windows, std=.02)
+                trunc_normal_(relative_position_bias_table_to_windows_vp, std=.02)
                 self.relative_position_bias_table_to_windows_clips.append(relative_position_bias_table_to_windows)
+                self.relative_position_bias_table_to_windows_clips_vp.append(relative_position_bias_table_to_windows_vp)
                 relative_position_index_k = get_relative_position_index(self.window_size, to_2tuple(kernel_size_true))
                 self.register_buffer("relative_position_index_clips_{}".format(k), relative_position_index_k)
-                # if (not focal_l_big_flag) and  focal_l_clips[k]>0:
-                #     mask = torch.zeros(kernel_size, kernel_size); mask[(2**focal_l_clips[k])-1:, (2**focal_l_clips[k])-1:] = 1
-                #     self.register_buffer("valid_ind_unfold_clips_{}".format(k), mask.flatten(0).nonzero().view(-1))
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
@@ -566,17 +582,25 @@ class WindowAttention3d3(nn.Module):
         self.focal_l_clips=focal_l_clips
         self.focal_kernel_clips=focal_kernel_clips
 
-    def forward(self, x_all, mask_all=None, batch_size=None, num_clips=None, vp_mask = None):
+    def forward(self, x_all, mask_all=None, batch_size=None, num_clips=None, vp_mask = vp_mask):
         """
         Args:
             x_all (list[Tensors]): input features at different granularity
             mask_all (list[Tensors/None]): masks for input features at different granularity
         """
         x = x_all[0][0] #
+        device = x.device
 
         B0, nH, nW, C = x.shape
         vanishing_map = F.interpolate(vp_mask, size=(nH, nW), mode='bilinear')
-        
+        #debug: this is only for debug, in real use, depth map is argument
+
+        # Bv, Cv, Hv, Wv = vanishing_map.shape
+        # assert Bv == 1, "vanishing map batch size should be 1"
+
+        # if Hv != nH or Wv != nW:
+        #     vanishing_map = F.interpolate(vanishing_map, size=(nH, nW), mode='bilinear')
+
         assert B0==batch_size
         qkv = self.qkv(x).reshape(B0, nH, nW, 3, C).permute(3, 0, 1, 2, 4).contiguous()
         q, k, v = qkv[0], qkv[1], qkv[2]  # B0, nH, nW, C
@@ -596,7 +620,7 @@ class WindowAttention3d3(nn.Module):
                 -1, self.window_size[0] * self.window_size[0], self.num_heads, C // self.num_heads
             ).transpose(1, 2).contiguous(), 
             (q, k, v)
-        ) # ((190+9, 8, 49, 32), (190+9, 8, 49, 32), (190+9, 8, 49, 32))
+        ) # ((190+196, 8, 49, 32), (190+196, 8, 49, 32), (190+196, 8, 49, 32))
 
         if self.expand_size > 0 and self.focal_level > 0:
             (k_tl, v_tl) = map(
@@ -713,6 +737,10 @@ class WindowAttention3d3(nn.Module):
                 k_pooled += [torch.cat([k_pooled_k, k_pooled_k_vp], dim=0)]
                 v_pooled += [torch.cat([v_pooled_k, v_pooled_k_vp], dim=0)] # [(190+9,8,25,32)]
 
+            coords_q_moving_all = []
+            coords_q_moving_opposite_all = []
+            mask_coord_list_all = []
+            mask_coord_list_opposite_all = []
             for k in range(len(self.focal_l_clips)):
                 focal_l_big_flag=False
                 if self.focal_l_clips[k]>self.window_size[0]:
@@ -754,32 +782,96 @@ class WindowAttention3d3(nn.Module):
                 qkv_pooled_vp = self.qkv(x_window_vp_pooled).reshape(B0, nWh_vp, nWw_vp, 3, C).permute(3, 0, 4, 1, 2).contiguous()
                 k_pooled_k_vp, v_pooled_k_vp = qkv_pooled_vp[1], qkv_pooled_vp[2]  # B0, C, nWh, nWw
 
+                #    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      vanishing point moving direction          <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 (k_pooled_k, v_pooled_k) = map(
-                    lambda t: self.unfolds_clips[k](t).view(
-                    B0, C, self.unfolds_clips[k].kernel_size[0], self.unfolds_clips[k].kernel_size[1], -1).permute(0, 4, 2, 3, 1).contiguous().\
-                    view(-1, self.unfolds_clips[k].kernel_size[0]*self.unfolds_clips[k].kernel_size[1], self.num_heads, C // self.num_heads).transpose(1, 2),
+                    lambda t: self.unfolds_clips[k](t).view(B0, C,
+                        self.unfolds_clips[k].kernel_size[0], self.unfolds_clips[k].kernel_size[1],
+                        x_all[0][1][0].shape[1], x_all[0][1][0].shape[2]),
+                    (k_pooled_k, v_pooled_k)
+                )
+
+                matrix = torch.zeros([k_pooled_k.shape[-2], k_pooled_k.shape[-1]]).type(torch.float32)
+                mask_coord_matrix = torch.arange((k_pooled_k.shape[-2] * k_pooled_k.shape[-1])).view(
+                    (k_pooled_k.shape[-2], k_pooled_k.shape[-1]))
+                k_matrix_moved = torch.zeros_like(k_pooled_k)
+                k_matrix_moved_opposite = torch.zeros_like(k_pooled_k)
+                v_matrix_moved = torch.zeros_like(v_pooled_k)
+                v_matrix_moved_opposite = torch.zeros_like(v_pooled_k)
+                coords_h_q = torch.arange(matrix.shape[0])
+                coords_w_q = torch.arange(matrix.shape[1])
+                coords_q = torch.stack(torch.meshgrid([coords_h_q, coords_w_q]))
+
+                # assume vanishing point at the middle of the image TODO
+                vp_coordinate = central_id
+
+                relative_matrix = torch.zeros_like(coords_q)
+                relative_matrix_tan = torch.zeros_like(matrix)
+                relative_matrix_move = torch.zeros_like(coords_q)
+                relative_matrix_move_opposite = torch.zeros_like(coords_q)
+                delta_y_matrix = vp_coordinate[0] - coords_q[0]
+                delta_x_matrix = vp_coordinate[1] - coords_q[1]
+                relative_matrix_tan = delta_y_matrix / (delta_x_matrix + 0.0001)
+
+                move_dir_90deg = ((relative_matrix_tan <= -2.414) + (relative_matrix_tan >= 2.414)).to(bool)
+                relative_matrix_move[:, move_dir_90deg] += torch.tensor([1, 0]).unsqueeze(-1)
+                move_dir_0deg = ((relative_matrix_tan <= 0.414) * (relative_matrix_tan >= -0.414)).to(bool)
+                relative_matrix_move[:, move_dir_0deg] += torch.tensor([0, 1]).unsqueeze(-1)
+                move_dir_45deg = ((relative_matrix_tan <= 2.414) * (relative_matrix_tan >= 0.414)).to(bool)
+                relative_matrix_move[:, move_dir_45deg] += torch.tensor([1, 1]).unsqueeze(-1)
+                move_dir_135deg = ((relative_matrix_tan <= -0.414) * (relative_matrix_tan >= -2.414)).to(bool)
+                relative_matrix_move[:, move_dir_135deg] += torch.tensor([1, -1]).unsqueeze(-1)
+
+                relative_matrix_move_opposite = - relative_matrix_move
+
+                relative_matrix_move[0, 0][relative_matrix_move[0, 0, :] <= 0] = 0
+                relative_matrix_move[0, -1][relative_matrix_move[0, -1, :] >= 0] = 0
+                relative_matrix_move[1, :, 0][relative_matrix_move[1, :, 0] <= 0] = 0
+                relative_matrix_move[1, :, -1][relative_matrix_move[1, :, -1] >= 0] = 0
+                # print(relative_matrix_tan)
+                relative_matrix_move_opposite[0, 0][relative_matrix_move_opposite[0, 0, :] <= 0] = 0
+                relative_matrix_move_opposite[0, -1][relative_matrix_move_opposite[0, -1, :] >= 0] = 0
+                relative_matrix_move_opposite[1, :, 0][relative_matrix_move_opposite[1, :, 0] <= 0] = 0
+                relative_matrix_move_opposite[1, :, -1][relative_matrix_move_opposite[1, :, -1] >= 0] = 0
+
+                coords_q_moved = coords_q + relative_matrix_move
+                coords_q_moved_opposite = coords_q + relative_matrix_move_opposite
+
+                mask_coord_list = (coords_q_moved[0] * coords_q_moved.shape[2] + coords_q_moved[1]).flatten().type(
+                    torch.long)
+                mask_coord_list_opposite = (
+                            coords_q_moved_opposite[0] * coords_q_moved_opposite.shape[2] + coords_q_moved_opposite[
+                        1]).flatten().type(
+                    torch.long)
+
+                (k_pooled_k, v_pooled_k) = map(
+                    lambda t: t.view(
+                        B0, C, self.unfolds_clips[k].kernel_size[0], self.unfolds_clips[k].kernel_size[1], -1).permute(
+                        0, 4, 2, 3, 1).contiguous(). \
+                        view(-1, self.unfolds_clips[k].kernel_size[0] * self.unfolds_clips[k].kernel_size[1],
+                             self.num_heads, C // self.num_heads).transpose(1, 2),
                     (k_pooled_k, v_pooled_k)  # (B0 x (nH*nW)) x nHeads x (unfold_wsize x unfold_wsize) x head_dim
                 )
+                k_matrix_moved = k_pooled_k[mask_coord_list]
+                k_matrix_moved_opposite = k_pooled_k[mask_coord_list_opposite]
+                v_matrix_moved = v_pooled_k[mask_coord_list]
+                v_matrix_moved_opposite = v_pooled_k[mask_coord_list_opposite]
+
+                coords_q_moving_all += [relative_matrix_move]
+                coords_q_moving_opposite_all += [relative_matrix_move_opposite]
+                mask_coord_list_all += [mask_coord_list]
+                mask_coord_list_opposite_all += [mask_coord_list_opposite]
+
+                k_pooled_k = torch.cat([k_pooled_k, k_matrix_moved, k_matrix_moved_opposite], dim=2)
+                v_pooled_k = torch.cat([v_pooled_k, v_matrix_moved, v_matrix_moved_opposite], dim=2)
+                #    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      vanishing point moving direction finish        <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
                 (k_pooled_k_vp, v_pooled_k_vp) = map(
                     lambda t: self.unfolds_clips_vp[k](t).view(
                     B0, C, self.unfolds_clips_vp[k].kernel_size[0], self.unfolds_clips_vp[k].kernel_size[1], -1).permute(0, 4, 2, 3, 1).contiguous().\
                     view(-1, self.unfolds_clips_vp[k].kernel_size[0]*self.unfolds_clips_vp[k].kernel_size[1], self.num_heads, C // self.num_heads).transpose(1, 2),
                     (k_pooled_k_vp, v_pooled_k_vp)  # (B0 x (nH*nW)) x nHeads x (unfold_wsize x unfold_wsize) x head_dim
                 )
-                n_windows_pre = int(math.sqrt(k_pooled_k_vp.shape[0]))
-                margin = int((n_windows_pre - self.vp_n_windows)/2)
-                heads, unfold_size, head_dim = k_pooled_k_vp.shape[1], k_pooled_k_vp.shape[2], k_pooled_k_vp.shape[3]
-                #
-                # (k_pooled_k_vp, v_pooled_k_vp) = map(
-                #     lambda t: t.view(n_windows_pre, n_windows_pre, heads, unfold_size, head_dim)[
-                #         margin:margin+self.vp_n_windows,  margin:margin+self.vp_n_windows
-                #     ].reshape(-1, heads, unfold_size, head_dim),
-                #     (k_pooled_k_vp, v_pooled_k_vp)
-                # )
-                #
-                # x_window_masks_vp = x_window_masks_vp.view(1, n_windows_pre, n_windows_pre, unfold_size)[
-                #     :, margin:margin+self.vp_n_windows,  margin:margin+self.vp_n_windows
-                # ].reshape(1, -1, unfold_size)
+                k_pooled_k_vp, v_pooled_k_vp = k_pooled_k_vp.repeat(1,1,3,1), v_pooled_k_vp.repeat(1,1,3,1)
 
                 mask_all[k+1] = torch.cat([mask_all[k+1], x_window_masks_vp], dim=1)
 
@@ -795,7 +887,7 @@ class WindowAttention3d3(nn.Module):
         N = k_all.shape[-2]
         q_windows = q_windows * self.scale
         attn = (q_windows @ k_all.transpose(-2, -1))  # B0*nW, nHead, window_size*window_size, focal_window_size*focal_window_size
-        # (190,8,49,289)
+        # attn = torch.zeros(254, 8, 49, 455)
 
         window_area = self.window_size[0] * self.window_size[1]    # 49
         # window_area_clips= num_clips*self.window_size[0] * self.window_size[1]       
@@ -806,11 +898,11 @@ class WindowAttention3d3(nn.Module):
             self.window_size[0] * self.window_size[1], self.window_size[0] * self.window_size[1], -1)  # Wh*Ww,Wh*Ww,nH
         relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # (8,49,49); nH, Wh*Ww, Wh*Ww
         # print(relative_position_bias.shape, attn.shape)
-        attn[:, :, :window_area, :window_area] = attn[:, :, :window_area, :window_area] + relative_position_bias.unsqueeze(0)
+        attn[:, :, :window_area, :window_area] += relative_position_bias.unsqueeze(0)
 
         # add relative position bias for patches inside a window
         if self.expand_size > 0 and self.focal_level > 0:
-            attn[:, :, :window_area, window_area:window_area_rolled] = attn[:, :, :window_area, window_area:window_area_rolled] + self.relative_position_bias_table_to_neighbors
+            attn[:, :, :window_area, window_area:window_area_rolled] += self.relative_position_bias_table_to_neighbors
 
         if self.pool_method != "none" and self.focal_level > 1:
             # add relative position bias for different windows in an image        
@@ -828,32 +920,53 @@ class WindowAttention3d3(nn.Module):
 
                 if mask_all[0][k+1] is not None:
                     # num_mask = mask_all[0][k + 1].shape[1]
-                    attn[:, :, :window_area, offset:(offset + (self.focal_window+2**k-1)**2)] = \
-                        attn[:, :, :window_area, offset:(offset + (self.focal_window+2**k-1)**2)] + \
-                            mask_all[0][k+1][:, :, None, None, :].repeat(attn.shape[0] // mask_all[0][k+1].shape[1], 1, 1, 1, 1).view(-1, 1, 1, mask_all[0][k+1].shape[-1])
+                    attn[:, :, :window_area, offset:(offset + (self.focal_window+2**k-1)**2)] += \
+                        mask_all[0][k+1][:, :, None, None, :].repeat(attn.shape[0] // mask_all[0][k+1].shape[1], 1, 1, 1, 1).view(-1, 1, 1, mask_all[0][k+1].shape[-1])
                     
                 offset += (self.focal_window+2**k-1)**2  
             # print(offset)
             for k in range(len(self.focal_l_clips)):
                 focal_l_big_flag=False
-                if self.focal_l_clips[k]>self.window_size[0]:
-                    kernel_size=self.focal_kernel_clips[k]
-                    kernel_size_true=kernel_size
-                else:
-                    kernel_size = self.focal_kernel_clips[k]
-                    kernel_size_true=kernel_size
+                kernel_size = self.focal_kernel_clips[k]
+                kernel_size_true = kernel_size
+
                 relative_position_index_k = getattr(self, 'relative_position_index_clips_{}'.format(k))
                 relative_position_bias_to_windows = self.relative_position_bias_table_to_windows_clips[k][:, relative_position_index_k.view(-1)].view(
                     -1, self.window_size[0] * self.window_size[1], (kernel_size_true)**2,
                 )
-                attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] = \
-                    attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] + relative_position_bias_to_windows.unsqueeze(0)
+                attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] += relative_position_bias_to_windows.unsqueeze(0)
+
+                # >>>>>>>>>>>>>>>>>>  vanishing point relative position <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+                coords_q_moved = coords_q_moving_all[k].view(2, -1)
+                coords_q_moved_opposite = coords_q_moving_opposite_all[k].view(2, -1)
+                coords_q_moved_sum = coords_q_moved[0]*3 + coords_q_moved[1]
+                coords_q_moved_opposite_sum = coords_q_moved_opposite[0]*3 + coords_q_moved_opposite[1]
+                coords_q_moved_sum = torch.cat([coords_q_moved_sum, torch.zeros(self.vp_roi_n_windows)])
+                coords_q_moved_opposite_sum = torch.cat([coords_q_moved_opposite_sum, torch.zeros(self.vp_roi_n_windows)])
+
+                coords_q_moved_idx = coords_q_moved_sum + 4
+                coords_q_moved_opposite_idx = coords_q_moved_opposite_sum + 4
+
+                relative_position_bias_to_windows_moved = torch.index_select(
+                    self.relative_position_bias_table_to_windows_clips_vp[k], 0, coords_q_moved_idx.to(int).to(device)
+                )
+                relative_position_bias_to_windows_moved_opposite = torch.index_select(
+                    self.relative_position_bias_table_to_windows_clips_vp[k], 0, coords_q_moved_opposite_idx.to(int).to(device)
+                )
+
+                attn[:, :, :window_area, (offset + (kernel_size_true)**2):(offset + 2*(kernel_size_true)**2)] += relative_position_bias_to_windows_moved
+                attn[:, :, :window_area, (offset + 2*(kernel_size_true)**2):(offset + 3*(kernel_size_true)**2)] += relative_position_bias_to_windows_moved_opposite
+
                 if mask_all[k+1] is not None:
-                    # num_mask = mask_all[k + 1].shape[1]
-                    attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] = \
-                        attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] + \
-                            mask_all[k+1][:, :, None, None, :].repeat(attn.shape[0] // mask_all[k+1].shape[1], 1, 1, 1, 1).view(-1, 1, 1, mask_all[k+1].shape[-1]) 
-                offset += (kernel_size_true)**2
+                    attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] += \
+                        mask_all[k+1][:, :, None, None, :].repeat(attn.shape[0] // mask_all[k+1].shape[1], 1, 1, 1, 1).view(-1, 1, 1, mask_all[k+1].shape[-1])
+                    vp_mask = mask_all[k + 1][:, mask_coord_list_all[k].type(torch.long), :][0, :, None, None, :]
+                    vp_opposite_mask = mask_all[k + 1][:, mask_coord_list_opposite_all[k].type(torch.long), :][0, :, None, None, :]
+                    attn[:-self.vp_roi_n_windows, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] += vp_mask
+                    attn[:-self.vp_roi_n_windows, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] += vp_opposite_mask
+
+                offset += (kernel_size_true)**2*3
+                # >>>>>>>>>>>>>>>>>>  vanishing point relative position finish<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
         if mask_all[0][0] is not None:
             print("inside the mask, be careful 0")
@@ -882,14 +995,6 @@ class WindowAttention3d3(nn.Module):
         )
         window_ids_vp = window_ids_vp_grid_h * nWw + window_ids_vp_grid_w
         window_ids_vp = torch.flatten(window_ids_vp)
-
-        # grid_h, grid_w = torch.meshgrid(
-        #     torch.arange(nH/self.window_size[0]), torch.arange(nW/self.window_size[0]), indexing='ij'
-        # )
-        # window_id_grid = torch.cat([grid_h.unsqueeze(-1), grid_w.unsqueeze(-1)], dim = -1).view(-1,2) # (nH*nW,2)
-        # central_window_id = torch.tensor(central_window_id).long().unsqueeze(0) # (1,2)
-        # diff_id = ((window_id_grid - central_window_id)**2).sum(dim=1) # (nH*nW,)
-        # _, topk_window_ids = torch.topk(diff_id, self.vp_n_winows, dim=0, largest=False)
 
         x_vp = x[-self.vp_roi_n_windows:, :, :, :].view(self.vp_roi_n_windows*window_area, -1, self.dim).contiguous() # (64,8,49,32) -> (64*49, 1, 256)
         x_vp_nearest = x[window_ids_vp, :, :, :].view(self.vp_roi_n_windows_ori*window_area, -1, self.dim).contiguous() # (16,8,49,32) -> (16*49, 1, 256)
@@ -1072,7 +1177,7 @@ class CffmTransformerBlock3d3(nn.Module):
         self.vp_stride_clips = [3, 2, 1]
 
 
-    def forward(self, x, vp_mask = None):
+    def forward(self, x):
 
         H0, W0 = self.input_resolution
         # B, L, C = x.shape
@@ -1236,7 +1341,7 @@ class CffmTransformerBlock3d3(nn.Module):
                 # pooling_index=pooling_index+1
         # exit()
         
-        attn_windows = self.attn(x_windows_all_clips, mask_all=x_window_masks_all_clips, batch_size=B0, num_clips=D0, vp_mask = vp_mask)  # nW*B0, window_size*window_size, C
+        attn_windows = self.attn(x_windows_all_clips, mask_all=x_window_masks_all_clips, batch_size=B0, num_clips=D0)  # nW*B0, window_size*window_size, C
 
         attn_windows = attn_windows[:, :self.window_size ** 2] # (190, 49, 245)
         
