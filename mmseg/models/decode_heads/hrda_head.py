@@ -358,7 +358,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         """Forward function for training."""
         if self.enable_hr_crop:
             assert self.hr_crop_box is not None
-        vp_mask = img_metas['vp_mask']
+        vp_mask = img_metas[-1]["vp_mask"]
         seg_logits = self.forward(inputs, vp_mask)
         losses = self.losses(seg_logits, gt_semantic_seg, seg_weight)
 
@@ -375,7 +375,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
     def forward_test(self, inputs, img_metas, test_cfg):
         """Forward function for testing, only ``fused_seg`` is used."""
-        vp_mask = img_metas['vp_mask']
+        vp_mask = img_metas[-1]["vp_mask"]
         return self.forward(inputs, vp_mask)[0]
 
     def losses(self, seg_logit, seg_label, seg_weight=None):
