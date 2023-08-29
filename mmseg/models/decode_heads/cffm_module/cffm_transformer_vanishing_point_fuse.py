@@ -1239,7 +1239,7 @@ class CffmTransformerBlock3d3(nn.Module):
 
                 vp_n_windows = self.vp_n_windows
 
-                print("vp mask shape", vp_mask.shape)
+                # print("vp mask shape", vp_mask.shape)
                 vanishing_map = F.interpolate(vp_mask, size=(H_pool, W_pool), mode='bilinear')
 
                 central_id, [hmin, hmax, wmin, wmax] = get_vanishing_point(
