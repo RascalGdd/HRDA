@@ -1344,7 +1344,7 @@ class CffmTransformerBlock3d3(nn.Module):
                 # pooling_index=pooling_index+1
         # exit()
         
-        attn_windows = self.attn(x_windows_all_clips, mask_all=x_window_masks_all_clips, batch_size=B0, num_clips=D0)  # nW*B0, window_size*window_size, C
+        attn_windows = self.attn(x_windows_all_clips, mask_all=x_window_masks_all_clips, batch_size=B0, num_clips=D0, vp_mask = vp_mask)  # nW*B0, window_size*window_size, C
 
         attn_windows = attn_windows[:, :self.window_size ** 2] # (190, 49, 245)
         
