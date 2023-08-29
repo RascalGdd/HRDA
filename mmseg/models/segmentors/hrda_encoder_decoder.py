@@ -442,7 +442,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             batch_size, num_clips, _, h, w = img.size()
             img = img.reshape(batch_size*num_clips, -1, h,w)
             # the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
-        vp_mask = img[:,3:4,:,:].to("cpu")
+        vp_mask = img[-1:,3:4,:,:].to("cpu")
         img = img[:,:3,:,:]
         img_metas[-1]["vp_mask"] = vp_mask
 
@@ -523,7 +523,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             batch_size, num_clips, _, h, w = img.size()
             img = img.reshape(batch_size*num_clips, -1, h,w)
             # the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
-        vp_mask = img[:,3:4,:,:].to("cpu")
+        vp_mask = img[-1:,3:4,:,:].to("cpu")
         img = img[:,:3,:,:]
         img_metas[-1]["vp_mask"] = vp_mask
 
