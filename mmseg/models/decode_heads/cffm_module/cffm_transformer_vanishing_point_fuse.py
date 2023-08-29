@@ -958,10 +958,10 @@ class WindowAttention3d3(nn.Module):
                 if mask_all[k+1] is not None:
                     attn[:, :, :window_area, offset:(offset + (kernel_size_true)**2)] += \
                         mask_all[k+1][:, :, None, None, :].repeat(attn.shape[0] // mask_all[k+1].shape[1], 1, 1, 1, 1).view(-1, 1, 1, mask_all[k+1].shape[-1])
-                    vp_mask = mask_all[k + 1][:, mask_coord_list_all[k].type(torch.long), :][0, :, None, None, :]
-                    vp_opposite_mask = mask_all[k + 1][:, mask_coord_list_opposite_all[k].type(torch.long), :][0, :, None, None, :]
-                    attn[:-self.vp_roi_n_windows, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] += vp_mask
-                    attn[:-self.vp_roi_n_windows, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] += vp_opposite_mask
+                    vp_bias_mask = mask_all[k + 1][:, mask_coord_list_all[k].type(torch.long), :][0, :, None, None, :]
+                    vp_opposite_bias_mask = mask_all[k + 1][:, mask_coord_list_opposite_all[k].type(torch.long), :][0, :, None, None, :]
+                    attn[:-self.vp_roi_n_windows, :, :window_area, (offset + (kernel_size_true) ** 2):(offset + 2*(kernel_size_true) ** 2)] += vp_bias_mask
+                    attn[:-self.vp_roi_n_windows, :, :window_area, (offset + 2*(kernel_size_true) ** 2):(offset + 3*(kernel_size_true) ** 2)] += vp_opposite_bias_mask
 
                 offset += (kernel_size_true)**2*3
                 # >>>>>>>>>>>>>>>>>>  vanishing point relative position finish<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

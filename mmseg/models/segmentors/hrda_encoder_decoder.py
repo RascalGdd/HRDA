@@ -443,16 +443,16 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             img = img.reshape(batch_size*num_clips, -1, h,w)
             # the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
         vp_mask = img[-1:,3:4,:,:].to("cpu")
-        img = img[:,:3,:,:]
+        img_content = img[:,:3,:,:]
         img_metas[-1]["vp_mask"] = vp_mask
 
         mres_feats = []
         self.decode_head.debug_output = {}
         for i, s in enumerate(self.scales):
             if s == 1 and self.blur_hr_crop:
-                scaled_img = self.blur_downup(img)
+                scaled_img = self.blur_downup(img_content)
             else:
-                scaled_img = self.resize(img, s)
+                scaled_img = self.resize(img_content, s)
             if i >= 1 and self.hr_slide_inference:
                 mres_feats.append(self.extract_slide_feat(scaled_img))
             else:
@@ -463,7 +463,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         out = self._decode_head_forward_test(mres_feats, img_metas)
         out = resize(
             input=out,
-            size=img.shape[2:],
+            size=img_content.shape[2:],
             mode='bilinear',
             align_corners=self.align_corners)
         return out
@@ -524,7 +524,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             img = img.reshape(batch_size*num_clips, -1, h,w)
             # the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
         vp_mask = img[-1:,3:4,:,:].to("cpu")
-        img = img[:,:3,:,:]
+        img_content = img[:,:3,:,:]
         img_metas[-1]["vp_mask"] = vp_mask
 
         if len(gt_semantic_seg.shape)==5:
@@ -532,7 +532,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
 
         losses = dict()
 
-        mres_feats, prob_vis = self._forward_train_features(img)
+        mres_feats, prob_vis = self._forward_train_features(img_content)
         for i, s in enumerate(self.scales):
             if return_feat and self.feature_scale in \
                     self.feature_scale_all_strs:
