@@ -593,13 +593,8 @@ class WindowAttention3d3(nn.Module):
 
         B0, nH, nW, C = x.shape
         vanishing_map = F.interpolate(vp_mask, size=(nH, nW), mode='bilinear')
-        #debug: this is only for debug, in real use, depth map is argument
 
-        # Bv, Cv, Hv, Wv = vanishing_map.shape
-        # assert Bv == 1, "vanishing map batch size should be 1"
-
-        # if Hv != nH or Wv != nW:
-        #     vanishing_map = F.interpolate(vanishing_map, size=(nH, nW), mode='bilinear')
+        print("vanishing_map shape", vanishing_map.shape)
 
         assert B0==batch_size
         qkv = self.qkv(x).reshape(B0, nH, nW, 3, C).permute(3, 0, 1, 2, 4).contiguous()
@@ -609,6 +604,9 @@ class WindowAttention3d3(nn.Module):
             vanishing_map, self.vp_n_windows, self.vp_n_windows, self.window_size[0], stride=self.vp_stride
         )
         vp_roi = [hmin, hmax, wmin, wmax]
+
+        print("central id", central_id)
+        print("vp_roi", vp_roi)
 
         central_window_id = [torch.round(central_id[0] / self.window_size[0]), torch.round(central_id[1] / self.window_size[1])]
 
