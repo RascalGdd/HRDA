@@ -594,8 +594,6 @@ class WindowAttention3d3(nn.Module):
         B0, nH, nW, C = x.shape
         vanishing_map = F.interpolate(vp_mask, size=(nH, nW), mode='bilinear')
 
-        print("vanishing_map shape", vanishing_map.shape)
-
         assert B0==batch_size
         qkv = self.qkv(x).reshape(B0, nH, nW, 3, C).permute(3, 0, 1, 2, 4).contiguous()
         q, k, v = qkv[0], qkv[1], qkv[2]  # B0, nH, nW, C
@@ -604,10 +602,6 @@ class WindowAttention3d3(nn.Module):
             vanishing_map, self.vp_n_windows, self.vp_n_windows, self.window_size[0], stride=self.vp_stride
         )
         vp_roi = [hmin, hmax, wmin, wmax]
-
-        print("central id", central_id)
-        print("vp_roi", vp_roi)
-
         central_window_id = [torch.round(central_id[0] / self.window_size[0]), torch.round(central_id[1] / self.window_size[1])]
 
         # partition q map
@@ -1185,7 +1179,7 @@ class CffmTransformerBlock3d3(nn.Module):
         x=x.reshape(B0*D0,H0,W0,C).reshape(B0*D0,H0*W0,C) # (4, 8192, 256)
         
         if vp_mask is None:
-            vp_mask = vanishing_point_to_depth_mask((H0,W0))
+            vp_mask = vanishing_point_to_depth_mask((H0,W0)).unsqueeze(0).unsqueeze(0)
 
         x = self.norm1(x)
         x = x.reshape(B0*D0, H0, W0, C) # (4, 64, 128, 256)
@@ -1245,7 +1239,9 @@ class CffmTransformerBlock3d3(nn.Module):
 
                 vp_n_windows = self.vp_n_windows
 
+                print("vp mask shape", vp_mask.shape)
                 vanishing_map = F.interpolate(vp_mask, size=(H_pool, W_pool), mode='bilinear')
+
                 central_id, [hmin, hmax, wmin, wmax] = get_vanishing_point(
                     vanishing_map, vp_n_windows, vp_n_windows, window_size_glo,
                     stride = self.vp_stride, extra_n_windows = self.vp_buffer
