@@ -1177,7 +1177,7 @@ class CffmTransformerBlock3d3(nn.Module):
         self.vp_stride_clips = [3, 2, 1]
 
 
-    def forward(self, x):
+    def forward(self, x, vp_mask = None):
 
         H0, W0 = self.input_resolution
         # B, L, C = x.shape
@@ -1186,6 +1186,9 @@ class CffmTransformerBlock3d3(nn.Module):
         # assert L == H * W, "input feature has wrong size"
         x=x.reshape(B0*D0,H0,W0,C).reshape(B0*D0,H0*W0,C) # (4, 8192, 256)
         
+        if vp_mask is None:
+            vp_mask = vanishing_point_to_depth_mask((H0,W0))
+
         x = self.norm1(x)
         x = x.reshape(B0*D0, H0, W0, C) # (4, 64, 128, 256)
         # print("here")
