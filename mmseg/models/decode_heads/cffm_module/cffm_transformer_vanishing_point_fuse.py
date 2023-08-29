@@ -135,21 +135,21 @@ def get_vanishing_point(
     wmin = central_id[1] - w_len_top
     wmax = central_id[1] + w_len_dwn
     if hmin < 0:
-        hmin = 0
         hmax += - hmin
         central_id[0] += - hmin
+        hmin += - hmin
     if hmax > H:
-        hmax = H
         hmin -= hmax - H
         central_id[0] -= hmax - H
+        hmax = H
     if wmin < 0:
-        wmin = 0
         wmax += - wmin
         central_id[1] += - wmin
+        wmin += - wmin
     if wmax > W:
-        wmax = W
         wmin -= wmax - W
         central_id[1] -= wmax - W
+        wmax = W
 
     return central_id, [hmin,hmax,wmin,wmax]
 
