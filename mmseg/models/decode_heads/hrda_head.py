@@ -194,7 +194,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             dev = features[0][0].device
 
             # debug
-            print("decode hr input (testing)", features[0][0].shape)
+            # print("decode hr input (testing)", features[0][0].shape)
 
             h_img, w_img = 0, 0
             for i in range(len(boxes)):
@@ -288,7 +288,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                     lr_sc_att_inp[i] = lr_sc_att_inp[i].detach()
 
         # debug
-        print("lr_input shape", lr_inp[0].shape)
+        # print("lr_input shape", lr_inp[0].shape)
 
         hr_scale = self.scales[1]
         lr_scale = self.scales[0]
