@@ -192,6 +192,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             features = inp['features']  # level, crop * bs, c, h, w
             boxes = inp['boxes']
             dev = features[0][0].device
+
+            # debug
+            print("decode hr input (testing)", features[0][0].shape)
+
             h_img, w_img = 0, 0
             for i in range(len(boxes)):
                 boxes[i] = scale_box(boxes[i], self.os)
@@ -222,6 +226,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             preds = preds / count_mat
             return preds
         else:
+            # debug
+            print("decode hr input (training)", inp[0].shape)
             return self.head(inp)
 
     def get_scale_attention(self, inp, feat_video = None, lr_out = None, hr_out = None):
@@ -280,6 +286,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             if "detach" in self.head_type:
                 for i in range(len(lr_sc_att_inp)):
                     lr_sc_att_inp[i] = lr_sc_att_inp[i].detach()
+
+        # debug
+        print("lr_input shape", lr_inp[0].shape)
 
         hr_scale = self.scales[1]
         lr_scale = self.scales[0]
