@@ -227,7 +227,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             return preds
         else:
             # debug
-            print("decode hr input (training)", inp[0].shape)
+            # print("decode hr input (training)", inp[0].shape)
             return self.head(inp)
 
     def get_scale_attention(self, inp, feat_video = None, lr_out = None, hr_out = None):
