@@ -1,6 +1,6 @@
 _base_ = [
     '../../_base_/models/daformer_conv1_mitb3.py',
-    '../../_base_/datasets/acdc_512x512_repeat_clips.py',
+    '../../_base_/datasets/acdc_1024x1024_repeat_clips.py',
     '../../_base_/default_runtime.py',
     '../../_base_/schedules/schedule_160k_adamw.py'
 ]
