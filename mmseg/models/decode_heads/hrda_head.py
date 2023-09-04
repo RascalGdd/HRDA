@@ -16,6 +16,7 @@ from ..segmentors.hrda_encoder_decoder import crop
 from .decode_head import BaseDecodeHead, BaseDecodeHead_clips_flow
 
 from torchvision.utils import save_image
+import cv2
 
 def scale_box(box, scale):
     y1, y2, x1, x2 = box
@@ -329,11 +330,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
         # debug: save attn weight
         for i_class in range(int(att.shape[1])):
-            this_map = att[0, i_class:i_class+1, :, :].repeat(3,1,1)
-            this_map[0] = this_map[0] * 64/255.0
-            this_map[1] = this_map[1] * 128/255.0
-            this_map[2] = this_map[2] * 192/255.0
-            save_image(this_map, f"debug/attn_weights_{i_class}.png")
+            this_map = (att[0, i_class:i_class+1, :, :].permute(1,2,0).cpu().numpy() * 255).astype(np.uint8)
+            this_map = cv2.cvtColor(this_map,cv2.COLOR_GRAY2RGB)
+            cv2.imwrite(f"debug/attn_weights_{i_class}.png", this_map)
+            # save_image(this_map, f"debug/attn_weights_{i_class}.png")
 
         if has_crop:
             hr_seg_inserted = torch.zeros_like(up_lr_seg)
