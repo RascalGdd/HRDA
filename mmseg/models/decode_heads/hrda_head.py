@@ -16,6 +16,7 @@ from ..segmentors.hrda_encoder_decoder import crop
 from .decode_head import BaseDecodeHead, BaseDecodeHead_clips_flow
 
 from torchvision.utils import save_image
+import numpy as np
 import cv2
 
 def scale_box(box, scale):
