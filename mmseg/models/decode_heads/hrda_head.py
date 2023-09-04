@@ -333,7 +333,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             this_map[0] = this_map[0] * 64/255.0
             this_map[1] = this_map[1] * 128/255.0
             this_map[2] = this_map[2] * 192/255.0
-            save_image(att[0, i_class:i_class+1, :, :].repeat(3,1,1), f"debug/attn_weights_{i_class}.png")
+            save_image(this_map, f"debug/attn_weights_{i_class}.png")
 
         if has_crop:
             hr_seg_inserted = torch.zeros_like(up_lr_seg)
