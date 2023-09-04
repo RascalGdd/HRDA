@@ -171,9 +171,6 @@ class HRDAEncoderDecoder(EncoderDecoder):
         # debug
         img = img[:,:3,:,:]
 
-        # debug: save attn weight
-        save_image(img[-1, :, :, :], f"debug/orig_image.png")
-
         mres_feats = []
         self.decode_head.debug_output = {}
         for i, s in enumerate(self.scales):
@@ -422,6 +419,9 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
             img = img[:,:3,:,:]
 
+        # debug: save attn weight
+        save_image(img[-1, :, :, :], f"debug/orig_image.png")
+
         mres_feats = []
         self.decode_head.debug_output = {}
         for i, s in enumerate(self.scales):
@@ -442,6 +442,10 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             size=img.shape[2:],
             mode='bilinear',
             align_corners=self.align_corners)
+
+        # debug
+        assert 0
+
         return out
 
     def _forward_train_features(self, img):
