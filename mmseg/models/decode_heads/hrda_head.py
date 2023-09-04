@@ -16,6 +16,8 @@ from ..segmentors.hrda_encoder_decoder import crop
 from .decode_head import BaseDecodeHead, BaseDecodeHead_clips_flow
 
 from torchvision.utils import save_image
+import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 import cv2
 
@@ -331,9 +333,13 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
         # debug: save attn weight
         for i_class in range(int(att.shape[1])):
-            this_map = (att[0, i_class:i_class+1, :, :].permute(1,2,0).detach().cpu().numpy() * 255).astype(np.uint8)
-            this_map = cv2.cvtColor(this_map,cv2.COLOR_GRAY2RGB)
-            cv2.imwrite(f"debug/attn_weights_{i_class}.png", this_map)
+            # this_map = (att[0, i_class:i_class+1, :, :].detach().cpu().numpy() * 255).astype(np.uint8)
+            this_map = att[0, i_class:i_class+1, :, :].detach().cpu().numpy()
+            plt.imshow(norm_cm_img)
+            plt.savefig(f"debug/attn_weights_{i_class}.png", dpi = SAVEFIG_DPI)
+
+            # this_map = cv2.cvtColor(this_map,cv2.COLOR_GRAY2RGB)
+            # cv2.imwrite(f"debug/attn_weights_{i_class}.png", this_map)
             # save_image(this_map, f"debug/attn_weights_{i_class}.png")
 
         if has_crop:
