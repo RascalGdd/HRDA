@@ -171,6 +171,8 @@ class HRDAEncoderDecoder(EncoderDecoder):
         # debug
         img = img[:,:3,:,:]
 
+        # debug: save attn weight
+        save_image(img[-1, :, :, :], f"debug/orig_image.png")
 
         mres_feats = []
         self.decode_head.debug_output = {}
