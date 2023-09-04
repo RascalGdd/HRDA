@@ -327,6 +327,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         if torch.is_tensor(att):
             att = self.resize(att, hr_scale / lr_scale)
 
+        # debug: save attn weight
+        # for i_class in range(int(att.shape[1])):
+        #     save_image(att[0, i_class:i_class+1, :, :], f"debug/attn_weights_{i_class}.png")
+
         if has_crop:
             hr_seg_inserted = torch.zeros_like(up_lr_seg)
             slc = self.hr_crop_slice(self.os)
