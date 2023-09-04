@@ -334,7 +334,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         # debug: save attn weight
         for i_class in range(int(att.shape[1])):
             # this_map = (att[0, i_class:i_class+1, :, :].detach().cpu().numpy() * 255).astype(np.uint8)
-            this_map = att[0, i_class:i_class+1, :, :].detach().cpu().numpy()
+            this_map = att[0, i_class:i_class+1, :, :].permute(1,2,0).detach().cpu().numpy()
             plt.imshow(this_map)
             plt.savefig(f"debug/attn_weights_{i_class}.png", dpi = SAVEFIG_DPI)
 
