@@ -420,7 +420,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             img = img[:,:3,:,:]
 
         # debug: save attn weight
-        # save_image(img[-1, :, :, :], f"debug/orig_image.png")
+        save_image(img[-1, :, :, :], f"debug/orig_image.png")
 
         mres_feats = []
         self.decode_head.debug_output = {}
@@ -444,7 +444,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             align_corners=self.align_corners)
 
         # debug
-        # print("img_metas", img_metas)
+        print("img_metas", img_metas)
         assert 0
 
         return out

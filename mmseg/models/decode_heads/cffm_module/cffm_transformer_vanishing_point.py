@@ -8,6 +8,8 @@ import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from einops import rearrange
 
+from torchvision.utils import save_image
+
 class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
         super().__init__()
@@ -915,6 +917,17 @@ class WindowAttention3d3(nn.Module):
 
         # x = (attn @ v_all).transpose(1, 2).reshape(attn.shape[0], window_area, C) # (190+9,49,256)
         x_return = x_return.transpose(1, 2).contiguous().reshape(attn.shape[0]-self.vp_roi_n_windows, window_area, C)
+
+        # DEBUG: output features
+        window_len  = int(math.sqrt(window_area))
+        x_show_before = x[:-self.vp_roi_n_windows:, 0, :, 0:1].reshape(-1,window_len,window_len,1) # (190, 49, 1)
+        x_show_before = window_reverse(x_show_before, window_len, nH, nW)
+        x_show_after = x_return[:,:,0:1].reshape(-1,window_len,window_len,1)
+        x_show_after = window_reverse(x_show_after, window_len, nH, nW)
+        save_image(x_show_before, "x_show_before_vp_attn.png")
+        save_image(x_show_after, "x_show_after_vp_attn.png")
+
+
         x_return = self.proj(x_return)
         x_return = self.proj_drop(x_return)
         # print(x.shape)
