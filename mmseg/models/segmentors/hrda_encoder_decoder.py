@@ -444,6 +444,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             align_corners=self.align_corners)
 
         # debug
+        print("img_metas", img_metas)
         assert 0
 
         return out
