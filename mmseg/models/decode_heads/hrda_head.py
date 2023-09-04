@@ -154,6 +154,11 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         if 'serial' in single_scale_head:
             attn_cfg['type'] = 'DAFormerSerialHead'
 
+        if 'CFFMLR' in single_scale_head:
+            self.cffm_only_lr = True
+        else:
+            self.cffm_only_lr = False 
+
         if not attention_classwise:
             attn_cfg['num_classes'] = 1
         if fixed_attention is None:
@@ -208,9 +213,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                                 device=dev)
             count_mat = torch.zeros((bs, 1, h_img, w_img), device=dev)
 
-            try:
+            if self.cffm_only_lr:
                 crop_seg_logits = self.head(features, no_cffm = True)
-            except:
+            else:
                 crop_seg_logits = self.head(features)
                 
             for i in range(len(boxes)):

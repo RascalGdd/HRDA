@@ -94,7 +94,7 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
 
         print(self.decoder_focal.blocks[0].focal_kernel_clips)
 
-    def forward(self, inputs, return_feat = False):
+    def forward(self, inputs, return_feat = False, no_cffm = False):
         # if self.training:
         #     assert self.num_clips==num_clips
         num_clips = self.num_clips
