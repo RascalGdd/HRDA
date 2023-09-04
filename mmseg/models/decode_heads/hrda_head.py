@@ -335,7 +335,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         for i_class in range(int(att.shape[1])):
             # this_map = (att[0, i_class:i_class+1, :, :].detach().cpu().numpy() * 255).astype(np.uint8)
             this_map = att[0, i_class:i_class+1, :, :].detach().cpu().numpy()
-            plt.imshow(norm_cm_img)
+            plt.imshow(this_map)
             plt.savefig(f"debug/attn_weights_{i_class}.png", dpi = SAVEFIG_DPI)
 
             # this_map = cv2.cvtColor(this_map,cv2.COLOR_GRAY2RGB)
