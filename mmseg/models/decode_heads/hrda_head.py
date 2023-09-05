@@ -140,7 +140,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             kwargs.pop('dilations')
             kwargs['channels'] = 1
             self.os = 8
-        elif 'CFFM' in single_scale_head: # only for video clips
+        elif 'CFFM' in single_scale_head and 'DAFormerFocal' not in single_scale_head: # only for video clips
             self.num_clips = kwargs['num_clips']
 
             if 'b0' in single_scale_head:
@@ -194,7 +194,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         if 'serial' in single_scale_head:
             attn_cfg['type'] = 'DAFormerSerialHead'
 
-        if 'CFFMLR' in single_scale_head:
+        if 'CFFMLR' in single_scale_head or 'FocalLR' in single_scale_head:
             self.cffm_only_lr = True
         else:
             self.cffm_only_lr = False 
@@ -350,8 +350,6 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         else:
             lr_seg = self.head(lr_inp)
             _c2 = None
-            # debug
-            print("lr decoded")
 
         hr_seg = self.decode_hr(hr_inp, batch_size)
 
