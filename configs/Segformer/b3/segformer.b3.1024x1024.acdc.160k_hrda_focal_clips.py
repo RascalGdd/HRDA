@@ -22,7 +22,7 @@ model = dict(
                 norm_cfg=norm_cfg)),
         type='HRDAHead',
         # Use the DAFormer decoder for each scale.
-        single_scale_head='DAFormerFocal',
+        single_scale_head='DAFormerFocal_b3',
         # Learn a scale attention for each class channel of the prediction.
         attention_classwise=True,
         # Set the detail loss weight $\lambda_d=0.1$.
