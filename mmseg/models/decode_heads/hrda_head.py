@@ -94,7 +94,7 @@ daformer_focal_head_config_b3 = dict(
             type='conv',
             kernel_size=1,
             act_cfg=dict(type='ReLU'),
-            norm_cfg=norm_cfg),
+            norm_cfg=dict(type='SyncBN', requires_grad=True)),
         depths=2,
         cffm_downsample=False
     ),
