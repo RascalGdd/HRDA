@@ -299,7 +299,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         batch_size = int(inputs[0][0].shape[0] / self.num_clips)
         
         # convert video feature to single image feature for HRDA-only mode
-        if 'CFFM' not in self.single_scale_head:
+        if 'CFFM' not in self.single_scale_head and 'Focal' not in self.single_scale_head:
             new_inputs = [[], []]
             for i_level in range(2):
                 if type(inputs[i_level]) == list:
