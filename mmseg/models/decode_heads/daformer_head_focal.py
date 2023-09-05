@@ -18,6 +18,7 @@ from .sep_aspp_head import DepthwiseSeparableASPPModule
 
 from .cffm_module.cffm_transformer import BasicLayer3d3
 
+from torchvision.utils import save_image
 
 class ASPPWrapper(nn.Module):
 
@@ -246,6 +247,11 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
             x2 = resize(x2, size=(h,w),mode='bilinear',align_corners=False)
         # debug
         print("x2 shape", x2.shape)
+        if x2.shape[0] > 1:
+            for i_batch in range(x2.shape[0]):
+                for i_clip in range(x2.shape[1]):
+                    save_image(crop_imgs[i_batch, i_clip, :, :], f"debug/hr_cropped_seg_pred_{i_batch}_{i_clip}.png")
+
         if not return_feat:
             return x2
         else:

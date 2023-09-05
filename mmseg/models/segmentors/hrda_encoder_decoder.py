@@ -365,8 +365,11 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         crop_imgs = torch.cat(crop_imgs, dim=0)
 
         # debug
-        for i_batch in range(crop_imgs.shape[0]):
-            save_image(crop_imgs[i_batch, :, :, :], f"debug/hr_cropped_image_{i_batch}.png")
+        n_crops = h_grids * w_grids
+        crop_imgs_show  = crop_imgs.reshpae[n_crops, 4, -1, crop_imgs.shape[2], crop_imgs.shape[3]]
+        for i_batch in range(n_crops):
+            for i_clip in range(4):
+                save_image(crop_imgs_show[i_batch, i_clip, :, :, :], f"debug/hr_cropped_image_{i_batch}_{i_clip}.png")
 
         crop_feats = self.extract_unscaled_feat(crop_imgs)
         # shape: feature levels, crops * batch size x c x h x w
@@ -425,10 +428,10 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             img = img[:,:3,:,:]
 
         # debug
-        save_image(img[0, :, :, :], f"debug/orig_image_0.png")
-        save_image(img[1, :, :, :], f"debug/orig_image_1.png")
-        save_image(img[2, :, :, :], f"debug/orig_image_2.png")
-        save_image(img[3, :, :, :], f"debug/orig_image_3.png")
+        # save_image(img[0, :, :, :], f"debug/orig_image_0.png")
+        # save_image(img[1, :, :, :], f"debug/orig_image_1.png")
+        # save_image(img[2, :, :, :], f"debug/orig_image_2.png")
+        # save_image(img[3, :, :, :], f"debug/orig_image_3.png")
 
         mres_feats = []
         self.decode_head.debug_output = {}
