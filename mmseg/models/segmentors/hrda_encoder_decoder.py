@@ -419,12 +419,6 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
             img = img[:,:3,:,:]
 
-        # debug: save attn weight
-        save_image(img[0, :, :, :], f"debug/orig_image_0.png")
-        save_image(img[1, :, :, :], f"debug/orig_image_1.png")
-        save_image(img[2, :, :, :], f"debug/orig_image_2.png")
-        save_image(img[3, :, :, :], f"debug/orig_image_3.png")
-
         mres_feats = []
         self.decode_head.debug_output = {}
         for i, s in enumerate(self.scales):
@@ -512,6 +506,12 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             # save_image(img[-1,4:5,:,:], 'debug/debug_pos_emb.png')
 
             img = img[:,:3,:,:]
+
+        # debug
+        save_image(img[0, :, :, :], f"debug/orig_image_0.png")
+        save_image(img[1, :, :, :], f"debug/orig_image_1.png")
+        save_image(img[2, :, :, :], f"debug/orig_image_2.png")
+        save_image(img[3, :, :, :], f"debug/orig_image_3.png")
 
         if len(gt_semantic_seg.shape)==5:
             gt_semantic_seg = gt_semantic_seg[:,-1]
