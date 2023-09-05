@@ -244,8 +244,6 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
         
         if self.cffm_downsample:
             x2 = resize(x2, size=(h,w),mode='bilinear',align_corners=False)
-        x2 = x2.unsqueeze(1)
-
         # debug
         print("x2 shape", x2.shape)
         if not return_feat:
