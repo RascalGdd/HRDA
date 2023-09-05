@@ -363,6 +363,11 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
                 crop_imgs.append(img[:, :, y1:y2, x1:x2])
                 crop_boxes.append([y1, y2, x1, x2])
         crop_imgs = torch.cat(crop_imgs, dim=0)
+
+        # debug
+        for i_batch in range(crop_imgs.shape[0]):
+            save_image(crop_imgs[i_batch, :, :, :], f"debug/hr_cropped_image_0.png")
+
         crop_feats = self.extract_unscaled_feat(crop_imgs)
         # shape: feature levels, crops * batch size x c x h x w
 
@@ -418,6 +423,12 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             img = img.reshape(batch_size*num_clips, -1, h,w)
             # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
             img = img[:,:3,:,:]
+
+        # debug
+        save_image(img[0, :, :, :], f"debug/orig_image_0.png")
+        save_image(img[1, :, :, :], f"debug/orig_image_1.png")
+        save_image(img[2, :, :, :], f"debug/orig_image_2.png")
+        save_image(img[3, :, :, :], f"debug/orig_image_3.png")
 
         mres_feats = []
         self.decode_head.debug_output = {}
@@ -506,12 +517,6 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
             # save_image(img[-1,4:5,:,:], 'debug/debug_pos_emb.png')
 
             img = img[:,:3,:,:]
-
-        # debug
-        save_image(img[0, :, :, :], f"debug/orig_image_0.png")
-        save_image(img[1, :, :, :], f"debug/orig_image_1.png")
-        save_image(img[2, :, :, :], f"debug/orig_image_2.png")
-        save_image(img[3, :, :, :], f"debug/orig_image_3.png")
 
         if len(gt_semantic_seg.shape)==5:
             gt_semantic_seg = gt_semantic_seg[:,-1]
