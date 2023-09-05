@@ -213,7 +213,6 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         self.hr_crop_box = None
         self.hr_slide_inference = hr_slide_inference
 
-
         self.debug_output_attention = debug_output_attention
         self.debug = False
         self.debug_cnt = 0
