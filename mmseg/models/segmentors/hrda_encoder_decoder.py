@@ -366,7 +366,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
 
         # debug
         for i_batch in range(crop_imgs.shape[0]):
-            save_image(crop_imgs[i_batch, :, :, :], f"debug/hr_cropped_image_0.png")
+            save_image(crop_imgs[i_batch, :, :, :], f"debug/hr_cropped_image_{i_batch}.png")
 
         crop_feats = self.extract_unscaled_feat(crop_imgs)
         # shape: feature levels, crops * batch size x c x h x w
