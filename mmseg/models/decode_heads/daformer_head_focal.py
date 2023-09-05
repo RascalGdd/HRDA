@@ -225,7 +225,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
             return self.cls_seg(_c.reshape(batch_size, num_clips, -1, h, w)[:,-1])
 
         # debug
-        print("_c shape", _c.shape)
+        # print("_c shape", _c.shape)
         if self.cffm_downsample:
             h2 = int(h/2)
             w2 = int(w/2)
@@ -235,7 +235,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
             _c_further = _c.reshape(batch_size, num_clips, -1, h, w)
 
         # debug
-        print("_c_further shape", _c_further.shape)
+        # print("_c_further shape", _c_further.shape)
 
         _c2 = self.decoder_focal(_c_further)
 
@@ -250,7 +250,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
             x2 = resize(x2, size=(h,w),mode='bilinear',align_corners=False)
 
         # debug
-        print("x2 shape", x2.shape)
+        # print("x2 shape", x2.shape)
 
         if not return_feat:
             return x2
