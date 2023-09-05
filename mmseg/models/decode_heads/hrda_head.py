@@ -350,6 +350,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         else:
             lr_seg = self.head(lr_inp)
             _c2 = None
+            # debug
+            print("lr decoded")
 
         hr_seg = self.decode_hr(hr_inp, batch_size)
 
