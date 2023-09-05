@@ -296,7 +296,7 @@ class BaseDecodeHead_clips_flow(nn.Module, metaclass=ABCMeta):
                  align_corners=False,
                  init_cfg=dict(
                      type='Normal', std=0.01, override=dict(name='conv_seg')),
-                 num_clips=5
+                 num_clips=4
     ):
         super(BaseDecodeHead_clips_flow, self).__init__()
         self._init_inputs(in_channels, in_index, input_transform)

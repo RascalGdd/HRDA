@@ -76,6 +76,31 @@ CFFM_head_config_b3 = dict(
     loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)
 )
 
+daformer_focal_head_config_b3 = dict(
+    type='DAFormerHeadFocal',
+    in_channels=[64, 128, 320, 512],
+    in_index=[0, 1, 2, 3],
+    feature_strides=[4, 8, 16, 32],
+    channels=256,
+    dropout_ratio=0.1,
+    num_classes=19,
+    norm_cfg=dict(type='SyncBN', requires_grad=True),
+    align_corners=False,
+    decoder_params=dict(
+        embed_dims=256,
+        embed_cfg=dict(type='mlp', act_cfg=None, norm_cfg=None),
+        embed_neck_cfg=dict(type='mlp', act_cfg=None, norm_cfg=None),
+        fusion_cfg=dict(
+            type='conv',
+            kernel_size=1,
+            act_cfg=dict(type='ReLU'),
+            norm_cfg=norm_cfg),
+        depths=2,
+        cffm_downsample=False
+    ),
+    loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+)
+
 
 @HEADS.register_module()
 class HRDAHead(BaseDecodeHead_clips_flow):
@@ -137,6 +162,17 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 head_cfg['type'] = head_cfg['type'] + '_vpfuse'
 
             head_cfg["num_clips"] = self.num_clips
+
+        elif 'DAFormerFocal' in single_scale_head:
+            self.num_clips = kwargs['num_clips']
+            if 'b3' in single_scale_head:
+                head_cfg = daformer_focal_head_config_b3
+            else:
+                assert 0, "specify the backbone in CFFMHead, e.g., DAFormerFocal_b3, only b3 is supported"
+            head_cfg["num_clips"] = self.num_clips
+            if 'down' in single_scale_head:
+                head_cfg['decoder_params']['cffm_downsample'] = True
+
         elif single_scale_head == 'DAFormerHead':
             head_cfg['type'] = single_scale_head
             if 'num_clips' in head_cfg:
@@ -250,9 +286,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             if feat_video is None:
                 att = torch.sigmoid(self.scale_attention(inp))
             else:
-                att = torch.sigmoid(self.scale_attention(inp, feat_video = feat_video))
                 if lr_out is not None and hr_out is not None and 'serial' in self.head_type:
                     att = torch.sigmoid(self.scale_attention(inp, feat_video, lr_out, hr_out))
+                else:
+                    att = torch.sigmoid(self.scale_attention(inp, feat_video = feat_video))
         else:
             att = self.fixed_attention
         return att
@@ -292,9 +329,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             hr_inp = inputs[1]
             lr_inp = inputs[0]
             lr_sc_att_inp = inputs[0]  # separate var necessary for stack hr_fusion
-            if "detach" in self.head_type:
-                for i in range(len(lr_sc_att_inp)):
-                    lr_sc_att_inp[i] = lr_sc_att_inp[i].detach()
+        
+        for i in range(len(lr_sc_att_inp)):
+            lr_sc_att_inp[i] = lr_sc_att_inp[i].detach()
 
         # debug
         # print("lr_input shape", lr_inp[0].shape)

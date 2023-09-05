@@ -12,9 +12,11 @@ from mmseg.models.decode_heads.isa_head import ISALayer
 from mmseg.ops import resize
 from ..builder import HEADS
 from .aspp_head import ASPPModule
-from .decode_head import BaseDecodeHead
+from .decode_head import BaseDecodeHead_clips_flow
 from .segformer_head import MLP
 from .sep_aspp_head import DepthwiseSeparableASPPModule
+
+from .cffm_module.cffm_transformer import BasicLayer3d3
 
 
 class ASPPWrapper(nn.Module):
@@ -122,10 +124,10 @@ def build_layer(in_channels, out_channels, type, **kwargs):
 
 
 @HEADS.register_module()
-class DAFormerHead(BaseDecodeHead):
+class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
 
     def __init__(self, **kwargs):
-        super(DAFormerHead, self).__init__(
+        super(DAFormerHeadFocal, self).__init__(
             input_transform='multiple_select', **kwargs)
 
         assert not self.align_corners
@@ -156,11 +158,45 @@ class DAFormerHead(BaseDecodeHead):
         self.fuse_layer = build_layer(
             sum(embed_dims), self.channels, **fusion_cfg)
 
-    def forward(self, inputs):
+        # new
+        depths = decoder_params['depths']
+        self.cffm_downsample = decoder_params['cffm_downsample']
+        self.decoder_focal=BasicLayer3d3(dim=self.channels,
+               input_resolution=(60, 60),
+               depth=depths,
+               num_heads=8,
+               window_size=7,
+               mlp_ratio=4.,
+               qkv_bias=True, 
+               qk_scale=None,
+               drop=0., 
+               attn_drop=0.,
+               drop_path=0.,
+               norm_layer=nn.LayerNorm, 
+               pool_method='fc',
+               downsample=None,
+               focal_level=2, 
+               focal_window=5, 
+               expand_size=3, 
+               expand_layer="all",                           
+               use_conv_embed=False,
+               use_shift=False, 
+               use_pre_norm=False, 
+               use_checkpoint=False, 
+               use_layerscale=False, 
+               layerscale_value=1e-4,
+               focal_l_clips=[1,2,3],
+               focal_kernel_clips=[7,5,3])
+        self.linear_pred = nn.Conv2d(self.channels*2, self.num_classes, kernel_size=1)
+
+        # debug
+        print("using Daformerhead focal")
+
+    def forward(self, inputs, return_feat = False, no_cffm = False):
         x = inputs
         n, _, h, w = x[-1].shape
-        # for f in x:
-        #     mmcv.print_log(f'{f.shape}', 'mmseg')
+        num_clips = self.num_clips
+        batch_size = int(n / num_clips)
 
         os_size = x[0].size()[2:]
         _c = {}
@@ -179,9 +215,36 @@ class DAFormerHead(BaseDecodeHead):
                     mode='bilinear',
                     align_corners=self.align_corners)
 
-        x = self.fuse_layer(torch.cat(list(_c.values()), dim=1))
-        x = self.cls_seg(x)
+        _c = self.fuse_layer(torch.cat(list(_c.values()), dim=1))
+        # debug
+        print("_c shape", _c.shape)
+        if self.cffm_downsample:
+            h2 = int(h/2)
+            w2 = int(w/2)
+            _c = resize(_c, size=(h2,w2),mode='bilinear',align_corners=False)
+            _c_further = _c.reshape(batch_size, num_clips, -1, h2, w2)
+        else:
+            _c_further = _c.reshape(batch_size, num_clips, -1, h, w)
 
+        # debug
+        print("_c_further shape", _c_further.shape)
+
+        _c2 = self.decoder_focal(_c_further)
+
+        assert _c_further.shape == _c2.shape
+
+        _c_further2 = torch.cat([_c_further[:,-1], _c2[:,-1]],1)
+
+        x2 = self.dropout(_c_further2)
+        x2 = self.linear_pred(x2)
         
+        if self.cffm_downsample:
+            x2 = resize(x2, size=(h,w),mode='bilinear',align_corners=False)
+        x2 = x2.unsqueeze(1)
 
-        return x
+        # debug
+        print("x2 shape", x2.shape)
+        if not return_feat:
+            return x2
+        else:
+            return x2, _c2
