@@ -366,7 +366,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
 
         # debug
         n_crops = h_grids * w_grids
-        crop_imgs_show  = crop_imgs.reshpae(n_crops, 4, -1, crop_imgs.shape[2], crop_imgs.shape[3])
+        crop_imgs_show  = crop_imgs.reshape(n_crops, 4, -1, crop_imgs.shape[2], crop_imgs.shape[3])
         for i_batch in range(n_crops):
             for i_clip in range(4):
                 save_image(crop_imgs_show[i_batch, i_clip, :, :, :], f"debug/hr_cropped_image_{i_batch}_{i_clip}.png")
