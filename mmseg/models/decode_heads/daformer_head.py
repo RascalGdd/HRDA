@@ -182,6 +182,4 @@ class DAFormerHead(BaseDecodeHead):
         x = self.fuse_layer(torch.cat(list(_c.values()), dim=1))
         x = self.cls_seg(x)
 
-        
-
         return x
