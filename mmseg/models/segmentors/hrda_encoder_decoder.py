@@ -365,11 +365,11 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
         crop_imgs = torch.cat(crop_imgs, dim=0)
 
         # debug
-        n_crops = h_grids * w_grids
-        crop_imgs_show  = crop_imgs.reshape(n_crops, 4, -1, crop_imgs.shape[2], crop_imgs.shape[3])
-        for i_batch in range(n_crops):
-            for i_clip in range(4):
-                save_image(crop_imgs_show[i_batch, i_clip, :, :, :], f"debug/hr_cropped_image_{i_batch}_{i_clip}.png")
+        # n_crops = h_grids * w_grids
+        # crop_imgs_show  = crop_imgs.reshape(n_crops, 4, -1, crop_imgs.shape[2], crop_imgs.shape[3])
+        # for i_batch in range(n_crops):
+        #     for i_clip in range(4):
+        #         save_image(crop_imgs_show[i_batch, i_clip, :, :, :], f"debug/hr_cropped_image_{i_batch}_{i_clip}.png")
 
         crop_feats = self.extract_unscaled_feat(crop_imgs)
         # shape: feature levels, crops * batch size x c x h x w
@@ -456,7 +456,7 @@ class HRDAEncoderDecoder_clips(EncoderDecoder_clips):
 
         # debug
         # print("img_metas", img_metas)
-        assert 0
+        # assert 0
 
         return out
 

@@ -220,9 +220,12 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
                     align_corners=self.align_corners)
 
         _c = self.fuse_layer(torch.cat(list(_c.values()), dim=1))
+        _, _, h, w=_c.shape
+        if no_cffm:
+            return self.cls_seg(_c.reshape(batch_size, num_clips, -1, h, w)[:,-1])
+
         # debug
         print("_c shape", _c.shape)
-        _, _, h, w=_c.shape
         if self.cffm_downsample:
             h2 = int(h/2)
             w2 = int(w/2)
@@ -245,12 +248,9 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
         
         if self.cffm_downsample:
             x2 = resize(x2, size=(h,w),mode='bilinear',align_corners=False)
+
         # debug
         print("x2 shape", x2.shape)
-        if x2.shape[0] > 1:
-            for i_batch in range(x2.shape[0]):
-                for i_clip in range(x2.shape[1]):
-                    save_image(crop_imgs[i_batch, i_clip, :, :], f"debug/hr_cropped_seg_pred_{i_batch}_{i_clip}.png")
 
         if not return_feat:
             return x2
