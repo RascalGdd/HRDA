@@ -132,7 +132,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
         assert len(feature_strides) == len(self.in_channels)
         assert min(feature_strides) == feature_strides[0]
         self.feature_strides = feature_strides
-        
+
         assert not self.align_corners
         decoder_params = kwargs['decoder_params']
         embed_dims = decoder_params['embed_dims']
@@ -197,7 +197,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
 
     def forward(self, inputs, return_feat = False, no_cffm = False):
         x = inputs
-        n, _, h, w = x[-1].shape
+        n, _, _, _ = x[-1].shape
         num_clips = self.num_clips
         batch_size = int(n / num_clips)
 
@@ -221,6 +221,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
         _c = self.fuse_layer(torch.cat(list(_c.values()), dim=1))
         # debug
         print("_c shape", _c.shape)
+        _, _, h, w=_c.shape
         if self.cffm_downsample:
             h2 = int(h/2)
             w2 = int(w/2)
