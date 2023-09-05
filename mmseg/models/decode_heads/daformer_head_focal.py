@@ -126,10 +126,13 @@ def build_layer(in_channels, out_channels, type, **kwargs):
 @HEADS.register_module()
 class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
 
-    def __init__(self, **kwargs):
+    def __init__(self, feature_strides, **kwargs):
         super(DAFormerHeadFocal, self).__init__(
             input_transform='multiple_select', **kwargs)
-
+        assert len(feature_strides) == len(self.in_channels)
+        assert min(feature_strides) == feature_strides[0]
+        self.feature_strides = feature_strides
+        
         assert not self.align_corners
         decoder_params = kwargs['decoder_params']
         embed_dims = decoder_params['embed_dims']
