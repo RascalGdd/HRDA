@@ -1,5 +1,5 @@
 _base_ = [
-    '../../_base_/models/daformer_conv1_mitb0.py',
+    '../../_base_/models/daformer_conv1_mitb1.py',
     '../../_base_/datasets/cityscapes_1024x1024_repeat_clips.py',
     '../../_base_/default_runtime.py',
     '../../_base_/schedules/schedule_160k_adamw.py'
