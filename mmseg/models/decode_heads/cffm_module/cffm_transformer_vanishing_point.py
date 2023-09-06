@@ -911,7 +911,7 @@ class WindowAttention3d3(nn.Module):
 
         # orig_n_window = x.shape[0] - self.vp_roi_n_windows
         # window_ids_non_vp = torch.arange(orig_n_window) 
-        x_return = x[:self.vp_roi_n_windows].clone()
+        x_return = x[:-self.vp_roi_n_windows].clone()
         x_return[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).contiguous().permute(0,2,1,3)
         # x[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).contiguous().permute(0,2,1,3)
 
@@ -920,7 +920,8 @@ class WindowAttention3d3(nn.Module):
 
         # DEBUG: output features
         window_len  = int(math.sqrt(window_area))
-        x_show_before = x[:-self.vp_roi_n_windows:, 0, :, 0:1].reshape(-1,window_len,window_len,1) # (190, 7, 7, 1)
+        print("x", x.shape)
+        x_show_before = x[:-self.vp_roi_n_windows, 0, :, 0:1].reshape(-1,window_len,window_len,1) # (190, 7, 7, 1)
         print("before attn before reverse:", x_show_before.shape, x_show_before.min(), x_show_before.max())
         x_show_before = window_reverse(x_show_before, window_len, nH, nW)
         x_show_after = x_return[:,:,0:1].reshape(-1,window_len,window_len,1)
