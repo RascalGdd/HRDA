@@ -878,6 +878,15 @@ class WindowAttention3d3(nn.Module):
         attn = self.attn_drop(attn)
         x = attn @ v_all # (190+64,8,49,32)
 
+        # DEBUG: output features
+        window_len  = int(math.sqrt(window_area))
+        print("x", x.shape)
+        for i in range(4):
+            x_show_before = x[:-self.vp_roi_n_windows, 0, :, i:i+1].reshape(-1,window_len,window_len,1) # (190, 7, 7, 1)
+            print("before attn before reverse:", x_show_before.shape, x_show_before.min(), x_show_before.max())
+            x_show_before = window_reverse(x_show_before, window_len, nH, nW)
+            save_image(((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1), f"debug/x_show_before_vp_attn_orig_{i}.png")
+
         central_window_id_roi = get_central_window_id_roi(
             central_id, self.window_size[0], self.vp_n_windows_ori
         )
@@ -931,9 +940,6 @@ class WindowAttention3d3(nn.Module):
             x_show_after = window_reverse(x_show_after, window_len, nH, nW)
             print("before attn:", x_show_before.shape, x_show_before.min(), x_show_before.max())
             print("after attn:", x_show_after.shape, x_show_after.min(), x_show_after.max())
-
-            x_show_vp = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).contiguous().permute(0,2,1,3)
-            x_show_vp = x_show_vp[:,0,:,i:i+1].reshape(-1,window_len,window_len,1)
 
             save_image(((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1), f"debug/x_show_before_vp_attn_{i}.png")
             save_image(((x_show_after - x_show_after.min()) / x_show_after.max()).squeeze(-1), f"debug/x_show_after_vp_attn_{i}.png")
