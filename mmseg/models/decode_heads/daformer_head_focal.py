@@ -239,14 +239,16 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
 
         # _c_further2 = torch.cat([_c_further[:,-1], _c2[:,-1]],1)
 
-        x2 = self.dropout(_c_further2)
+        x2 = self.dropout(_c)
         x2 = self.linear_pred(x2)
         
         # if self.cffm_downsample:
         #     x2 = resize(x2, size=(h,w),mode='bilinear',align_corners=False)
 
 
-        if not return_feat:
-            return x2
-        else:
-            return x2, _c2
+        # if not return_feat:
+        #     return x2
+        # else:
+        #     return x2, _c2
+        
+        return x2
