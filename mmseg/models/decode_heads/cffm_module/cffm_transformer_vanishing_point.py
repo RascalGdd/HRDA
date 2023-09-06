@@ -930,8 +930,14 @@ class WindowAttention3d3(nn.Module):
         x_show_after = window_reverse(x_show_after, window_len, nH, nW)
         print("before attn:", x_show_before.shape, x_show_before.min(), x_show_before.max())
         print("after attn:", x_show_after.shape, x_show_after.min(), x_show_after.max())
-        save_image(x_show_before.squeeze(-1), "x_show_before_vp_attn.png")
-        save_image(x_show_after.squeeze(-1), "x_show_after_vp_attn.png")
+
+        x_show_vp = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).contiguous().permute(0,2,1,3)
+        x_show_vp = x_show_vp[:,0,:,0:1].reshape(-1,window_len,window_len,1)
+
+        save_image(x_show_before.squeeze(-1), "debug/x_show_before_vp_attn.png")
+        save_image(x_show_after.squeeze(-1), "debug/x_show_after_vp_attn.png")
+        print("diff:", torch.abs(x_show_before - x_show_after).sum())
+
 
 
         x_return = self.proj(x_return)
