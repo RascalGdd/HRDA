@@ -238,7 +238,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
         # assert _c_further.shape == _c2.shape
 
         # _c_further2 = torch.cat([_c_further[:,-1], _c2[:,-1]],1)
-
+        _c = _c.reshape(batch_size, num_clips, -1, h, w)[:,-1]
         x2 = self.dropout(_c)
         x2 = self.linear_pred(x2)
         
