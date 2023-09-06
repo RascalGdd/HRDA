@@ -924,7 +924,7 @@ class WindowAttention3d3(nn.Module):
         print("before attn before reverse:", x_show_before.shape, x_show_before.min(), x_show_before.max())
         x_show_before = window_reverse(x_show_before, window_len, nH, nW)
         x_show_after = x_return[:,:,0:1].reshape(-1,window_len,window_len,1)
-        print("after attn before reverse": x_show_after.shape, x_show_after.min(), x_show_after.max())
+        print("after attn before reverse:", x_show_after.shape, x_show_after.min(), x_show_after.max())
         x_show_after = window_reverse(x_show_after, window_len, nH, nW)
         print("before attn:", x_show_before.shape, x_show_before.min(), x_show_before.max())
         print("after attn:", x_show_after.shape, x_show_after.min(), x_show_after.max())
