@@ -1006,7 +1006,7 @@ class WindowAttention3d3(nn.Module):
 
         # orig_n_window = x.shape[0] - self.vp_roi_n_windows
         # window_ids_non_vp = torch.arange(orig_n_window) 
-        x_return = x[:-self.vp_roi_n_windows].clone()
+        x_return = x[:self.vp_roi_n_windows].clone()
         x_return[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).contiguous().permute(0,2,1,3)
         # x[window_ids_vp, :, :, :] = x_vp_nearest.view(self.vp_roi_n_windows_ori, window_area, self.num_heads, C//self.num_heads).contiguous().permute(0,2,1,3)
 
