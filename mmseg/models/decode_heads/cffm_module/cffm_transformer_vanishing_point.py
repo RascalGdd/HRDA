@@ -9,6 +9,10 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 from einops import rearrange
 
 from torchvision.utils import save_image
+import matplotlib.pyplot as plt
+import matplotlib
+import numpy as np
+import cv2
 
 class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
@@ -885,7 +889,13 @@ class WindowAttention3d3(nn.Module):
             x_show_before = x[:-self.vp_roi_n_windows, 0, :, i:i+1].reshape(-1,window_len,window_len,1) # (190, 7, 7, 1)
             print("before attn before reverse:", x_show_before.shape, x_show_before.min(), x_show_before.max())
             x_show_before = window_reverse(x_show_before, window_len, nH, nW)
+            x_show_before = ((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1)
             save_image(((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1), f"debug/x_show_before_vp_attn_orig_{i}.png")
+
+            x_show_before = x_show_before.permute(1,2,0).detach().cpu().numpy()
+            plt.imshow(x_show_before)
+            plt.savefig(f"debug/x_show_before_vp_attn_orig_{i}.png")
+
 
         central_window_id_roi = get_central_window_id_roi(
             central_id, self.window_size[0], self.vp_n_windows_ori
