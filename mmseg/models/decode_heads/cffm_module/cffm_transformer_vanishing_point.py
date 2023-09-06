@@ -885,18 +885,19 @@ class WindowAttention3d3(nn.Module):
         # DEBUG: output features
         window_len  = int(math.sqrt(window_area))
         print("x", x.shape)
-        for i in range(4):
-            x_show_before = x[:-self.vp_roi_n_windows, 0, :, i:i+1].reshape(-1,window_len,window_len,1) # (190, 7, 7, 1)
-            print("before attn before reverse:", x_show_before.shape, x_show_before.min(), x_show_before.max())
-            x_show_before = window_reverse(x_show_before, window_len, nH, nW)
-            x_show_before = ((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1)
-            save_image(((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1), f"debug/x_show_before_vp_attn_orig_{i}.png")
+        if nH > 133:
+            for i in range(4):
+                x_show_before = x[:-self.vp_roi_n_windows, 0, :, i:i+1].reshape(-1,window_len,window_len,1) # (190, 7, 7, 1)
+                print("before attn before reverse:", x_show_before.shape, x_show_before.min(), x_show_before.max())
+                x_show_before = window_reverse(x_show_before, window_len, nH, nW)
+                x_show_before = ((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1)
+                save_image(((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1), f"debug/x_show_before_vp_attn_orig_{i}.png")
 
-            x_show_before = x_show_before.permute(1,2,0).detach().cpu().numpy()
-            plt.imshow(x_show_before)
-            plt.savefig(f"debug/x_show_before_vp_attn_orig_{i}.png")
+                x_show_before = x_show_before.permute(1,2,0).detach().cpu().numpy()
+                plt.imshow(x_show_before)
+                plt.savefig(f"debug/x_show_before_vp_attn_orig_{i}.png")
 
-        assert 0
+            assert 0
 
 
         central_window_id_roi = get_central_window_id_roi(
