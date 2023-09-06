@@ -896,6 +896,8 @@ class WindowAttention3d3(nn.Module):
             plt.imshow(x_show_before)
             plt.savefig(f"debug/x_show_before_vp_attn_orig_{i}.png")
 
+            assert 0
+
 
         central_window_id_roi = get_central_window_id_roi(
             central_id, self.window_size[0], self.vp_n_windows_ori
