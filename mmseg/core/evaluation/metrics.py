@@ -143,13 +143,13 @@ def total_intersect_and_union(results,
                 this_result, this_gt_seg_map, num_classes, ignore_index,
                 label_map, reduce_zero_label, this_invalid_map)
 
-        if i < 50:
-            normalizer = float(gt_seg_maps[i].max())
-            save_image(torch.from_numpy(this_result).to(float) / normalizer, 'debug/seg_pred_{}.png'.format(i))
-            save_image(torch.from_numpy(this_gt_seg_map).to(float) / normalizer, 'debug/seg_gt_{}.png'.format(i))
-            if this_invalid_map is not None:
-                save_image(torch.from_numpy(this_invalid_map).to(float), 'debug/invalid_map_{}.png'.format(i))
-            print("i={},".format(i), sum((this_result == this_gt_seg_map).astype(int)))
+        # if i < 50:
+        #     normalizer = float(gt_seg_maps[i].max())
+        #     save_image(torch.from_numpy(this_result).to(float) / normalizer, 'debug/seg_pred_{}.png'.format(i))
+        #     save_image(torch.from_numpy(this_gt_seg_map).to(float) / normalizer, 'debug/seg_gt_{}.png'.format(i))
+        #     if this_invalid_map is not None:
+        #         save_image(torch.from_numpy(this_invalid_map).to(float), 'debug/invalid_map_{}.png'.format(i))
+        #     print("i={},".format(i), sum((this_result == this_gt_seg_map).astype(int)))
 
         total_area_intersect += area_intersect
         total_area_union += area_union
