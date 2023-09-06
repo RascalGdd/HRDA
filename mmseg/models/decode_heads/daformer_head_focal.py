@@ -225,7 +225,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
         _, _, h, w=_c.shape
         if no_cffm:
             x2 = self.dropout(_c.reshape(batch_size, num_clips, -1, h, w)[:,-1])
-            x2 = self.linear_pred2(x2)
+            x2 = self.linear_pred(x2)
             return x2
 
         if self.cffm_downsample:

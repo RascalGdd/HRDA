@@ -272,7 +272,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         else:
             # debug
             # print("decode hr input (training)", inp[0].shape)
-            return self.head(inp)
+            if self.cffm_only_lr:
+                crop_seg_logits = self.head(features, no_cffm = True)
+            else:
+                crop_seg_logits = self.head(features)
 
     def get_scale_attention(self, inp, feat_video = None, lr_out = None, hr_out = None):
 
