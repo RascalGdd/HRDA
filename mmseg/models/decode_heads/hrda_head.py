@@ -276,6 +276,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 crop_seg_logits = self.head(inp, no_cffm = True)
             else:
                 crop_seg_logits = self.head(inp)
+            return crop_seg_logits
 
     def get_scale_attention(self, inp, feat_video = None, lr_out = None, hr_out = None):
 
