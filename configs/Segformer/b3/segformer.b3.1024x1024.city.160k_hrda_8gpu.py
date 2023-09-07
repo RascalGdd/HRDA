@@ -1,6 +1,6 @@
 _base_ = [
     '../../_base_/models/daformer_conv1_mitb3.py',
-    '../../_base_/datasets/acdc_1024x1024_repeat_clips.py',
+    '../../_base_/datasets/cityscapes_1024x1024_repeat.py',
     '../../_base_/default_runtime.py',
     '../../_base_/schedules/schedule_160k_adamw.py'
 ]
@@ -9,9 +9,8 @@ _base_ = [
 norm_cfg = dict(type='SyncBN', requires_grad=True)
 find_unused_parameters = True
 model = dict(
-    type='HRDAEncoderDecoder_clips',
-    decode_head=dict(
-        decoder_params=dict(
+    type='HRDAEncoderDecoder',
+    decode_head=dict(decoder_params=dict(
             fusion_cfg=dict(
                 _delete_=True,
                 type='aspp',
@@ -22,12 +21,12 @@ model = dict(
                 norm_cfg=norm_cfg)),
         type='HRDAHead',
         # Use the DAFormer decoder for each scale.
-        single_scale_head='TransCFFMHead_b3_vpattn',
+        single_scale_head='DAFormerHead',
         # Learn a scale attention for each class channel of the prediction.
         attention_classwise=True,
         # Set the detail loss weight $\lambda_d=0.1$.
         hr_loss_weight=0.1,
-        num_clips=4),
+        num_clips=1),
     # Use the full resolution for the detail crop and half the resolution for
     # the context crop.
     scales=[1, 0.5],
@@ -48,8 +47,8 @@ model = dict(
         crop_size=[1024, 1024]))
 
 # data
-data = dict(samples_per_gpu=1)
-evaluation = dict(interval=1, metric='mIoU')
+data = dict(samples_per_gpu=2)
+evaluation = dict(interval=4000, metric='mIoU')
 
 # optimizer
 optimizer = dict(_delete_=True, type='AdamW', lr=0.00006, betas=(0.9, 0.999), weight_decay=0.01,
