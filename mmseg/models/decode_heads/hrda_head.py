@@ -169,6 +169,10 @@ class HRDAHead(BaseDecodeHead_clips_flow):
                 head_cfg = daformer_focal_head_config_b3
             else:
                 assert 0, "specify the backbone in CFFMHead, e.g., DAFormerFocal_b3, only b3 is supported"
+
+            if 'Res' in single_scale_head:
+                head_cfg['type'] = head_cfg['type'] + 'Res'
+
             head_cfg["num_clips"] = self.num_clips
             if 'down' in single_scale_head:
                 head_cfg['decoder_params']['cffm_downsample'] = True

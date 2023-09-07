@@ -125,10 +125,10 @@ def build_layer(in_channels, out_channels, type, **kwargs):
 
 
 @HEADS.register_module()
-class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
+class DAFormerHeadFocalRes(BaseDecodeHead_clips_flow):
 
     def __init__(self, feature_strides, **kwargs):
-        super(DAFormerHeadFocal, self).__init__(
+        super(DAFormerHeadFocalRes, self).__init__(
             input_transform='multiple_select', **kwargs)
         assert len(feature_strides) == len(self.in_channels)
         assert min(feature_strides) == feature_strides[0]
@@ -195,7 +195,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
         self.linear_pred = nn.Conv2d(self.channels, self.num_classes, kernel_size=1)
 
         # debug
-        print("using Daformerhead focal")
+        print("using Daformerhead focal res")
 
     def forward(self, inputs, return_feat = False, no_cffm = False):
         x = inputs
@@ -240,9 +240,9 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
 
         assert _c_further.shape == _c2.shape
 
-        _c_further2 = torch.cat([_c_further[:,-1], _c2[:,-1]],1)
+        _c_further2 = _c_further[:,-1] + _c2[:,-1]
         x2 = self.dropout(_c_further2)
-        x2 = self.linear_pred2(x2)
+        x2 = self.linear_pred(x2)
         
         if self.cffm_downsample:
             x2 = resize(x2, size=(h,w),mode='bilinear',align_corners=False)

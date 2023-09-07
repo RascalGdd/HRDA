@@ -883,21 +883,21 @@ class WindowAttention3d3(nn.Module):
         x = attn @ v_all # (190+64,8,49,32)
 
         # DEBUG: output features
-        window_len  = int(math.sqrt(window_area))
-        print("x", x.shape)
-        if nH > 133:
-            for i in range(4):
-                x_show_before = x[:-self.vp_roi_n_windows, 0, :, i:i+1].reshape(-1,window_len,window_len,1) # (190, 7, 7, 1)
-                print("before attn before reverse:", x_show_before.shape, x_show_before.min(), x_show_before.max())
-                x_show_before = window_reverse(x_show_before, window_len, nH, nW)
-                x_show_before = ((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1)
-                save_image(((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1), f"debug/x_show_before_vp_attn_orig_{i}.png")
+        # window_len  = int(math.sqrt(window_area))
+        # print("x", x.shape)
+        # if nH > 133:
+        #     for i in range(4):
+        #         x_show_before = x[:-self.vp_roi_n_windows, 0, :, i:i+1].reshape(-1,window_len,window_len,1) # (190, 7, 7, 1)
+        #         print("before attn before reverse:", x_show_before.shape, x_show_before.min(), x_show_before.max())
+        #         x_show_before = window_reverse(x_show_before, window_len, nH, nW)
+        #         x_show_before = ((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1)
+        #         save_image(((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1), f"debug/x_show_before_vp_attn_orig_{i}.png")
 
-                x_show_before = x_show_before.permute(1,2,0).detach().cpu().numpy()
-                plt.imshow(x_show_before)
-                plt.savefig(f"debug/x_show_before_vp_attn_orig_{i}.png")
+        #         x_show_before = x_show_before.permute(1,2,0).detach().cpu().numpy()
+        #         plt.imshow(x_show_before)
+        #         plt.savefig(f"debug/x_show_before_vp_attn_orig_{i}.png")
 
-            assert 0
+        #     assert 0
 
 
         central_window_id_roi = get_central_window_id_roi(
@@ -941,22 +941,22 @@ class WindowAttention3d3(nn.Module):
         x_return = x_return.transpose(1, 2).contiguous().reshape(attn.shape[0]-self.vp_roi_n_windows, window_area, C)
 
         # DEBUG: output features
-        window_len  = int(math.sqrt(window_area))
-        print("x", x.shape)
-        print("nH, nW", (nH, nW))
-        for i in range(4):
-            x_show_before = x[:-self.vp_roi_n_windows, 0, :, i:i+1].reshape(-1,window_len,window_len,1) # (190, 7, 7, 1)
-            print("before attn before reverse:", x_show_before.shape, x_show_before.min(), x_show_before.max())
-            x_show_before = window_reverse(x_show_before, window_len, nH, nW)
-            x_show_after = x_return[:,:,0:1].reshape(-1,window_len,window_len,1)
-            print("after attn before reverse:", x_show_after.shape, x_show_after.min(), x_show_after.max())
-            x_show_after = window_reverse(x_show_after, window_len, nH, nW)
-            print("before attn:", x_show_before.shape, x_show_before.min(), x_show_before.max())
-            print("after attn:", x_show_after.shape, x_show_after.min(), x_show_after.max())
+        # window_len  = int(math.sqrt(window_area))
+        # print("x", x.shape)
+        # print("nH, nW", (nH, nW))
+        # for i in range(4):
+        #     x_show_before = x[:-self.vp_roi_n_windows, 0, :, i:i+1].reshape(-1,window_len,window_len,1) # (190, 7, 7, 1)
+        #     print("before attn before reverse:", x_show_before.shape, x_show_before.min(), x_show_before.max())
+        #     x_show_before = window_reverse(x_show_before, window_len, nH, nW)
+        #     x_show_after = x_return[:,:,0:1].reshape(-1,window_len,window_len,1)
+        #     print("after attn before reverse:", x_show_after.shape, x_show_after.min(), x_show_after.max())
+        #     x_show_after = window_reverse(x_show_after, window_len, nH, nW)
+        #     print("before attn:", x_show_before.shape, x_show_before.min(), x_show_before.max())
+        #     print("after attn:", x_show_after.shape, x_show_after.min(), x_show_after.max())
 
-            save_image(((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1), f"debug/x_show_before_vp_attn_{i}.png")
-            save_image(((x_show_after - x_show_after.min()) / x_show_after.max()).squeeze(-1), f"debug/x_show_after_vp_attn_{i}.png")
-            print("diff:", torch.abs(x_show_before - x_show_after).sum())
+        #     save_image(((x_show_before - x_show_before.min()) / x_show_before.max()).squeeze(-1), f"debug/x_show_before_vp_attn_{i}.png")
+        #     save_image(((x_show_after - x_show_after.min()) / x_show_after.max()).squeeze(-1), f"debug/x_show_after_vp_attn_{i}.png")
+        #     print("diff:", torch.abs(x_show_before - x_show_after).sum())
 
         x_return = self.proj(x_return)
         x_return = self.proj_drop(x_return)
