@@ -193,6 +193,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
                focal_kernel_clips=[7,5,3])
 
         self.linear_pred = nn.Conv2d(self.channels, self.num_classes, kernel_size=1)
+        self.linear_pred2 = nn.Conv2d(self.channels*2, self.num_classes, kernel_size=1)
 
         # debug
         print("using Daformerhead focal")
