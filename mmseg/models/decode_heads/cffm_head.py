@@ -122,7 +122,9 @@ class CFFMHead_clips_resize1_8(BaseDecodeHead_clips_flow):
 
         _, _, h, w=_c.shape
         x = self.dropout(_c) # Bk=4, C, H, W
-        default_logit = self.linear_pred(x.reshape(batch_size, num_clips, -1, x.shape[2], x.shape[3])[:,-1]) # 1, C, H2, W2
+        if no_cffm:
+            default_logit = self.linear_pred(x.reshape(batch_size, num_clips, -1, x.shape[2], x.shape[3])[:,-1]) # 1, C, H2, W2
+            return default_logit
 
         # if not self.training and num_clips!=self.num_clips:
         #     return x[:,-1]
