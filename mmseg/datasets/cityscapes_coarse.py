@@ -41,14 +41,14 @@ class CityscapesDatasetCoarse(CustomDataset):
         if crop_pseudo_margins is not None:
             assert kwargs['pipeline'][-1]['type'] == 'Collect'
             kwargs['pipeline'][-1]['keys'].append('valid_pseudo_mask')
-        super(CityscapesDataset, self).__init__(
+        super(CityscapesDatasetCoarse, self).__init__(
             img_suffix=img_suffix, seg_map_suffix=seg_map_suffix, invalid_map_suffix=invalid_map_suffix, **kwargs)
 
         self.pseudo_margins = crop_pseudo_margins
         self.valid_mask_size = [1024, 2048]
 
     def pre_pipeline(self, results):
-        super(CityscapesDataset, self).pre_pipeline(results)
+        super(CityscapesDatasetCoarse, self).pre_pipeline(results)
         if self.pseudo_margins is not None:
             results['valid_pseudo_mask'] = np.ones(
                 self.valid_mask_size, dtype=np.uint8)
@@ -272,7 +272,7 @@ class CityscapesDatasetCoarse_clips(CustomDataset_cityscape_clips):
                [0, 80, 100], [0, 0, 230], [119, 11, 32]]
 
     def __init__(self, **kwargs):
-        super(CityscapesDataset_clips, self).__init__(
+        super(CityscapesDatasetCoarse_clips, self).__init__(
             img_suffix='_leftImg8bit.png',
             seg_map_suffix='_gtCoarse_labelTrainIds.png',
             invalid_map_suffix='_gtCoarse_invGray.png',
