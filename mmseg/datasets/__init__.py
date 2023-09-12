@@ -4,6 +4,7 @@
 from .acdc import ACDCDataset
 from .builder import DATASETS, PIPELINES, build_dataloader, build_dataset
 from .cityscapes import CityscapesDataset, CityscapesDataset_clips
+from .cityscapes_coarse import CityscapesDatasetCoarse, CityscapesDatasetCoarse_clips
 from .custom import CustomDataset, CustomDataset_cityscape_clips
 from .dark_zurich import DarkZurichDataset
 from .dataset_wrappers import ConcatDataset, RepeatDataset
@@ -22,6 +23,8 @@ __all__ = [
     'PIPELINES',
     'CityscapesDataset',
     'CityscapesDataset_clips',
+    'CityscapesDatasetCoarse',
+    'CityscapesDatasetCoarse_clips',
     'GTADataset',
     'SynthiaDataset',
     'UDADataset',
