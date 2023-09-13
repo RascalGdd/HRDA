@@ -68,6 +68,10 @@ def single_gpu_test(model,
 
         if show or out_dir:
             img_tensor = data['img'][0]
+
+            if type(img_tensor) == list:
+                img_tensor = img_tensor[-1][:,:3]
+
             img_metas = data['img_metas'][0].data[0]
             imgs = tensor2imgs(img_tensor, **img_metas[0]['img_norm_cfg'])
             assert len(imgs) == len(img_metas)
@@ -84,19 +88,19 @@ def single_gpu_test(model,
                 else:
                     out_file = None
 
-                if hasattr(model.module.decode_head,
-                           'debug_output_attention') and \
-                        model.module.decode_head.debug_output_attention:
-                    # Attention debug output
-                    mmcv.imwrite(result[0] * 255, out_file)
-                else:
-                    model.module.show_result(
-                        img_show,
-                        result,
-                        palette=dataset.PALETTE,
-                        show=show,
-                        out_file=out_file,
-                        opacity=opacity)
+                # if hasattr(model.module.decode_head,
+                #            'debug_output_attention') and \
+                #         model.module.decode_head.debug_output_attention:
+                #     # Attention debug output
+                #     mmcv.imwrite(result[0] * 255, out_file)
+                # else:
+                model.module.show_result(
+                    img_show,
+                    result,
+                    palette=dataset.PALETTE,
+                    show=show,
+                    out_file=out_file,
+                    opacity=opacity)
 
         if isinstance(result, list):
             if efficient_test:

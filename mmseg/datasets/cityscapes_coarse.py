@@ -191,7 +191,7 @@ class CityscapesDatasetCoarse(CustomDataset):
             metrics.remove('cityscapes')
         if len(metrics) > 0:
             eval_results.update(
-                super(CityscapesDataset,
+                super(CityscapesDatasetCoarse,
                       self).evaluate(results, metrics, logger, efficient_test))
 
         return eval_results
@@ -399,7 +399,7 @@ class CityscapesDatasetCoarse_clips(CustomDataset_cityscape_clips):
             metrics.remove('cityscapes')
         if len(metrics) > 0:
             eval_results.update(
-                super(CityscapesDataset_clips,
+                super(CityscapesDatasetCoarse_clips,
                       self).evaluate(results, metrics, logger, efficient_test))
 
         return eval_results
