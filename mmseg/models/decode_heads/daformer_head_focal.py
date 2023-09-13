@@ -192,8 +192,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
                focal_l_clips=[1,2,3],
                focal_kernel_clips=[7,5,3])
 
-        self.linear_pred = nn.Conv2d(self.channels, self.num_classes, kernel_size=1)
-        self.linear_pred2 = nn.Conv2d(self.channels*2, self.num_classes, kernel_size=1)
+        self.linear_pred = nn.Conv2d(self.channels*2, self.num_classes, kernel_size=1)
 
         # debug
         print("using Daformerhead focal")
@@ -224,9 +223,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
         _c = self.fuse_layer(torch.cat(list(_c.values()), dim=1))
         _, _, h, w=_c.shape
         if no_cffm:
-            x2 = self.dropout(_c.reshape(batch_size, num_clips, -1, h, w)[:,-1])
-            x2 = self.linear_pred(x2)
-            return x2
+            return self.cls_seg(_c.reshape(batch_size, num_clips, -1, h, w)[:,-1])
 
         if self.cffm_downsample:
             h2 = int(h/2)
@@ -243,7 +240,7 @@ class DAFormerHeadFocal(BaseDecodeHead_clips_flow):
 
         _c_further2 = torch.cat([_c_further[:,-1], _c2[:,-1]],1)
         x2 = self.dropout(_c_further2)
-        x2 = self.linear_pred2(x2)
+        x2 = self.linear_pred(x2)
         
         if self.cffm_downsample:
             x2 = resize(x2, size=(h,w),mode='bilinear',align_corners=False)
