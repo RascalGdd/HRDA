@@ -66,6 +66,10 @@ def single_gpu_test(model,
         with torch.no_grad():
             result = model(return_loss=False, **data)
 
+            # DEBUG
+            print(type(result[0]))
+            mmcv.imwrite(result[0] * 255, "debug/debug_test_out.png")
+
         if show or out_dir:
             img_tensor = data['img'][0]
 
