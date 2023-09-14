@@ -66,8 +66,6 @@ def single_gpu_test(model,
         with torch.no_grad():
             result = model(return_loss=False, **data)
 
-            # DEBUG: output id map
-            mmcv.imwrite(result[0], osp.join("debug", img_meta['ori_filename']))
 
         if show or out_dir:
             img_tensor = data['img'][0]
@@ -90,6 +88,9 @@ def single_gpu_test(model,
                     out_file = osp.join(out_dir, img_meta['ori_filename'])
                 else:
                     out_file = None
+
+                # DEBUG: output id map
+                mmcv.imwrite(result[0], osp.join("debug", img_meta['ori_filename']))
 
                 # if hasattr(model.module.decode_head,
                 #            'debug_output_attention') and \
