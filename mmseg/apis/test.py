@@ -68,6 +68,7 @@ def single_gpu_test(model,
 
             # DEBUG
             print(type(result[0]))
+            print(type(data['img_metas'][0]))
             mmcv.imwrite(result[0], "debug/debug_test_out.png")
 
         if show or out_dir:
