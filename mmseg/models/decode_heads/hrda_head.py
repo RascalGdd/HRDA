@@ -177,6 +177,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             if 'down' in single_scale_head:
                 head_cfg['decoder_params']['cffm_downsample'] = True
 
+            if 'vpmove' in single_scale_head:
+                head_cfg['type'] = head_cfg['type'] + '_vpmove'
+
         elif single_scale_head == 'DAFormerHead':
             head_cfg['type'] = single_scale_head
             if 'num_clips' in head_cfg:
