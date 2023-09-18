@@ -623,6 +623,7 @@ class CustomDataset_cityscape_clips(Dataset):
                 ann_info_one=img_info_one['ann']
                 img_anns.append([img_info_one, ann_info_one])
                 if not os.path.isfile(self.img_dir+'/'+im_name_new):
+                    print(self.img_dir+'/'+im_name_new)
                     assert False
         except:
             dilation_used=[-i for i in dilation_used]
@@ -638,6 +639,7 @@ class CustomDataset_cityscape_clips(Dataset):
                 ann_info_one=img_info_one['ann']
                 img_anns.append([img_info_one, ann_info_one])
                 if not os.path.isfile(self.img_dir+'/'+im_name_new):
+                    print(self.img_dir+'/'+im_name_new)
                     assert False
         img_anns.append([img_info, ann_info])
 
