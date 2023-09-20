@@ -233,8 +233,12 @@ class DAFormerHeadFocal_vpmove(BaseDecodeHead_clips_flow):
         else:
             _c_further = _c.reshape(batch_size, num_clips, -1, h, w)
 
-
-        _c2 = self.decoder_focal(_c_further)
+        if batch_size != 1:
+            c_tuple = torch.split(_c_further, 1, 0)
+            c2_list = [self.decoder_focal(inst) for inst in c_tuple]
+            _c2 = torch.cat(c2_list, 0)
+        else:
+            _c2 = self.decoder_focal(_c_further)
 
         assert _c_further.shape == _c2.shape
 
