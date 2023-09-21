@@ -1,6 +1,6 @@
 _base_ = [
     '../../_base_/models/daformer_conv1_mitb3.py',
-    '../../_base_/datasets/acdc_512x512_repeat.py',
+    '../../_base_/datasets/acdc_512x512_repeat_clips.py',
     '../../_base_/default_runtime.py',
     '../../_base_/schedules/schedule_160k_adamw.py'
 ]
@@ -9,7 +9,7 @@ _base_ = [
 norm_cfg = dict(type='SyncBN', requires_grad=True)
 find_unused_parameters = True
 model = dict(
-    type='HRDAEncoderDecoder',
+    type='HRDAEncoderDecoder_clips',
     decode_head=dict(
         decoder_params=dict(
             fusion_cfg=dict(
@@ -22,12 +22,12 @@ model = dict(
                 norm_cfg=norm_cfg)),
         type='HRDAHead',
         # Use the DAFormer decoder for each scale.
-        single_scale_head='DAFormerHead',
+        single_scale_head='DAFormerFocal_b3',
         # Learn a scale attention for each class channel of the prediction.
         attention_classwise=True,
         # Set the detail loss weight $\lambda_d=0.1$.
         hr_loss_weight=0.1,
-        num_clips=1),
+        num_clips=4),
     # Use the full resolution for the detail crop and half the resolution for
     # the context crop.
     scales=[1, 0.5],
