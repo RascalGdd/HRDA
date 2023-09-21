@@ -90,6 +90,18 @@ class HRDAEncoderDecoder(EncoderDecoder):
 
         self.debug_cnt = 0
 
+        self.print_param_size()
+
+    def print_param_size(self):
+        for name, param in self.named_parameters():
+            print(name)
+
+        n_param = sum(p.numel() for p in self.parameters())
+        print('\n [Logger] Num of total params:', n_param)
+        n_param = sum(p.numel() for p in self.parameters() if p.requires_grad)
+        print('\n [Logger] Num of trainable params:', n_param)
+        return n_param
+
     def extract_unscaled_feat(self, img):
         x = self.backbone(img)
         if self.with_neck:
