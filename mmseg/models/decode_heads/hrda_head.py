@@ -452,7 +452,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
     def forward_test(self, inputs, img_metas, test_cfg):
         """Forward function for testing, only ``fused_seg`` is used."""
         print(img_metas)
-        self.THIS_VISUALIZE_DIR = os.path.join("attn_weight_vis", img_metas[0]['ori_filename'][:-4])
+        self.THIS_VISUALIZE_DIR = os.path.join("attn_weight_vis2", img_metas[0]['ori_filename'][:-4])
         if not os.path.exists(self.THIS_VISUALIZE_DIR):
            os.makedirs(self.THIS_VISUALIZE_DIR)
         return self.forward(inputs)[0]
