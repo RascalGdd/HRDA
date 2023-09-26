@@ -2,7 +2,7 @@
 # Copyright (c) 2022 ETH Zurich, Lukas Hoyer. All rights reserved.
 # Licensed under the Apache License, Version 2.0
 # ---------------------------------------------------------------
-
+import os
 from copy import deepcopy
 
 import torch
@@ -454,6 +454,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
     def forward_test(self, inputs, img_metas, test_cfg):
         """Forward function for testing, only ``fused_seg`` is used."""
         print(img_metas)
+        THIS_VISUALIZE_DIR = os.path.join("attn_weight_vis", img_metas['ori_filename'][:-4])
+        if not os.path.exists(THIS_VISUALIZE_DIR):
+           os.makedirs(THIS_VISUALIZE_DIR)
         return self.forward(inputs)[0]
 
     def losses(self, seg_logit, seg_label, seg_weight=None):
