@@ -102,6 +102,9 @@ daformer_focal_head_config_b3 = dict(
 )
 
 
+# DEBUG
+THIS_VISUALIZE_DIR = "debug"
+
 @HEADS.register_module()
 class HRDAHead(BaseDecodeHead_clips_flow):
 
@@ -379,11 +382,11 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             att = self.resize(att, hr_scale / lr_scale)
 
         # debug: save attn weight
-        # for i_class in range(int(att.shape[1])):
-        #     # this_map = (att[0, i_class:i_class+1, :, :].detach().cpu().numpy() * 255).astype(np.uint8)
-        #     this_map = att[0, i_class:i_class+1, :, :].permute(1,2,0).detach().cpu().numpy()
-        #     plt.imshow(this_map)
-        #     plt.savefig(f"debug/attn_weights_{i_class}.png")
+        for i_class in range(int(att.shape[1])):
+            # this_map = (att[0, i_class:i_class+1, :, :].detach().cpu().numpy() * 255).astype(np.uint8)
+            this_map = att[0, i_class:i_class+1, :, :].permute(1,2,0).detach().cpu().numpy()
+            plt.imshow(this_map)
+            plt.savefig(f"debug/attn_weights_{i_class}.png")
 
             # this_map = cv2.cvtColor(this_map,cv2.COLOR_GRAY2RGB)
             # cv2.imwrite(f"debug/attn_weights_{i_class}.png", this_map)
@@ -450,6 +453,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
 
     def forward_test(self, inputs, img_metas, test_cfg):
         """Forward function for testing, only ``fused_seg`` is used."""
+        print(img_metas)
         return self.forward(inputs)[0]
 
     def losses(self, seg_logit, seg_label, seg_weight=None):
