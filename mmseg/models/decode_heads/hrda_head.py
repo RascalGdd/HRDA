@@ -102,9 +102,6 @@ daformer_focal_head_config_b3 = dict(
 )
 
 
-# DEBUG
-THIS_VISUALIZE_DIR = "debug"
-
 @HEADS.register_module()
 class HRDAHead(BaseDecodeHead_clips_flow):
 
@@ -226,6 +223,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         self.debug_output_attention = debug_output_attention
         self.debug = False
         self.debug_cnt = 0
+        self.THIS_VISUALIZE_DIR = "debug"
 
     def set_hr_crop_box(self, boxes):
         self.hr_crop_box = boxes
@@ -386,7 +384,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             # this_map = (att[0, i_class:i_class+1, :, :].detach().cpu().numpy() * 255).astype(np.uint8)
             this_map = att[0, i_class:i_class+1, :, :].permute(1,2,0).detach().cpu().numpy()
             plt.imshow(this_map)
-            plt.savefig(os.path.join(THIS_VISUALIZE_DIR, f"attn_weights_{i_class}.png"))
+            plt.savefig(os.path.join(self.THIS_VISUALIZE_DIR, f"attn_weights_{i_class}.png"))
 
             # this_map = cv2.cvtColor(this_map,cv2.COLOR_GRAY2RGB)
             # cv2.imwrite(f"debug/attn_weights_{i_class}.png", this_map)
@@ -454,9 +452,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
     def forward_test(self, inputs, img_metas, test_cfg):
         """Forward function for testing, only ``fused_seg`` is used."""
         print(img_metas)
-        THIS_VISUALIZE_DIR = os.path.join("attn_weight_vis", img_metas[0]['ori_filename'][:-4])
-        if not os.path.exists(THIS_VISUALIZE_DIR):
-           os.makedirs(THIS_VISUALIZE_DIR)
+        self.THIS_VISUALIZE_DIR = os.path.join("attn_weight_vis", img_metas[0]['ori_filename'][:-4])
+        if not os.path.exists(self.THIS_VISUALIZE_DIR):
+           os.makedirs(self.THIS_VISUALIZE_DIR)
         return self.forward(inputs)[0]
 
     def losses(self, seg_logit, seg_label, seg_weight=None):
