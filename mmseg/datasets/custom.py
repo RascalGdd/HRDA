@@ -491,7 +491,7 @@ class CustomDataset_cityscape_clips(Dataset):
                                                self.ann_dir,
                                                self.seg_map_suffix, self.invalid_map_suffix, self.split)
         print(len(self.img_infos))
-        self.flip_video=True
+        self.flip_video=False # True # DEBUG
         print("flip video: ",self.flip_video)
         self.dilation=dilation
 
@@ -615,8 +615,9 @@ class CustomDataset_cityscape_clips(Dataset):
             for ii in dilation_used:
                 img_info_one={}
                 
+                frame_int = int(value_i_splits[-2]) + ii
                 im_name_new = "_".join(
-                    value_i_splits[:-2] + [(str(int(value_i_splits[-2]) + ii)).rjust(6, "0")] + value_i_splits[-1:])
+                    value_i_splits[:-2] + [f"{frame_int:06d}"] + value_i_splits[-1:])
 
                 img_info_one['filename']=im_name_new
                 img_info_one['ann']=dict(seg_map=seg_map, invalid_map=invalid_map)
@@ -633,8 +634,9 @@ class CustomDataset_cityscape_clips(Dataset):
             for ii in dilation_used:
                 img_info_one={}
 
+                frame_int = int(value_i_splits[-2]) + ii
                 im_name_new = "_".join(
-                    value_i_splits[:-2] + [(str(int(value_i_splits[-2]) + ii)).rjust(6, "0")] + value_i_splits[-1:])
+                    value_i_splits[:-2] + [f"{frame_int:06d}"] + value_i_splits[-1:])
 
                 img_info_one['filename']=im_name_new
                 img_info_one['ann']=dict(seg_map=seg_map, invalid_map=invalid_map)
