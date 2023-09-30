@@ -711,8 +711,10 @@ class CustomDataset_cityscape_clips(Dataset):
             seg_map=img_info['ann']['seg_map']
             invalid_map=img_info['ann']['invalid_map']
             value_i_splits=filename.split('_')
+
+            frame_int = int(value_i_splits[-2]) + ii
             im_name_new = "_".join(
-                value_i_splits[:-2] + [(str(int(value_i_splits[-2]) + ii)).rjust(6, "0")] + value_i_splits[-1:])
+                value_i_splits[:-2] + [f"{frame_int:06d}"] + value_i_splits[-1:])
             # value_i_splits=seg_map.split('_')
             # seg_map_new = "_".join(
             #     value_i_splits[:-2] + [(str(int(value_i_splits[-2]) - ii)).rjust(6, "0")] + value_i_splits[-1:])
