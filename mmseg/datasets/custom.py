@@ -600,6 +600,7 @@ class CustomDataset_cityscape_clips(Dataset):
         invalid_map=img_info['ann']['invalid_map']
         value_i_splits=filename.split('_')
 
+        dilation_used=self.dilation
         if self.flip_video:
             # print("here")
             if random.random()<0.5:
