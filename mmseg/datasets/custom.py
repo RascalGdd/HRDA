@@ -491,7 +491,7 @@ class CustomDataset_cityscape_clips(Dataset):
                                                self.ann_dir,
                                                self.seg_map_suffix, self.invalid_map_suffix, self.split)
         print(len(self.img_infos))
-        self.flip_video=False # True # DEBUG
+        self.flip_video=True # True # DEBUG
         print("flip video: ",self.flip_video)
         self.dilation=dilation
 
