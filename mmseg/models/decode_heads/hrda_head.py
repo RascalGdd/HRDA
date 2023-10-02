@@ -76,6 +76,31 @@ CFFM_head_config_b3 = dict(
     loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0)
 )
 
+daformer_focal_head_config_b2 = dict(
+    type='DAFormerHeadFocal',
+    in_channels=[64, 128, 320, 512],
+    in_index=[0, 1, 2, 3],
+    feature_strides=[4, 8, 16, 32],
+    channels=128,
+    dropout_ratio=0.1,
+    num_classes=19,
+    norm_cfg=dict(type='SyncBN', requires_grad=True),
+    align_corners=False,
+    decoder_params=dict(
+        embed_dims=256,
+        embed_cfg=dict(type='mlp', act_cfg=None, norm_cfg=None),
+        embed_neck_cfg=dict(type='mlp', act_cfg=None, norm_cfg=None),
+        fusion_cfg=dict(
+            type='conv',
+            kernel_size=1,
+            act_cfg=dict(type='ReLU'),
+            norm_cfg=dict(type='SyncBN', requires_grad=True)),
+        depths=2,
+        cffm_downsample=False
+    ),
+    loss_decode=dict(type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+)
+
 daformer_focal_head_config_b3 = dict(
     type='DAFormerHeadFocal',
     in_channels=[64, 128, 320, 512],
@@ -167,6 +192,8 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             self.num_clips = kwargs['num_clips']
             if 'b3' in single_scale_head:
                 head_cfg = daformer_focal_head_config_b3
+            elif 'b2' in single_scale_head:
+                head_cfg = daformer_focal_head_config_b2
             else:
                 assert 0, "specify the backbone in CFFMHead, e.g., DAFormerFocal_b3, only b3 is supported"
 
