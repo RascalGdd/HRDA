@@ -92,6 +92,11 @@ def single_gpu_test(model,
 
                 # DEBUG: output id map
                 mmcv.imwrite(result[0], out_file)
+                # print(type(result), len(result), result[0].shape)
+                # print(result[0]==result[1])
+                # asdfasdfasdga
+                if isinstance(result, list):
+                    result = result[-1] # debug: list to tensor
 
                 # if hasattr(model.module.decode_head,
                 #            'debug_output_attention') and \
@@ -117,7 +122,7 @@ def single_gpu_test(model,
                 result = np2tmp(result, tmpdir='.efficient_test')
             results.append(result)
 
-        batch_size = len(result)
+        batch_size = img_tensor.size(0) #len(result)
         for _ in range(batch_size):
             prog_bar.update()
     return results
