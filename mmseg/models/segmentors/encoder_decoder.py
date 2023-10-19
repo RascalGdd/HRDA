@@ -78,9 +78,10 @@ class EncoderDecoder(BaseSegmentor):
 
         # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
         img = img[:,:3,:,:]
-        
+
         x = self.extract_feat(img)
         out = self._decode_head_forward_test(x, img_metas)
+        print(out.shape) # debug
         out = resize(
             input=out,
             size=img.shape[2:],
