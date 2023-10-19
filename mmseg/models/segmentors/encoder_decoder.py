@@ -75,6 +75,10 @@ class EncoderDecoder(BaseSegmentor):
     def encode_decode(self, img, img_metas):
         """Encode images with backbone and decode into a semantic segmentation
         map of the same size as input."""
+
+        # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+        img = img[:,:3,:,:]
+        
         x = self.extract_feat(img)
         out = self._decode_head_forward_test(x, img_metas)
         out = resize(
@@ -179,7 +183,7 @@ class EncoderDecoder(BaseSegmentor):
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
-        
+
         # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
         img = img[:,:3,:,:]
 
@@ -357,6 +361,10 @@ class EncoderDecoder(BaseSegmentor):
 
         Only rescale=True is supported.
         """
+
+        # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+        img = img[:,:3,:,:]
+
         # aug_test rescale all imgs back to ori_shape for now
         assert rescale
         # to save memory, we get augmented seg logit inplace
