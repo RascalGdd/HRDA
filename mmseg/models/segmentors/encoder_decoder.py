@@ -81,7 +81,10 @@ class EncoderDecoder(BaseSegmentor):
 
         x = self.extract_feat(img)
         out = self._decode_head_forward_test(x, img_metas)
-        print(out.shape) # debug
+
+        if len(out.shape) == 3:
+            out = out.unsqueeze(0)
+
         out = resize(
             input=out,
             size=img.shape[2:],
