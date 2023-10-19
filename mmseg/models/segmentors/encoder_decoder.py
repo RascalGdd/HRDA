@@ -179,6 +179,10 @@ class EncoderDecoder(BaseSegmentor):
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
+        
+        # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+        img = img[:,:3,:,:]
+
         x = self.extract_feat(img)
 
         losses = dict()
@@ -329,6 +333,10 @@ class EncoderDecoder(BaseSegmentor):
 
     def simple_test(self, img, img_meta, rescale=True):
         """Simple test with single image."""
+
+        # debug: the first 3 channels are image RGB, 4th is vanishing mask and 5th is global pos emb
+        img = img[:,:3,:,:]
+
         seg_logit = self.inference(img, img_meta, rescale)
         if hasattr(self.decode_head, 'debug_output_attention') and \
                 self.decode_head.debug_output_attention:
@@ -494,7 +502,7 @@ class EncoderDecoder_clips(BaseSegmentor):
         if img.dim()==5:
             batch_size, num_clips, _, h, w =img.size()
 
-        img=img.reshape(batch_size*num_clips, -1, h,w)
+            img=img.reshape(batch_size*num_clips, -1, h,w)
 
         x = self.extract_feat(img)
 
