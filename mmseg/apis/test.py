@@ -65,7 +65,7 @@ def single_gpu_test(model,
     for i, data in enumerate(data_loader):
         with torch.no_grad():
             result = model(return_loss=False, **data)
-            
+
             img_tensor = data['img'][0]
 
             if type(img_tensor) == list:
@@ -74,11 +74,12 @@ def single_gpu_test(model,
                 img_tensor = img_tensor[:,:3]
 
         if show or out_dir:
-
-
             img_metas = data['img_metas'][0].data[0]
             imgs = tensor2imgs(img_tensor, **img_metas[0]['img_norm_cfg'])
             assert len(imgs) == len(img_metas)
+
+            if isinstance(result, list):
+                result = result[-1] # debug: list to tensor
 
             for img, img_meta in zip(imgs, img_metas):
                 h, w, _ = img_meta['img_shape']
@@ -96,9 +97,7 @@ def single_gpu_test(model,
                 mmcv.imwrite(result[0], out_file)
                 # print(type(result), len(result), result[0].shape)
                 # print(result[0]==result[1])
-                # asdfasdfasdga
-                if isinstance(result, list):
-                    result = result[-1] # debug: list to tensor
+
 
                 # if hasattr(model.module.decode_head,
                 #            'debug_output_attention') and \
