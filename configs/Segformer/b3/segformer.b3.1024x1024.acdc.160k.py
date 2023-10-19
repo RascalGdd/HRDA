@@ -8,12 +8,6 @@ _base_ = [
 # model settings
 norm_cfg = dict(type='SyncBN', requires_grad=True)
 find_unused_parameters = True
-model = dict(
-    test_cfg=dict(
-        mode='slide',
-        batched_slide=True,
-        stride=[512, 512],
-        crop_size=[1024, 1024]))
 
 # data
 data = dict(samples_per_gpu=1)
