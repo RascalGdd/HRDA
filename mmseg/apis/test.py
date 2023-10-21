@@ -94,7 +94,7 @@ def single_gpu_test(model,
                     out_file = None
 
                 # DEBUG: output id map
-                mmcv.imwrite(result[0], out_file)
+                mmcv.imwrite(result, out_file)
                 # print(type(result), len(result), result[0].shape)
                 # print(result[0]==result[1])
 
