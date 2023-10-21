@@ -436,7 +436,7 @@ class TransHeadVideo(BaseDecodeHead):
 
         hidden_dim = 256
         nheads = 8
-        dec_layers = 8
+        dec_layers = 4 # 8
         pre_norm = False
         dim_feedforward = 2048
 
