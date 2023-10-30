@@ -21,6 +21,7 @@ from .trans_scale_video_head import TransHeadVideo
 from .daformer_head_video import DAFormerSerialHead
 from .daformer_head_focal import DAFormerHeadFocal
 from .daformer_head_focal_vpmove import DAFormerHeadFocal_vpmove
+from .daformer_head_focal_sdfm import DAFormerHeadFocal_sdfm
 from .daformer_head_focal_res import DAFormerHeadFocalRes
 
 __all__ = [
@@ -41,5 +42,7 @@ __all__ = [
     'CFFMHead_clips_resize1_8_vpfuse',
     'TransHeadVideo',
     'DAFormerSerialHead',
-    'DAFormerHeadFocal'
+    'DAFormerHeadFocal',
+    'DAFormerHeadFocal_vpmove',
+    'DAFormerHeadFocal_sdfm'
 ]

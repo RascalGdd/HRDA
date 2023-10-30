@@ -261,6 +261,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             if 'vpmove' in single_scale_head:
                 head_cfg['type'] = head_cfg['type'] + '_vpmove'
 
+            if 'vpss' in single_scale_head:
+                head_cfg['type'] = head_cfg['type'] + '_vpss'
+
         elif single_scale_head == 'DAFormerHead':
             head_cfg['type'] = single_scale_head
             if 'num_clips' in head_cfg:
