@@ -517,6 +517,8 @@ class TransHeadVideo(BaseDecodeHead):
             normalize_before=pre_norm,
         )
 
+        self.debug_count = 0
+
     def forward_prediction_heads(self, output, mask_features):
         decoder_output = self.decoder_norm(output)
         decoder_output = decoder_output.transpose(0, 1)
@@ -560,13 +562,13 @@ class TransHeadVideo(BaseDecodeHead):
                     mode='bilinear',
                     align_corners=False)
             mask_feats.append(feat)
-        mask_features = self.out_proj(torch.cat(mask_feats, 1))
+        mask_features = self.out_proj(torch.cat(mask_feats, 1)) # (B, C, H, W)
 
         _, bs, _ = src[0].shape
 
         # QxNxC
         query_embed = self.query_embed.weight.unsqueeze(1).repeat(1, bs, 1)
-        output = self.query_feat.weight.unsqueeze(1).repeat(1, bs, 1)
+        output = self.query_feat.weight.unsqueeze(1).repeat(1, bs, 1) # (B, Q, C), Q = 19
         predictions_mask = []
 
         # prediction heads on learnable query features
@@ -592,8 +594,13 @@ class TransHeadVideo(BaseDecodeHead):
             )
 
             if i == self.num_layers - 1 and feat_video is not None:
-                # print("feat_video shape", feat_video.shape)
-                # print("output shape", output.shape)
+                if self.debug_count < 1:
+                    print("inside trans scale video feat cross attention!")
+                    with open('video_feat_debug.txt', 'w') as f:
+                        f.write("inside trans scale video feat cross attention!")
+                    print("feat_video shape", feat_video.shape)
+                    print("output shape", output.shape)
+                    self.debug_count += 1
                 [bs, n_clips, channels, H, W] = feat_video.shape
                 output = self.video_crs_attn(output, feat_video[:,-1].reshape(H*W, bs, channels))
 
