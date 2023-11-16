@@ -128,7 +128,7 @@ def build_layer(in_channels, out_channels, type, **kwargs):
 class DAFormerHeadFocal_vpss(BaseDecodeHead_clips_flow):
 
     def __init__(self, feature_strides, **kwargs):
-        super(DAFormerHeadFocal_sdfm, self).__init__(
+        super(DAFormerHeadFocal_vpss, self).__init__(
             input_transform='multiple_select', **kwargs)
         assert len(feature_strides) == len(self.in_channels)
         assert min(feature_strides) == feature_strides[0]
