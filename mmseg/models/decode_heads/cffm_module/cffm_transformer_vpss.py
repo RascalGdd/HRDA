@@ -753,13 +753,6 @@ class WindowAttention3d3(nn.Module):
                 qkv_pooled = self.qkv(x_window_pooled).reshape(B0, nWh, nWw, 3, C).permute(3, 0, 4, 1, 2).contiguous()
                 k_pooled_k, v_pooled_k = qkv_pooled[1], qkv_pooled[2]  # B0, C, nWh, nWw
 
-                (k_pooled_k, v_pooled_k) = map(
-                    lambda t: self.unfolds_clips[k](t).view(
-                    B0, C, self.unfolds_clips[k].kernel_size[0], self.unfolds_clips[k].kernel_size[1], -1).permute(0, 4, 2, 3, 1).contiguous().\
-                    view(-1, self.unfolds_clips[k].kernel_size[0]*self.unfolds_clips[k].kernel_size[1], self.num_heads, C // self.num_heads).transpose(1, 2), 
-                    (k_pooled_k, v_pooled_k)  # (B0 x (nH*nW)) x nHeads x (unfold_wsize x unfold_wsize) x head_dim
-                )
-
                 #    >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>      motion VP moving direction          <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 (k_pooled_k, v_pooled_k) = map(
                     lambda t: self.unfolds_clips[k](t).view(B0, C, self.unfolds_clips[k].kernel_size[0], self.unfolds_clips[k].kernel_size[1], x_all[0][1].shape[1], x_all[0][1].shape[2]),
