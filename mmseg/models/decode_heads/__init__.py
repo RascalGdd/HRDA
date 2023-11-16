@@ -20,6 +20,7 @@ from .daformer_head_video import DAFormerSerialHead
 from .daformer_head_focal import DAFormerHeadFocal
 from .daformer_head_focal_vpmove import DAFormerHeadFocal_vpmove
 from .daformer_head_focal_sdfm import DAFormerHeadFocal_sdfm
+from .daformer_head_focal_vpss import DAFormerHeadFocal_vpss
 from .daformer_head_focal_res import DAFormerHeadFocalRes
 
 __all__ = [
@@ -40,5 +41,6 @@ __all__ = [
     'DAFormerSerialHead',
     'DAFormerHeadFocal',
     'DAFormerHeadFocal_vpmove',
-    'DAFormerHeadFocal_sdfm'
+    'DAFormerHeadFocal_sdfm',
+    'DAFormerHeadFocal_vpss'
 ]

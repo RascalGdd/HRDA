@@ -261,6 +261,9 @@ class HRDAHead(BaseDecodeHead_clips_flow):
             if 'vpmove' in single_scale_head:
                 head_cfg['type'] = head_cfg['type'] + '_vpmove'
 
+            if 'sdfm' in single_scale_head:
+                head_cfg['sdfm'] = head_cfg['type'] + '_sdfm'
+
             if 'vpss' in single_scale_head:
                 head_cfg['type'] = head_cfg['type'] + '_vpss'
 
@@ -288,7 +291,7 @@ class HRDAHead(BaseDecodeHead_clips_flow):
         if 'CFFMLR' in single_scale_head or 'FocalLR' in single_scale_head:
             self.cffm_only_lr = True
         else:
-            self.cffm_only_lr = False 
+            self.cffm_only_lr = False
 
         if not attention_classwise:
             attn_cfg['num_classes'] = 1
