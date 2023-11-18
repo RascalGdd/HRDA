@@ -714,6 +714,11 @@ class WindowAttention3d3(nn.Module):
                 k_pooled += [k_pooled_k]
                 v_pooled += [v_pooled_k] # [(190,8,25,32)]
 
+            
+            coords_q_moving_all = []
+            coords_q_moving_opposite_all = []
+            mask_coord_list_all = []
+            mask_coord_list_opposite_all = []
             for k in range(len(self.focal_l_clips)):
                 focal_l_big_flag=False
                 if self.focal_l_clips[k]>self.window_size[0]:
